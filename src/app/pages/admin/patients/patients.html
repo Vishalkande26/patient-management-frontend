@@ -1,0 +1,384 @@
+<div class="page-container">
+
+  
+
+  @if (showPopup) {
+
+    <div
+      class="toast-notification"
+      [class.toast-success]="popupType === 'success'"
+      [class.toast-error]="popupType === 'error'">
+
+      <span class="toast-icon">
+
+        @if (popupType === 'success') {
+          ✓
+        } @else {
+          ✕
+        }
+
+      </span>
+
+      <span class="toast-message">
+        {{ popupMessage }}
+      </span>
+
+      <button
+        type="button"
+        class="toast-close"
+        (click)="showPopup = false">
+
+        ×
+
+      </button>
+
+    </div>
+
+  }
+
+
+  
+  <div class="top-bar">
+
+    <h1>
+      Manage Patients
+    </h1>
+
+    <button
+      type="button"
+      class="logout-button"
+      (click)="logout()">
+
+      Logout
+
+    </button>
+
+  </div>
+
+
+  
+
+  <div class="form-container">
+
+    <h2>
+
+      @if (editingId === null) {
+        Add Patient
+      } @else {
+        Update Patient
+      }
+
+    </h2>
+
+
+    
+
+    <div class="form-group">
+
+      <label>
+        Patient Name
+      </label>
+
+      <input
+        type="text"
+        [(ngModel)]="name"
+        placeholder="Enter patient name">
+
+    </div>
+
+
+    
+
+    <div class="form-group">
+
+      <label>
+        Age
+      </label>
+
+      <input
+        type="number"
+        [(ngModel)]="age"
+        min="1"
+        placeholder="Enter patient age">
+
+    </div>
+
+
+    
+
+    <div class="form-group">
+
+      <label>
+        Gender
+      </label>
+
+      <select
+        [(ngModel)]="gender">
+
+        <option
+          value=""
+          disabled>
+
+          
+
+        </option>
+
+        <option value="Male">
+          Male
+        </option>
+
+        <option value="Female">
+          Female
+        </option>
+
+        <option value="Other">
+          Other
+        </option>
+
+      </select>
+
+    </div>
+
+
+    
+
+    <div class="form-group">
+
+      <label>
+        Phone
+      </label>
+
+      <input
+        type="text"
+        [(ngModel)]="phone"
+        maxlength="10"
+        inputmode="numeric"
+        placeholder="Enter 10 digit phone number">
+
+    </div>
+
+
+    
+
+    <div class="form-group">
+
+      <label>
+        Disease
+      </label>
+
+      <input
+        type="text"
+        [(ngModel)]="disease"
+        placeholder="Enter disease">
+
+    </div>
+
+
+
+
+    <div class="form-group">
+
+      <label>
+        Address
+      </label>
+
+      <input
+        type="text"
+        [(ngModel)]="address"
+        placeholder="Enter patient address">
+
+    </div>
+
+
+    
+
+    <button
+      type="button"
+      class="save-button"
+      (click)="savePatient()">
+
+      @if (editingId === null) {
+        Add Patient
+      } @else {
+        Update Patient
+      }
+
+    </button>
+
+
+    
+
+    @if (editingId !== null) {
+
+      <button
+        type="button"
+        class="cancel-button"
+        (click)="clearForm()">
+
+        Cancel
+
+      </button>
+
+    }
+
+  </div>
+
+
+  
+
+  <div class="table-container">
+
+    <div class="list-header">
+
+      <h2>
+        Patient List
+      </h2>
+
+      <button
+        type="button"
+        class="refresh-button"
+        (click)="loadPatients()">
+
+        Refresh Patients
+
+      </button>
+
+    </div>
+
+
+    @if (patients.length === 0) {
+
+      <p class="empty-message">
+        No patients found.
+      </p>
+
+    } @else {
+
+      <table>
+
+        <thead>
+
+          <tr>
+
+            <th>
+              ID
+            </th>
+
+            <th>
+              Name
+            </th>
+
+            <th>
+              Age
+            </th>
+
+            <th>
+              Gender
+            </th>
+
+            <th>
+              Phone
+            </th>
+
+            <th>
+              Disease
+            </th>
+
+            <th>
+              Address
+            </th>
+
+            <th>
+              Actions
+            </th>
+
+          </tr>
+
+        </thead>
+
+
+        <tbody>
+
+          @for (
+            patient of patients;
+            track patient.id
+          ) {
+
+            <tr>
+
+              <td>
+                {{ patient.id }}
+              </td>
+
+              <td>
+                {{ patient.name }}
+              </td>
+
+              <td>
+                {{ patient.age }}
+              </td>
+
+              <td>
+                {{ patient.gender }}
+              </td>
+
+              <td>
+                {{ patient.phone }}
+              </td>
+
+              <td>
+                {{ patient.disease }}
+              </td>
+
+              <td>
+                {{ patient.address }}
+              </td>
+
+              <td>
+
+                <button
+                  type="button"
+                  class="edit-button"
+                  (click)="editPatient(patient)">
+
+                  Edit
+
+                </button>
+
+
+                <button
+                  type="button"
+                  class="delete-button"
+                  (click)="deletePatient(patient.id)">
+
+                  Delete
+
+                </button>
+
+              </td>
+
+            </tr>
+
+          }
+
+        </tbody>
+
+      </table>
+
+    }
+
+  </div>
+
+
+  
+
+  <button
+    type="button"
+    class="back-button"
+    (click)="goBack()">
+
+    Back to Admin Dashboard
+
+  </button>
+
+</div>

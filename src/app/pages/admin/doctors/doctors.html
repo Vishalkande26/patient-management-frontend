@@ -1,0 +1,340 @@
+<div class="page-container">
+
+  
+
+  @if (showPopup) {
+
+    <div
+      class="toast-notification"
+      [class.toast-success]="popupType === 'success'"
+      [class.toast-error]="popupType === 'error'">
+
+      <span class="toast-icon">
+
+        @if (popupType === 'success') {
+          ✓
+        } @else {
+          ✕
+        }
+
+      </span>
+
+      <span class="toast-message">
+        {{ popupMessage }}
+      </span>
+
+      <button
+        type="button"
+        class="toast-close"
+        (click)="showPopup = false">
+
+        ×
+
+      </button>
+
+    </div>
+
+  }
+
+
+  
+  <div class="top-bar">
+
+    <h1>
+      Manage Doctors
+    </h1>
+
+    <button
+      type="button"
+      class="logout-button"
+      (click)="logout()">
+
+      Logout
+
+    </button>
+
+  </div>
+
+
+  
+
+  <div class="form-container">
+
+    <h2>
+
+      @if (editingId === null) {
+        Add Doctor
+      } @else {
+        Update Doctor
+      }
+
+    </h2>
+
+
+    
+
+    <div class="form-group">
+
+      <label>
+        Doctor Name
+      </label>
+
+      <input
+        type="text"
+        [(ngModel)]="name"
+        placeholder="Enter doctor name">
+
+    </div>
+
+
+  
+
+    <div class="form-group">
+
+      <label>
+        Specialization
+      </label>
+
+      <input
+        type="text"
+        [(ngModel)]="specialization"
+        placeholder="Enter specialization">
+
+    </div>
+
+
+  
+
+    <div class="form-group">
+
+      <label>
+        Phone
+      </label>
+
+      <input
+        type="text"
+        [(ngModel)]="phone"
+        maxlength="10"
+        inputmode="numeric"
+        placeholder="Enter 10 digit phone number">
+
+    </div>
+
+
+    
+
+    <div class="form-group">
+
+      <label>
+        Email
+      </label>
+
+      <input
+        type="email"
+        [(ngModel)]="email"
+        placeholder="Enter doctor email">
+
+    </div>
+
+
+    
+
+    <div class="form-group">
+
+      <label>
+        Experience (Years)
+      </label>
+
+      <input
+        type="number"
+        [(ngModel)]="experience"
+        min="0"
+        placeholder="Enter experience">
+
+    </div>
+
+
+    
+
+    <button
+      type="button"
+      class="save-button"
+      (click)="saveDoctor()">
+
+      @if (editingId === null) {
+        Add Doctor
+      } @else {
+        Update Doctor
+      }
+
+    </button>
+
+
+    
+
+    @if (editingId !== null) {
+
+      <button
+        type="button"
+        class="cancel-button"
+        (click)="clearForm()">
+
+        Cancel
+
+      </button>
+
+    }
+
+  </div>
+
+
+  
+
+  <div class="table-container">
+
+    <div class="list-header">
+
+      <h2>
+        Doctor List
+      </h2>
+
+      <button
+        type="button"
+        class="refresh-button"
+        (click)="loadDoctors()">
+
+        Refresh Doctors
+
+      </button>
+
+    </div>
+
+
+    @if (doctors.length === 0) {
+
+      <p class="empty-message">
+        No doctors found.
+      </p>
+
+    } @else {
+
+      <table>
+
+        <thead>
+
+          <tr>
+
+            <th>
+              ID
+            </th>
+
+            <th>
+              Name
+            </th>
+
+            <th>
+              Specialization
+            </th>
+
+            <th>
+              Phone
+            </th>
+
+            <th>
+              Email
+            </th>
+
+            <th>
+              Experience
+            </th>
+
+            <th>
+              Actions
+            </th>
+
+          </tr>
+
+        </thead>
+
+
+        <tbody>
+
+          @for (
+            doctor of doctors;
+            track doctor.id
+          ) {
+
+            <tr>
+
+              <td>
+                {{ doctor.id }}
+              </td>
+
+              <td>
+                {{ doctor.name }}
+              </td>
+
+              <td>
+                {{ doctor.specialization }}
+              </td>
+
+              <td>
+                {{ doctor.phone }}
+              </td>
+
+              <td>
+                {{ doctor.email }}
+              </td>
+
+              <td>
+                {{ doctor.experience }}
+              </td>
+
+              <td>
+
+                <button
+                  type="button"
+                  class="edit-button"
+                  (click)="editDoctor(doctor)">
+
+                  Edit
+
+                </button>
+
+
+                <button
+                  type="button"
+                  class="delete-button"
+                  (click)="deleteDoctor(doctor.id)">
+
+                  Delete
+
+                </button>
+
+              </td>
+
+            </tr>
+
+          }
+
+        </tbody>
+
+      </table>
+
+    }
+
+  </div>
+
+
+  
+
+  <button
+    type="button"
+    class="back-button"
+    (click)="goBack()">
+
+    Back to Admin Dashboard
+
+  </button>
+
+</div>

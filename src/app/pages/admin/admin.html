@@ -1,0 +1,45 @@
+<div class="dashboard">
+
+  <div class="top-bar">
+
+    <h1>Admin Dashboard</h1>
+
+    <button
+      class="logout-button"
+      (click)="logout()">
+      Logout
+    </button>
+
+  </div>
+
+  <p>Welcome to the Admin Dashboard</p>
+
+  <p>
+    <strong>Role:</strong> ADMIN
+  </p>
+
+  <div class="menu">
+
+    <button
+      (click)="goToUsers()">
+      Manage Users
+    </button>
+
+    <button
+      (click)="goToDoctors()">
+      Manage Doctors
+    </button>
+
+    <button
+      (click)="goToPatients()">
+      Manage Patients
+    </button>
+
+    <button
+      (click)="goToAppointments()">
+      Manage Appointments
+    </button>
+
+  </div>
+
+</div>
