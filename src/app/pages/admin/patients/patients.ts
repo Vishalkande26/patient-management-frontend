@@ -1,20 +1,6 @@
-import {
-  Component,
-  OnInit,
-  inject
-} from '@angular/core';
-
-import {
-  FormsModule
-} from '@angular/forms';
-
-import {
-  Router
-} from '@angular/router';
-
-import {
-  HttpErrorResponse
-} from '@angular/common/http';
+import { Component, inject } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 
 import {
   Patient,
@@ -23,401 +9,450 @@ import {
 
 @Component({
   selector: 'app-patients',
-  imports: [
-    FormsModule
-  ],
+  imports: [FormsModule],
   templateUrl: './patients.html',
   styleUrl: './patients.css'
 })
-export class Patients implements OnInit {
+export class Patients {
 
-  private patientService =
-    inject(PatientService);
+  private patientService = inject(PatientService);
+  private router = inject(Router);
 
-  private router =
-    inject(Router);
-
-  patients: Patient[] = [];
-
-  loading = false;
-
-
-  
-
-  name = '';
-
-  age: number = 0;
-
-  gender = '';
-
-  phone = '';
-
-  disease = '';
-
-  address = '';
-
-
-  
+  patient: Patient = {
+    name: '',
+    age: 1,
+    gender: '',
+    phone: '',
+    disease: '',
+    address: ''
+  };
 
   editingId: number | null = null;
 
+  loading = false;
 
-  
+  message = '';
 
-  showPopup = false;
+  messageType: 'success' | 'error' = 'success';
 
-  popupMessage = '';
+  patients: Patient[] = [];
 
-  popupType:
-    'success' | 'error' = 'success';
+  searchTerm = '';
 
+  genderFilter = 'ALL';
 
-  
+  sortField:
+    | 'id'
+    | 'name'
+    | 'age'
+    | 'gender' = 'id';
 
-  ngOnInit(): void {
+  sortDirection: 'asc' | 'desc' = 'asc';
 
-    
-    this.patients =
-      this.patientService
-        .getCachedPatients();
+  currentPage = 1;
 
-   
+  pageSize = 5;
+
+  constructor() {
     this.loadPatients();
   }
 
-
-  
   loadPatients(): void {
 
     this.loading = true;
 
-    this.patientService
-      .getPatients()
-      .subscribe({
+    this.patientService.getPatients().subscribe({
 
-        next: (data: Patient[]) => {
+      next: (data: Patient[]) => {
 
-          console.log(
-            'Latest patients loaded:',
-            data
-          );
+        this.patients = data;
 
-          this.patients = data;
+        this.loading = false;
 
-          this.loading = false;
-        },
+        this.fixCurrentPage();
+      },
 
-        error: (
-          error: HttpErrorResponse
-        ) => {
+      error: (error: unknown) => {
 
-          console.error(
-            'Error loading patients:',
-            error
-          );
+        console.error('Error loading patients:', error);
 
-          this.loading = false;
+        this.loading = false;
 
-          
-          if (this.patients.length > 0) {
-            return;
-          }
-
-          if (error.status === 401) {
-
-            this.showError(
-              'Please login again.'
-            );
-
-          } else if (error.status === 403) {
-
-            this.showError(
-              'Only admin can view patients.'
-            );
-
-          } else {
-
-            this.showError(
-              'Failed to load patients.'
-            );
-          }
-        }
-      });
+        this.showMessage(
+          'Unable to load patients.',
+          'error'
+        );
+      }
+    });
   }
 
+  get genders(): string[] {
 
-  
-
-  savePatient(): void {
-
-    if (
-      !this.name.trim() ||
-      !this.gender.trim() ||
-      !this.phone.trim() ||
-      !this.disease.trim() ||
-      !this.address.trim()
-    ) {
-
-      this.showError(
-        'Please fill all fields.'
-      );
-
-      return;
-    }
-
-
-    if (
-      this.age === null ||
-      this.age === undefined ||
-      this.age < 1
-    ) {
-
-      this.showError(
-        'Age must be greater than 0.'
-      );
-
-      return;
-    }
-
-
-    if (
-      !/^[0-9]{10}$/.test(
-        this.phone.trim()
+    return [
+      ...new Set(
+        this.patients
+          .map(patient => patient.gender)
+          .filter(value => value)
       )
-    ) {
+    ].sort();
+  }
 
-      this.showError(
-        'Phone number must be exactly 10 digits.'
-      );
+  get filteredPatients(): Patient[] {
 
-      return;
-    }
+    const term =
+      this.searchTerm.trim().toLowerCase();
 
+    const filtered =
+      this.patients.filter(patient => {
 
-    const patient: Patient = {
+        const matchesSearch =
+          !term ||
+          patient.name.toLowerCase().includes(term) ||
+          patient.phone.includes(term) ||
+          patient.disease.toLowerCase().includes(term) ||
+          patient.address.toLowerCase().includes(term);
 
-      name:
-        this.name.trim(),
+        const matchesGender =
+          this.genderFilter === 'ALL' ||
+          patient.gender === this.genderFilter;
 
-      age:
-        Number(this.age),
+        return matchesSearch && matchesGender;
+      });
 
-      gender:
-        this.gender.trim(),
+    return [...filtered].sort((a, b) => {
 
-      phone:
-        this.phone.trim(),
+      let av: string | number;
+      let bv: string | number;
 
-      disease:
-        this.disease.trim(),
+      if (this.sortField === 'id') {
 
-      address:
-        this.address.trim()
-    };
+        av = a.id ?? 0;
+        bv = b.id ?? 0;
 
+      } else if (this.sortField === 'age') {
 
-    console.log(
-      'Patient data being sent:',
-      patient
+        av = a.age;
+        bv = b.age;
+
+      } else if (this.sortField === 'name') {
+
+        av = a.name.toLowerCase();
+        bv = b.name.toLowerCase();
+
+      } else {
+
+        av = a.gender.toLowerCase();
+        bv = b.gender.toLowerCase();
+      }
+
+      const result =
+        av < bv
+          ? -1
+          : av > bv
+            ? 1
+            : 0;
+
+      return this.sortDirection === 'asc'
+        ? result
+        : -result;
+    });
+  }
+
+  get totalPages(): number {
+
+    return Math.max(
+      1,
+      Math.ceil(
+        this.filteredPatients.length /
+        this.pageSize
+      )
     );
+  }
 
+  get paginatedPatients(): Patient[] {
 
-    
+    const start =
+      (this.currentPage - 1) *
+      this.pageSize;
 
-    if (this.editingId === null) {
+    const end =
+      start + this.pageSize;
 
-      this.patientService
-        .createPatient(patient)
-        .subscribe({
+    return this.filteredPatients.slice(
+      start,
+      end
+    );
+  }
 
-          next: (response: Patient) => {
+  get startRecord(): number {
 
-            console.log(
-              'Patient added:',
-              response
-            );
+    if (this.filteredPatients.length === 0) {
+      return 0;
+    }
 
-            
-            this.patients = [
-              ...this.patients,
-              response
-            ];
+    return (
+      (this.currentPage - 1) *
+      this.pageSize
+    ) + 1;
+  }
 
-           
-            this.patientService
-              .setCachedPatients(
-                this.patients
-              );
+  get endRecord(): number {
 
-            this.clearForm();
+    return Math.min(
+      this.currentPage * this.pageSize,
+      this.filteredPatients.length
+    );
+  }
 
-           
-            this.loadPatients();
+  get pageNumbers(): number[] {
 
-            this.showSuccess(
-              'Patient added successfully!'
-            );
-          },
+    return Array.from(
+      { length: this.totalPages },
+      (_, index) => index + 1
+    );
+  }
 
-          error: (
-            error: HttpErrorResponse
-          ) => {
+  changePage(page: number): void {
 
-            console.error(
-              'Add patient error:',
-              error
-            );
+    if (
+      page < 1 ||
+      page > this.totalPages
+    ) {
+      return;
+    }
 
-            if (error.status === 400) {
+    this.currentPage = page;
+  }
 
-              this.showError(
-                'Invalid patient data. Please check all fields.'
-              );
+  previousPage(): void {
 
-            } else if (error.status === 401) {
+    this.changePage(
+      this.currentPage - 1
+    );
+  }
 
-              this.showError(
-                'Please login again.'
-              );
+  nextPage(): void {
 
-            } else if (error.status === 403) {
+    this.changePage(
+      this.currentPage + 1
+    );
+  }
 
-              this.showError(
-                'Only admin can add patients.'
-              );
+  onPageSizeChange(): void {
 
-            } else {
+    this.currentPage = 1;
+  }
 
-              this.showError(
-                'Failed to add patient.'
-              );
-            }
-          }
-        });
+  private fixCurrentPage(): void {
+
+    if (
+      this.currentPage >
+      this.totalPages
+    ) {
+      this.currentPage =
+        this.totalPages;
+    }
+  }
+
+  onSearchChange(): void {
+
+    this.currentPage = 1;
+  }
+
+  onFilterChange(): void {
+
+    this.currentPage = 1;
+  }
+
+  sortBy(
+    field:
+      | 'id'
+      | 'name'
+      | 'age'
+      | 'gender'
+  ): void {
+
+    if (this.sortField === field) {
+
+      this.sortDirection =
+        this.sortDirection === 'asc'
+          ? 'desc'
+          : 'asc';
+
+    } else {
+
+      this.sortField = field;
+
+      this.sortDirection = 'asc';
+    }
+
+    this.currentPage = 1;
+  }
+
+  getSortIcon(
+    field:
+      | 'id'
+      | 'name'
+      | 'age'
+      | 'gender'
+  ): string {
+
+    if (this.sortField !== field) {
+      return '↕';
+    }
+
+    return this.sortDirection === 'asc'
+      ? '↑'
+      : '↓';
+  }
+
+  submitPatient(): void {
+
+    if (
+      !this.patient.name ||
+      !this.patient.gender ||
+      !this.patient.phone ||
+      !this.patient.disease ||
+      !this.patient.address
+    ) {
+
+      this.showMessage(
+        'Please fill all required fields.',
+        'error'
+      );
 
       return;
     }
 
+    if (this.editingId !== null) {
 
-    
+      this.updatePatient();
+
+    } else {
+
+      this.createPatient();
+    }
+  }
+
+  private createPatient(): void {
+
+    this.loading = true;
+
     this.patientService
-      .updatePatient(
-        this.editingId,
-        patient
-      )
+      .createPatient(this.patient)
       .subscribe({
 
-        next: (response: Patient) => {
+        next: (createdPatient: Patient) => {
 
-          console.log(
-            'Patient updated:',
-            response
+          this.patients = [
+            ...this.patients,
+            createdPatient
+          ];
+
+          this.loading = false;
+
+          this.showMessage(
+            'Patient created successfully.'
           );
 
-          
-          this.patients =
-            this.patients.map(
-              (item: Patient) =>
-                item.id === response.id
-                  ? response
-                  : item
-            );
+          this.resetForm();
 
-          
-          this.patientService
-            .setCachedPatients(
-              this.patients
-            );
-
-          this.clearForm();
-
-          
-          this.loadPatients();
-
-          this.showSuccess(
-            'Patient updated successfully!'
-          );
+          this.currentPage =
+            this.totalPages;
         },
 
-        error: (
-          error: HttpErrorResponse
-        ) => {
+        error: (error: unknown) => {
 
           console.error(
-            'Update patient error:',
+            'Error creating patient:',
             error
           );
 
-          if (error.status === 400) {
+          this.loading = false;
 
-            this.showError(
-              'Invalid patient data. Please check all fields.'
-            );
-
-          } else if (error.status === 401) {
-
-            this.showError(
-              'Please login again.'
-            );
-
-          } else if (error.status === 403) {
-
-            this.showError(
-              'Only admin can update patients.'
-            );
-
-          } else if (error.status === 404) {
-
-            this.showError(
-              'Patient not found.'
-            );
-
-          } else {
-
-            this.showError(
-              'Failed to update patient.'
-            );
-          }
+          this.showMessage(
+            'Unable to create patient.',
+            'error'
+          );
         }
       });
   }
 
-
-  
-  editPatient(
-    patient: Patient
-  ): void {
+  editPatient(patient: Patient): void {
 
     this.editingId =
       patient.id ?? null;
 
-    this.name =
-      patient.name;
+    this.patient = {
 
-    this.age =
-      patient.age ?? 0;
+      name: patient.name,
 
-    this.gender =
-      patient.gender;
+      age: patient.age,
 
-    this.phone =
-      patient.phone;
+      gender: patient.gender,
 
-    this.disease =
-      patient.disease;
+      phone: patient.phone,
 
-    this.address =
-      patient.address;
+      disease: patient.disease,
 
-    this.popupMessage = '';
+      address: patient.address
+    };
 
-    this.showPopup = false;
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
   }
 
+  private updatePatient(): void {
 
-  // ============================
-  // DELETE PATIENT
-  // ============================
+    if (this.editingId === null) {
+      return;
+    }
+
+    this.loading = true;
+
+    this.patientService
+      .updatePatient(
+        this.editingId,
+        this.patient
+      )
+      .subscribe({
+
+        next: (updatedPatient: Patient) => {
+
+          this.patients =
+            this.patients.map(patient =>
+              patient.id === this.editingId
+                ? updatedPatient
+                : patient
+            );
+
+          this.loading = false;
+
+          this.showMessage(
+            'Patient updated successfully.'
+          );
+
+          this.resetForm();
+        },
+
+        error: (error: unknown) => {
+
+          console.error(
+            'Error updating patient:',
+            error
+          );
+
+          this.loading = false;
+
+          this.showMessage(
+            'Unable to update patient.',
+            'error'
+          );
+        }
+      });
+  }
 
   deletePatient(
     id: number | undefined
@@ -427,17 +462,16 @@ export class Patients implements OnInit {
       return;
     }
 
-
     const confirmed =
-      confirm(
+      window.confirm(
         'Are you sure you want to delete this patient?'
       );
-
 
     if (!confirmed) {
       return;
     }
 
+    this.loading = true;
 
     this.patientService
       .deletePatient(id)
@@ -445,193 +479,81 @@ export class Patients implements OnInit {
 
         next: () => {
 
-          console.log(
-            'Patient deleted:',
-            id
-          );
-
-          /*
-           * Remove immediately from list.
-           */
           this.patients =
             this.patients.filter(
-              (patient: Patient) =>
+              patient =>
                 patient.id !== id
             );
 
-          /*
-           * Update cache.
-           */
-          this.patientService
-            .setCachedPatients(
-              this.patients
-            );
+          this.loading = false;
 
-          this.showSuccess(
-            'Patient deleted successfully!'
+          this.fixCurrentPage();
+
+          this.showMessage(
+            'Patient deleted successfully.'
           );
-
-          /*
-           * Background refresh.
-           */
-          this.loadPatients();
         },
 
-        error: (
-          error: HttpErrorResponse
-        ) => {
+        error: (error: unknown) => {
 
           console.error(
-            'Delete patient error:',
+            'Error deleting patient:',
             error
           );
 
-          if (error.status === 401) {
+          this.loading = false;
 
-            this.showError(
-              'Please login again.'
-            );
-
-          } else if (error.status === 403) {
-
-            this.showError(
-              'Only admin can delete patients.'
-            );
-
-          } else if (error.status === 404) {
-
-            this.showError(
-              'Patient not found.'
-            );
-
-          } else {
-
-            this.showError(
-              'Failed to delete patient.'
-            );
-          }
+          this.showMessage(
+            'Unable to delete patient.',
+            'error'
+          );
         }
       });
   }
 
+  resetForm(): void {
 
-  // ============================
-  // CLEAR FORM
-  // ============================
+    this.patient = {
 
-  clearForm(): void {
+      name: '',
 
-    this.name = '';
+      age: 1,
 
-    this.age = 0;
+      gender: '',
 
-    this.gender = '';
+      phone: '',
 
-    this.phone = '';
+      disease: '',
 
-    this.disease = '';
-
-    this.address = '';
+      address: ''
+    };
 
     this.editingId = null;
   }
 
+  refreshPatients(): void {
 
-  // ============================
-  // SUCCESS TOAST
-  // ============================
-
-  showSuccess(
-    message: string
-  ): void {
-
-    this.popupMessage =
-      message;
-
-    this.popupType =
-      'success';
-
-    this.showPopup =
-      true;
-
-    setTimeout(() => {
-
-      this.showPopup =
-        false;
-
-    }, 2500);
+    this.loadPatients();
   }
 
+  backToDashboard(): void {
 
-  // ============================
-  // ERROR TOAST
-  // ============================
+    this.router.navigate(['/admin']);
+  }
 
-  showError(
-    message: string
+  private showMessage(
+    message: string,
+    type: 'success' | 'error' = 'success'
   ): void {
 
-    this.popupMessage =
-      message;
+    this.message = message;
 
-    this.popupType =
-      'error';
-
-    this.showPopup =
-      true;
+    this.messageType = type;
 
     setTimeout(() => {
 
-      this.showPopup =
-        false;
+      this.message = '';
 
     }, 3000);
-  }
-
-
-  // ============================
-  // BACK
-  // ============================
-
-  goBack(): void {
-
-    this.router.navigate([
-      '/admin'
-    ]);
-  }
-
-
-  // ============================
-  // LOGOUT
-  // ============================
-
-  logout(): void {
-
-    /*
-     * Clear patient cache
-     * when logging out.
-     */
-    this.patientService
-      .clearCache();
-
-    localStorage.removeItem(
-      'token'
-    );
-
-    localStorage.removeItem(
-      'username'
-    );
-
-    localStorage.removeItem(
-      'email'
-    );
-
-    localStorage.removeItem(
-      'role'
-    );
-
-    this.router.navigate([
-      '/login'
-    ]);
   }
 }

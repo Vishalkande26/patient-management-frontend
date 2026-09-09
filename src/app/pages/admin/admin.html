@@ -1,60 +1,131 @@
-<div class="dashboard">
+<div class="admin-layout">
 
-  <div class="top-bar">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
 
-    <h1>Admin Dashboard</h1>
+    <div class="brand">
 
-    <button
-      type="button"
-      class="logout-button"
-      (click)="logout()">
+      <div class="brand-icon">
+        PM
+      </div>
 
-      Logout
+      <div class="brand-text">
+        <strong>Patient Management</strong>
+        <span>Admin Panel</span>
+      </div>
 
-    </button>
+    </div>
 
-  </div>
 
-  <p>Welcome to the Admin Dashboard</p>
+    <nav class="sidebar-nav">
 
-  <p>
-    <strong>Role:</strong> ADMIN
-  </p>
+      <a
+        routerLink="/admin"
+        routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: true }"
+      >
+        <span class="nav-icon">⌂</span>
+        <span>Dashboard</span>
+      </a>
 
-  <div class="menu">
 
-    <button
-      type="button"
-      (click)="goToUsers()">
+      <a
+        routerLink="/admin/doctors"
+        routerLinkActive="active"
+      >
+        <span class="nav-icon">D</span>
+        <span>Manage Doctors</span>
+      </a>
 
-      Manage Users
 
-    </button>
+      <a
+        routerLink="/admin/patients"
+        routerLinkActive="active"
+      >
+        <span class="nav-icon">P</span>
+        <span>Manage Patients</span>
+      </a>
 
-    <button
-      type="button"
-      (click)="goToDoctors()">
 
-      Manage Doctors
+      <a
+        routerLink="/admin/users"
+        routerLinkActive="active"
+      >
+        <span class="nav-icon">U</span>
+        <span>Manage Users</span>
+      </a>
 
-    </button>
 
-    <button
-      type="button"
-      (click)="goToPatients()">
+      <a
+        routerLink="/admin/appointments"
+        routerLinkActive="active"
+      >
+        <span class="nav-icon">A</span>
+        <span>Manage Appointments</span>
+      </a>
 
-      Manage Patients
+    </nav>
 
-    </button>
 
-    <button
-      type="button"
-      (click)="goToAppointments()">
+    <div class="sidebar-footer">
 
-      Manage Appointments
+      <div class="admin-user">
 
-    </button>
+        <strong>{{ username }}</strong>
 
-  </div>
+        <span>ADMIN</span>
+
+      </div>
+
+
+      <button
+        type="button"
+        class="logout-button"
+        (click)="logout()"
+      >
+        Logout
+      </button>
+
+    </div>
+
+  </aside>
+
+
+  <!-- MAIN AREA -->
+  <section class="main-area">
+
+    <!-- TOP NAVBAR -->
+    <header class="top-nav">
+
+      <div class="page-heading">
+
+        <span class="eyebrow">
+          ADMIN PANEL
+        </span>
+
+        <h1>
+          {{ pageTitle }}
+        </h1>
+
+      </div>
+
+
+      <div class="top-user">
+
+        Welcome, {{ username }}
+
+      </div>
+
+    </header>
+
+
+    <!-- PAGE CONTENT -->
+    <main class="content-area">
+
+      <router-outlet></router-outlet>
+
+    </main>
+
+  </section>
 
 </div>

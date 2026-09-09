@@ -1,222 +1,379 @@
-<div class="page-container">
+<div class="management-page">
 
-  
+  <!-- =========================
+       PAGE HEADER
+       ========================= -->
 
-  @if (showPopup) {
+  <div class="page-header">
 
-    <div
-      class="toast-notification"
-      [class.toast-success]="popupType === 'success'"
-      [class.toast-error]="popupType === 'error'">
+    <div>
 
-      <span class="toast-icon">
-
-        @if (popupType === 'success') {
-          ✓
-        } @else {
-          ✕
-        }
-
+      <span class="page-label">
+        ADMIN MANAGEMENT
       </span>
 
-      <span class="toast-message">
-        {{ popupMessage }}
-      </span>
+      <h2>Doctors</h2>
+
+      <p>
+        Create and manage doctor information.
+      </p>
+
+    </div>
+
+
+    <div class="header-actions">
+
+      <!-- BACK TO ADMIN -->
 
       <button
         type="button"
-        class="toast-close"
-        (click)="showPopup = false">
-
-        ×
-
+        class="back-button"
+        (click)="backToDashboard()"
+      >
+        ← Back to Dashboard
       </button>
+
+
+      <!-- MANUAL REFRESH -->
+
+      <button
+        type="button"
+        class="refresh-button"
+        (click)="refreshDoctors()"
+        [disabled]="loading"
+      >
+        ↻ Refresh
+      </button>
+
+    </div>
+
+  </div>
+
+
+  <!-- =========================
+       MESSAGE
+       ========================= -->
+
+  @if (message) {
+
+    <div
+      class="message"
+      [class.success]="messageType === 'success'"
+      [class.error]="messageType === 'error'"
+    >
+
+      {{ message }}
 
     </div>
 
   }
 
 
-  
-  <div class="top-bar">
+  <!-- =========================
+       FORM
+       ========================= -->
 
-    <h1>
-      Manage Doctors
-    </h1>
+  <section class="form-card">
 
-    <button
-      type="button"
-      class="logout-button"
-      (click)="logout()">
+    <div class="section-header">
 
-      Logout
+      <div>
 
-    </button>
+        <h3>
 
-  </div>
+          {{ editingId !== null
+            ? 'Update Doctor'
+            : 'Add Doctor'
+          }}
+
+        </h3>
+
+        <p>
+          Enter doctor details below.
+        </p>
+
+      </div>
 
 
-  
+      @if (editingId !== null) {
 
-  <div class="form-container">
+        <button
+          type="button"
+          class="cancel-button"
+          (click)="resetForm()"
+        >
+          Cancel Edit
+        </button>
 
-    <h2>
-
-      @if (editingId === null) {
-        Add Doctor
-      } @else {
-        Update Doctor
       }
 
-    </h2>
-
-
-    
-
-    <div class="form-group">
-
-      <label>
-        Doctor Name
-      </label>
-
-      <input
-        type="text"
-        [(ngModel)]="name"
-        placeholder="Enter doctor name">
-
     </div>
 
 
-  
+    <form
+      #doctorForm="ngForm"
+      (ngSubmit)="submitDoctor()"
+    >
 
-    <div class="form-group">
-
-      <label>
-        Specialization
-      </label>
-
-      <input
-        type="text"
-        [(ngModel)]="specialization"
-        placeholder="Enter specialization">
-
-    </div>
+      <div class="form-grid">
 
 
-  
+        <!-- NAME -->
 
-    <div class="form-group">
+        <div class="form-group">
 
-      <label>
-        Phone
-      </label>
+          <label>
+            Doctor Name
+          </label>
 
-      <input
-        type="text"
-        [(ngModel)]="phone"
-        maxlength="10"
-        inputmode="numeric"
-        placeholder="Enter 10 digit phone number">
+          <input
+            type="text"
+            name="name"
+            [(ngModel)]="doctor.name"
+            placeholder="Enter doctor name"
+            required
+          />
 
-    </div>
-
-
-    
-
-    <div class="form-group">
-
-      <label>
-        Email
-      </label>
-
-      <input
-        type="email"
-        [(ngModel)]="email"
-        placeholder="Enter doctor email">
-
-    </div>
+        </div>
 
 
-    
+        <!-- SPECIALIZATION -->
 
-    <div class="form-group">
+        <div class="form-group">
 
-      <label>
-        Experience (Years)
-      </label>
+          <label>
+            Specialization
+          </label>
 
-      <input
-        type="number"
-        [(ngModel)]="experience"
-        min="0"
-        placeholder="Enter experience">
+          <input
+            type="text"
+            name="specialization"
+            [(ngModel)]="doctor.specialization"
+            placeholder="Enter specialization"
+            required
+          />
 
-    </div>
-
-
-    
-
-    <button
-      type="button"
-      class="save-button"
-      (click)="saveDoctor()">
-
-      @if (editingId === null) {
-        Add Doctor
-      } @else {
-        Update Doctor
-      }
-
-    </button>
+        </div>
 
 
-    
+        <!-- PHONE -->
 
-    @if (editingId !== null) {
+        <div class="form-group">
 
-      <button
-        type="button"
-        class="cancel-button"
-        (click)="clearForm()">
+          <label>
+            Phone
+          </label>
 
-        Cancel
+          <input
+            type="text"
+            name="phone"
+            [(ngModel)]="doctor.phone"
+            placeholder="Enter 10 digit phone number"
+            maxlength="10"
+            required
+          />
 
-      </button>
-
-    }
-
-  </div>
+        </div>
 
 
-  
+        <!-- EMAIL -->
 
-  <div class="table-container">
+        <div class="form-group">
+
+          <label>
+            Email
+          </label>
+
+          <input
+            type="email"
+            name="email"
+            [(ngModel)]="doctor.email"
+            placeholder="Enter doctor email"
+            required
+          />
+
+        </div>
+
+
+        <!-- EXPERIENCE -->
+
+        <div class="form-group">
+
+          <label>
+            Experience (Years)
+          </label>
+
+          <input
+            type="number"
+            name="experience"
+            [(ngModel)]="doctor.experience"
+            min="0"
+            placeholder="Enter experience"
+            required
+          />
+
+        </div>
+
+      </div>
+
+
+      <!-- FORM ACTIONS -->
+
+      <div class="form-actions">
+
+        <button
+          type="submit"
+          class="primary-button"
+          [disabled]="loading"
+        >
+
+          {{ editingId !== null
+            ? 'Update Doctor'
+            : 'Add Doctor'
+          }}
+
+        </button>
+
+
+        @if (editingId !== null) {
+
+          <button
+            type="button"
+            class="secondary-button"
+            (click)="resetForm()"
+          >
+            Clear
+          </button>
+
+        }
+
+      </div>
+
+    </form>
+
+  </section>
+
+
+  <!-- =========================
+       DOCTOR LIST
+       ========================= -->
+
+  <section class="list-section">
 
     <div class="list-header">
 
-      <h2>
-        Doctor List
-      </h2>
+      <div>
 
-      <button
-        type="button"
-        class="refresh-button"
-        (click)="loadDoctors()">
+        <h3>
+          Doctor List
+        </h3>
 
-        Refresh Doctors
+        <p>
+          {{ filteredDoctors.length }}
+          doctor(s) found
+        </p>
 
-      </button>
+      </div>
 
     </div>
 
 
-    @if (doctors.length === 0) {
+    <!-- =========================
+         SEARCH + FILTER
+         ========================= -->
 
-      <p class="empty-message">
-        No doctors found.
-      </p>
+    <div class="filter-bar">
 
-    } @else {
+
+      <!-- SEARCH -->
+
+      <div class="search-box">
+
+        <span>🔎</span>
+
+        <input
+          type="text"
+          [(ngModel)]="searchTerm"
+          (ngModelChange)="onSearchChange()"
+          placeholder="Search by name, specialization, phone or email..."
+        />
+
+      </div>
+
+
+      <!-- SPECIALIZATION FILTER -->
+
+      <div class="filter-group">
+
+        <label>
+          Specialization
+        </label>
+
+        <select
+          [(ngModel)]="specializationFilter"
+          (ngModelChange)="onFilterChange()"
+        >
+
+          <option value="ALL">
+            All Specializations
+          </option>
+
+
+          @for (
+            specialization of specializations;
+            track specialization
+          ) {
+
+            <option
+              [value]="specialization"
+            >
+              {{ specialization }}
+            </option>
+
+          }
+
+        </select>
+
+      </div>
+
+
+      <!-- ROWS -->
+
+      <div class="filter-group">
+
+        <label>
+          Rows
+        </label>
+
+        <select
+          [(ngModel)]="pageSize"
+          (ngModelChange)="onPageSizeChange()"
+        >
+
+          <option [ngValue]="5">
+            5
+          </option>
+
+          <option [ngValue]="10">
+            10
+          </option>
+
+          <option [ngValue]="20">
+            20
+          </option>
+
+        </select>
+
+      </div>
+
+    </div>
+
+
+    <!-- =========================
+         TABLE
+         ========================= -->
+
+    <div class="table-container">
 
       <table>
 
@@ -224,29 +381,67 @@
 
           <tr>
 
-            <th>
+            <th
+              class="sortable"
+              (click)="sortBy('id')"
+            >
               ID
+
+              <span>
+                {{ getSortIcon('id') }}
+              </span>
+
             </th>
 
-            <th>
+
+            <th
+              class="sortable"
+              (click)="sortBy('name')"
+            >
               Name
+
+              <span>
+                {{ getSortIcon('name') }}
+              </span>
+
             </th>
 
-            <th>
+
+            <th
+              class="sortable"
+              (click)="sortBy('specialization')"
+            >
               Specialization
+
+              <span>
+                {{ getSortIcon('specialization') }}
+              </span>
+
             </th>
+
 
             <th>
               Phone
             </th>
 
+
             <th>
               Email
             </th>
 
-            <th>
+
+            <th
+              class="sortable"
+              (click)="sortBy('experience')"
+            >
               Experience
+
+              <span>
+                {{ getSortIcon('experience') }}
+              </span>
+
             </th>
+
 
             <th>
               Actions
@@ -259,8 +454,27 @@
 
         <tbody>
 
+          @if (
+            loading &&
+            doctors.length === 0
+          ) {
+
+            <tr>
+
+              <td
+                colspan="7"
+                class="empty-state"
+              >
+                Loading doctors...
+              </td>
+
+            </tr>
+
+          }
+
+
           @for (
-            doctor of doctors;
+            doctor of paginatedDoctors;
             track doctor.id
           ) {
 
@@ -270,47 +484,89 @@
                 {{ doctor.id }}
               </td>
 
-              <td>
-                {{ doctor.name }}
-              </td>
 
               <td>
-                {{ doctor.specialization }}
+
+                <strong>
+                  {{ doctor.name }}
+                </strong>
+
               </td>
+
+
+              <td>
+
+                <span class="specialization-badge">
+                  {{ doctor.specialization }}
+                </span>
+
+              </td>
+
 
               <td>
                 {{ doctor.phone }}
               </td>
 
+
               <td>
                 {{ doctor.email }}
               </td>
 
+
               <td>
-                {{ doctor.experience }}
+
+                <span class="experience-badge">
+
+                  {{ doctor.experience }}
+                  years
+
+                </span>
+
               </td>
 
+
               <td>
 
-                <button
-                  type="button"
-                  class="edit-button"
-                  (click)="editDoctor(doctor)">
+                <div class="action-buttons">
 
-                  Edit
+                  <button
+                    type="button"
+                    class="edit-button"
+                    (click)="editDoctor(doctor)"
+                  >
+                    Edit
+                  </button>
 
-                </button>
+
+                  <button
+                    type="button"
+                    class="delete-button"
+                    (click)="deleteDoctor(doctor.id)"
+                  >
+                    Delete
+                  </button>
+
+                </div>
+
+              </td>
+
+            </tr>
+
+          }
 
 
-                <button
-                  type="button"
-                  class="delete-button"
-                  (click)="deleteDoctor(doctor.id)">
+          @if (
+            paginatedDoctors.length === 0 &&
+            !loading
+          ) {
 
-                  Delete
+            <tr>
 
-                </button>
-
+              <td
+                colspan="7"
+                class="empty-state"
+              >
+                No doctors found.
               </td>
 
             </tr>
@@ -321,20 +577,87 @@
 
       </table>
 
+    </div>
+
+
+    <!-- =========================
+         PAGINATION
+         ========================= -->
+
+    @if (
+      filteredDoctors.length > 0
+    ) {
+
+      <div class="pagination">
+
+        <div class="pagination-info">
+
+          Showing
+
+          <strong>
+            {{ startRecord }}
+          </strong>
+
+          -
+
+          <strong>
+            {{ endRecord }}
+          </strong>
+
+          of
+
+          <strong>
+            {{ filteredDoctors.length }}
+          </strong>
+
+        </div>
+
+
+        <div class="pagination-buttons">
+
+          <button
+            type="button"
+            (click)="previousPage()"
+            [disabled]="currentPage === 1"
+          >
+            ‹
+          </button>
+
+
+          @for (
+            page of pageNumbers;
+            track page
+          ) {
+
+            <button
+              type="button"
+              [class.active-page]="
+                page === currentPage
+              "
+              (click)="changePage(page)"
+            >
+              {{ page }}
+            </button>
+
+          }
+
+
+          <button
+            type="button"
+            (click)="nextPage()"
+            [disabled]="
+              currentPage === totalPages
+            "
+          >
+            ›
+          </button>
+
+        </div>
+
+      </div>
+
     }
 
-  </div>
-
-
-  
-
-  <button
-    type="button"
-    class="back-button"
-    (click)="goBack()">
-
-    Back to Admin Dashboard
-
-  </button>
+  </section>
 
 </div>

@@ -1,17 +1,6 @@
-import {
-  Injectable,
-  inject
-} from '@angular/core';
-
-import {
-  HttpClient,
-  HttpHeaders
-} from '@angular/common/http';
-
-import {
-  Observable,
-  tap
-} from 'rxjs';
+import { Injectable, inject } from '@angular/core';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { Observable } from 'rxjs';
 
 export interface Doctor {
   id?: number;
@@ -29,124 +18,32 @@ export class DoctorService {
 
   private http = inject(HttpClient);
 
-  private apiUrl =
-    'http://localhost:8080/api/doctors';
+  private apiUrl = 'http://localhost:8080/api/doctors';
 
-  private cacheKey =
-    'doctors_cache';
-
-
-
+  private cacheKey = 'doctors';
 
   private getHeaders(): HttpHeaders {
-
-    const token =
-      localStorage.getItem('token');
+    const token = localStorage.getItem('token');
 
     return new HttpHeaders({
-      Authorization:
-        `Bearer ${token}`
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
     });
   }
 
-
-  
   getDoctors(): Observable<Doctor[]> {
 
-    return this.http
-      .get<Doctor[]>(
-        this.apiUrl,
-        {
-          headers: this.getHeaders()
-        }
-      )
-      .pipe(
+    console.log('GET doctors:', this.apiUrl);
 
-        tap((doctors: Doctor[]) => {
-
-          localStorage.setItem(
-            this.cacheKey,
-            JSON.stringify(doctors)
-          );
-
-        })
-
-      );
-  }
-
-
-  
-
-  getCachedDoctors(): Doctor[] {
-
-    const cachedData =
-      localStorage.getItem(
-        this.cacheKey
-      );
-
-    if (!cachedData) {
-      return [];
-    }
-
-    try {
-
-      return JSON.parse(
-        cachedData
-      ) as Doctor[];
-
-    } catch (error) {
-
-      console.error(
-        'Error reading doctor cache:',
-        error
-      );
-
-      return [];
-    }
-  }
-
-
-  
-
-  setCachedDoctors(
-    doctors: Doctor[]
-  ): void {
-
-    localStorage.setItem(
-      this.cacheKey,
-      JSON.stringify(doctors)
-    );
-  }
-
-
-  
-  clearCache(): void {
-
-    localStorage.removeItem(
-      this.cacheKey
-    );
-  }
-
-
- 
-  getDoctorById(
-    id: number
-  ): Observable<Doctor> {
-
-    return this.http.get<Doctor>(
-      `${this.apiUrl}/${id}`,
+    return this.http.get<Doctor[]>(
+      this.apiUrl,
       {
         headers: this.getHeaders()
       }
     );
   }
 
-
- 
-
-  createDoctor(
-    doctor: Doctor
-  ): Observable<Doctor> {
+  createDoctor(doctor: Doctor): Observable<Doctor> {
 
     return this.http.post<Doctor>(
       this.apiUrl,
@@ -157,8 +54,6 @@ export class DoctorService {
     );
   }
 
-
-  
   updateDoctor(
     id: number,
     doctor: Doctor
@@ -173,17 +68,41 @@ export class DoctorService {
     );
   }
 
+  deleteDoctor(id: number): Observable<void> {
 
- 
-  deleteDoctor(
-    id: number
-  ): Observable<string> {
-
-    return this.http.delete<string>(
+    return this.http.delete<void>(
       `${this.apiUrl}/${id}`,
       {
         headers: this.getHeaders()
       }
     );
+  }
+
+  getCachedDoctors(): Doctor[] {
+
+    const data = localStorage.getItem(this.cacheKey);
+
+    if (!data) {
+      return [];
+    }
+
+    try {
+      return JSON.parse(data);
+    } catch {
+      return [];
+    }
+  }
+
+  setCachedDoctors(doctors: Doctor[]): void {
+
+    localStorage.setItem(
+      this.cacheKey,
+      JSON.stringify(doctors)
+    );
+  }
+
+  clearCache(): void {
+
+    localStorage.removeItem(this.cacheKey);
   }
 }

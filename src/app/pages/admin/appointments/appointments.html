@@ -1,0 +1,405 @@
+<div class="management-page">
+
+  @if (showPopup) {
+
+    <div
+      class="toast"
+      [class.success]="popupType === 'success'"
+      [class.error]="popupType === 'error'">
+
+      {{ popupMessage }}
+
+      <button
+        type="button"
+        (click)="showPopup = false">
+
+        ×
+
+      </button>
+
+    </div>
+
+  }
+
+
+  <section class="form-card">
+
+    <span>APPOINTMENT MANAGEMENT</span>
+
+    <h2>
+      {{ editingId === null
+          ? 'Create Appointment'
+          : 'Update Appointment' }}
+    </h2>
+
+
+    <div class="form-grid">
+
+      <div class="form-group">
+
+        <label>Patient</label>
+
+        <select [(ngModel)]="patientId">
+
+          <option [ngValue]="null">
+            Select patient
+          </option>
+
+          @for (
+            patient of patients;
+            track patient.id
+          ) {
+
+            <option [ngValue]="patient.id">
+
+              {{ patient.name }}
+              (ID: {{ patient.id }})
+
+            </option>
+
+          }
+
+        </select>
+
+      </div>
+
+
+      <div class="form-group">
+
+        <label>Doctor</label>
+
+        <select [(ngModel)]="doctorId">
+
+          <option [ngValue]="null">
+            Select doctor
+          </option>
+
+          @for (
+            doctor of doctors;
+            track doctor.id
+          ) {
+
+            <option [ngValue]="doctor.id">
+
+              {{ doctor.name }}
+              -
+              {{ doctor.specialization }}
+
+            </option>
+
+          }
+
+        </select>
+
+      </div>
+
+
+      <div class="form-group">
+
+        <label>Date</label>
+
+        <input
+          type="date"
+          [(ngModel)]="appointmentDate">
+
+      </div>
+
+
+      <div class="form-group">
+
+        <label>Time</label>
+
+        <input
+          type="time"
+          [(ngModel)]="appointmentTime">
+
+      </div>
+
+
+      <div class="form-group">
+
+        <label>Status</label>
+
+        <select [(ngModel)]="status">
+
+          @for (
+            item of statuses;
+            track item
+          ) {
+
+            <option [value]="item">
+              {{ item }}
+            </option>
+
+          }
+
+        </select>
+
+      </div>
+
+
+      <div class="form-group">
+
+        <label>Reason</label>
+
+        <input
+          type="text"
+          [(ngModel)]="reason"
+          placeholder="Appointment reason">
+
+      </div>
+
+    </div>
+
+
+    <div class="form-actions">
+
+      <button
+        type="button"
+        class="primary-button"
+        (click)="saveAppointment()">
+
+        {{ editingId === null
+            ? 'Create Appointment'
+            : 'Update Appointment' }}
+
+      </button>
+
+
+      @if (editingId !== null) {
+
+        <button
+          type="button"
+          class="secondary-button"
+          (click)="clearForm()">
+
+          Cancel
+
+        </button>
+
+      }
+
+    </div>
+
+  </section>
+
+
+  <section class="table-card">
+
+    <div class="list-heading">
+
+      <div>
+
+        <span>RECORDS</span>
+
+        <h2>Appointments</h2>
+
+      </div>
+
+      <button
+        type="button"
+        class="refresh-button"
+        (click)="loadAppointments()">
+
+        Refresh
+
+      </button>
+
+    </div>
+
+
+    <div class="filters">
+
+      <input
+        type="text"
+        [(ngModel)]="searchTerm"
+        placeholder="Search patient, doctor or reason">
+
+
+      <select [(ngModel)]="statusFilter">
+
+        <option value="ALL">
+          All Status
+        </option>
+
+        @for (
+          item of statuses;
+          track item
+        ) {
+
+          <option [value]="item">
+            {{ item }}
+          </option>
+
+        }
+
+      </select>
+
+    </div>
+
+
+    @if (loading) {
+
+      <div class="empty">
+        Loading appointments...
+      </div>
+
+    } @else if (filteredAppointments.length === 0) {
+
+      <div class="empty">
+        No appointments found.
+      </div>
+
+    } @else {
+
+      <div class="table-wrapper">
+
+        <table>
+
+          <thead>
+
+            <tr>
+
+              <th>
+                <button
+                  class="sort-button"
+                  (click)="sortBy('id')">
+
+                  ID
+
+                </button>
+              </th>
+
+              <th>
+                <button
+                  class="sort-button"
+                  (click)="sortBy('patient')">
+
+                  Patient
+
+                </button>
+              </th>
+
+              <th>
+                <button
+                  class="sort-button"
+                  (click)="sortBy('doctor')">
+
+                  Doctor
+
+                </button>
+              </th>
+
+              <th>
+                <button
+                  class="sort-button"
+                  (click)="sortBy('date')">
+
+                  Date / Time
+
+                </button>
+              </th>
+
+              <th>Reason</th>
+
+              <th>
+                <button
+                  class="sort-button"
+                  (click)="sortBy('status')">
+
+                  Status
+
+                </button>
+              </th>
+
+              <th>Actions</th>
+
+            </tr>
+
+          </thead>
+
+
+          <tbody>
+
+            @for (
+              appointment of filteredAppointments;
+              track appointment.id
+            ) {
+
+              <tr>
+
+                <td>{{ appointment.id }}</td>
+
+                <td>
+
+                  {{ appointment.patientName }}
+
+                </td>
+
+                <td>
+
+                  {{ appointment.doctorName }}
+
+                </td>
+
+                <td>
+
+                  {{ appointment.appointmentDate }}
+                  <br>
+                  {{ appointment.appointmentTime }}
+
+                </td>
+
+                <td>
+
+                  {{ appointment.reason }}
+
+                </td>
+
+                <td>
+
+                  <span class="status-badge">
+
+                    {{ appointment.status }}
+
+                  </span>
+
+                </td>
+
+                <td class="actions">
+
+                  <button
+                    type="button"
+                    class="edit-button"
+                    (click)="editAppointment(appointment)">
+
+                    Edit
+
+                  </button>
+
+                  <button
+                    type="button"
+                    class="delete-button"
+                    (click)="deleteAppointment(appointment.id)">
+
+                    Delete
+
+                  </button>
+
+                </td>
+
+              </tr>
+
+            }
+
+          </tbody>
+
+        </table>
+
+      </div>
+
+    }
+
+  </section>
+
+</div>

@@ -1,52 +1,56 @@
 import { Component, inject } from '@angular/core';
-
-import { Router } from '@angular/router';
+import {
+  Router,
+  RouterLink,
+  RouterLinkActive,
+  RouterOutlet
+} from '@angular/router';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-admin',
-
-  imports: [],
-
+  imports: [
+    RouterLink,
+    RouterLinkActive,
+    RouterOutlet
+  ],
   templateUrl: './admin.html',
-
   styleUrl: './admin.css'
 })
 export class Admin {
 
   private router = inject(Router);
+  private authService = inject(AuthService);
 
-  goToUsers(): void {
-
-    // Users page is not implemented yet.
-    // Do nothing.
+  get username(): string {
+    return this.authService.getUsername() ?? 'Admin';
   }
 
-  goToDoctors(): void {
+  get pageTitle(): string {
 
-    this.router.navigate(['/admin/doctors']);
-  }
+    const url = this.router.url;
 
-  goToPatients(): void {
+    if (url.includes('/doctors')) {
+      return 'Manage Doctors';
+    }
 
-    this.router.navigate(['/admin/patients']);
-  }
+    if (url.includes('/patients')) {
+      return 'Manage Patients';
+    }
 
-  goToAppointments(): void {
+    if (url.includes('/users')) {
+      return 'Manage Users';
+    }
 
-    // Appointments page is not implemented yet.
-    // Do nothing.
+    if (url.includes('/appointments')) {
+      return 'Manage Appointments';
+    }
+
+    return 'Admin Dashboard';
   }
 
   logout(): void {
-
-    localStorage.removeItem('token');
-
-    localStorage.removeItem('username');
-
-    localStorage.removeItem('email');
-
-    localStorage.removeItem('role');
-
+    this.authService.logout();
     this.router.navigate(['/login']);
   }
 }

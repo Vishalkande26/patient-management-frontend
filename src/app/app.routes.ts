@@ -4,8 +4,12 @@ import { Login } from './pages/login/login';
 import { Register } from './pages/register/register';
 
 import { Admin } from './pages/admin/admin';
+import { AdminHome } from './pages/admin/home/admin-home';
+
 import { Doctors } from './pages/admin/doctors/doctors';
 import { Patients } from './pages/admin/patients/patients';
+import { Users } from './pages/admin/users/users';
+import { Appointments } from './pages/admin/appointments/appointments';
 
 import { Doctor } from './pages/doctor/doctor';
 import { Patient } from './pages/patient/patient';
@@ -30,32 +34,53 @@ export const routes: Routes = [
     component: Register
   },
 
+
+  /* =========================
+     ADMIN
+     ========================= */
+
   {
     path: 'admin',
     component: Admin,
     canActivate: [authGuard],
     data: {
       role: 'ADMIN'
-    }
+    },
+
+    children: [
+
+      {
+        path: '',
+        component: AdminHome
+      },
+
+      {
+        path: 'doctors',
+        component: Doctors
+      },
+
+      {
+        path: 'patients',
+        component: Patients
+      },
+
+      {
+        path: 'users',
+        component: Users
+      },
+
+      {
+        path: 'appointments',
+        component: Appointments
+      }
+
+    ]
   },
 
-  {
-    path: 'admin/doctors',
-    component: Doctors,
-    canActivate: [authGuard],
-    data: {
-      role: 'ADMIN'
-    }
-  },
 
-  {
-    path: 'admin/patients',
-    component: Patients,
-    canActivate: [authGuard],
-    data: {
-      role: 'ADMIN'
-    }
-  },
+  /* =========================
+     DOCTOR
+     ========================= */
 
   {
     path: 'doctor',
@@ -66,6 +91,11 @@ export const routes: Routes = [
     }
   },
 
+
+  /* =========================
+     PATIENT
+     ========================= */
+
   {
     path: 'patient',
     component: Patient,
@@ -74,6 +104,11 @@ export const routes: Routes = [
       role: 'PATIENT'
     }
   },
+
+
+  /* =========================
+     INVALID URL
+     ========================= */
 
   {
     path: '**',
