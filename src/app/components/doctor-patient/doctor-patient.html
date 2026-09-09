@@ -1,0 +1,304 @@
+<div class="page-container">
+
+  <div class="top-bar">
+
+    <h1>
+      Doctor - Patient Management
+    </h1>
+
+  </div>
+
+
+  <!-- ============================= -->
+  <!-- INPUT SECTION -->
+  <!-- ============================= -->
+
+  <div class="form-container">
+
+    <h2>
+      Manage Doctor-Patient Relationship
+    </h2>
+
+
+    <div class="form-group">
+
+      <label>
+        Doctor ID
+      </label>
+
+      <input
+        type="number"
+        [(ngModel)]="doctorId"
+        placeholder="Enter Doctor ID"
+        min="1">
+
+    </div>
+
+
+    <div class="form-group">
+
+      <label>
+        Patient ID
+      </label>
+
+      <input
+        type="number"
+        [(ngModel)]="patientId"
+        placeholder="Enter Patient ID"
+        min="1">
+
+    </div>
+
+
+    <div class="button-group">
+
+      <button
+        type="button"
+        class="assign-button"
+        (click)="assignDoctorToPatient()">
+
+        Assign Doctor to Patient
+
+      </button>
+
+
+      <button
+        type="button"
+        class="remove-button"
+        (click)="removeDoctorFromPatient()">
+
+        Remove Doctor from Patient
+
+      </button>
+
+    </div>
+
+  </div>
+
+
+  <!-- ============================= -->
+  <!-- MESSAGES -->
+  <!-- ============================= -->
+
+  @if (message) {
+
+    <div class="success-message">
+
+      {{ message }}
+
+    </div>
+
+  }
+
+
+  @if (errorMessage) {
+
+    <div class="error-message">
+
+      {{ errorMessage }}
+
+    </div>
+
+  }
+
+
+  <!-- ============================= -->
+  <!-- DOCTOR SIDE -->
+  <!-- ============================= -->
+
+  <div class="relationship-container">
+
+    <h2>
+      Patients Assigned to Doctor
+    </h2>
+
+
+    <button
+      type="button"
+      class="load-button"
+      (click)="loadPatientsByDoctor()">
+
+      Get Patients of Doctor
+
+    </button>
+
+
+    @if (patients.length === 0) {
+
+      <p class="empty-message">
+
+        No patients found for this doctor.
+
+      </p>
+
+    } @else {
+
+      <table>
+
+        <thead>
+
+          <tr>
+
+            <th>ID</th>
+
+            <th>Name</th>
+
+            <th>Age</th>
+
+            <th>Gender</th>
+
+            <th>Phone</th>
+
+            <th>Disease</th>
+
+          </tr>
+
+        </thead>
+
+
+        <tbody>
+
+          @for (
+            patient of patients;
+            track patient.id
+          ) {
+
+            <tr>
+
+              <td>
+                {{ patient.id }}
+              </td>
+
+              <td>
+                {{ patient.name }}
+              </td>
+
+              <td>
+                {{ patient.age }}
+              </td>
+
+              <td>
+                {{ patient.gender }}
+              </td>
+
+              <td>
+                {{ patient.phone }}
+              </td>
+
+              <td>
+                {{ patient.disease }}
+              </td>
+
+            </tr>
+
+          }
+
+        </tbody>
+
+      </table>
+
+    }
+
+  </div>
+
+
+  <!-- ============================= -->
+  <!-- PATIENT SIDE -->
+  <!-- ============================= -->
+
+  <div class="relationship-container">
+
+    <h2>
+      Doctors Assigned to Patient
+    </h2>
+
+
+    <button
+      type="button"
+      class="load-button"
+      (click)="loadDoctorsByPatient()">
+
+      Get Doctors of Patient
+
+    </button>
+
+
+    @if (doctors.length === 0) {
+
+      <p class="empty-message">
+
+        No doctors found for this patient.
+
+      </p>
+
+    } @else {
+
+      <table>
+
+        <thead>
+
+          <tr>
+
+            <th>ID</th>
+
+            <th>Name</th>
+
+            <th>Specialization</th>
+
+            <th>Phone</th>
+
+            <th>Email</th>
+
+            <th>Experience</th>
+
+          </tr>
+
+        </thead>
+
+
+        <tbody>
+
+          @for (
+            doctor of doctors;
+            track doctor.id
+          ) {
+
+            <tr>
+
+              <td>
+                {{ doctor.id }}
+              </td>
+
+              <td>
+                {{ doctor.name }}
+              </td>
+
+              <td>
+                {{ doctor.specialization }}
+              </td>
+
+              <td>
+                {{ doctor.phone }}
+              </td>
+
+              <td>
+                {{ doctor.email }}
+              </td>
+
+              <td>
+                {{ doctor.experience }}
+              </td>
+
+            </tr>
+
+          }
+
+        </tbody>
+
+      </table>
+
+    }
+
+  </div>
+
+</div>

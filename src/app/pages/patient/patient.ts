@@ -11,26 +11,27 @@ export class Patient {
 
   private router = inject(Router);
 
+
   goToDoctors(): void {
 
-    this.router.navigate([
-      '/patient/doctors'
-    ]);
+    // Not implemented yet
+
   }
+
 
   goToCreateAppointment(): void {
 
-    this.router.navigate([
-      '/patient/create-appointment'
-    ]);
+    // Not implemented yet
+
   }
+
 
   goToAppointments(): void {
 
-    this.router.navigate([
-      '/patient/appointments'
-    ]);
+    // Not implemented yet
+
   }
+
 
   logout(): void {
 
@@ -42,5 +43,7 @@ export class Patient {
     this.router.navigate([
       '/login'
     ]);
+
   }
+
 }

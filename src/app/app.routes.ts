@@ -73,6 +73,11 @@ export const routes: Routes = [
     data: {
       role: 'PATIENT'
     }
+  },
+
+  {
+    path: '**',
+    redirectTo: 'login'
   }
 
 ];
