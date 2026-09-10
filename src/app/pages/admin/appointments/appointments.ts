@@ -4,15 +4,26 @@ import {
   inject
 } from '@angular/core';
 
-import { FormsModule } from '@angular/forms';
-
-import { HttpErrorResponse } from '@angular/common/http';
+import {
+  FormsModule
+} from '@angular/forms';
 
 import {
-  Appointment,
-  AppointmentRequest,
+  Router
+} from '@angular/router';
+
+import {
+  HttpErrorResponse
+} from '@angular/common/http';
+
+import {
   AppointmentService
 } from '../../../services/appointment.service';
+
+import {
+  Patient,
+  PatientService
+} from '../../../services/patient.service';
 
 import {
   Doctor,
@@ -20,15 +31,74 @@ import {
 } from '../../../services/doctor.service';
 
 import {
-  Patient,
-  PatientService
-} from '../../../services/patient.service';
+  Modal
+} from '../../../shared/modal/modal';
+
+
+/* =========================================================
+   APPOINTMENT DISPLAY MODEL
+   ========================================================= */
+
+interface AppointmentRow {
+
+  id?: number;
+
+  patientId: number;
+
+  patientName: string;
+
+  patientDisease: string;
+
+  patientAddress: string;
+
+  doctorId: number;
+
+  doctorName: string;
+
+  doctorSpecialization: string;
+
+  appointmentDate: string;
+
+  appointmentTime: string;
+
+  reason: string;
+
+  status: string;
+
+}
+
+
+/* =========================================================
+   APPOINTMENT REQUEST MODEL
+   ========================================================= */
+
+interface AppointmentRequest {
+
+  patientId: number;
+
+  doctorId: number;
+
+  appointmentDate: string;
+
+  appointmentTime: string;
+
+  reason: string;
+
+  status: string;
+
+}
+
+
+/* =========================================================
+   COMPONENT
+   ========================================================= */
 
 @Component({
   selector: 'app-appointments',
 
   imports: [
-    FormsModule
+    FormsModule,
+    Modal
   ],
 
   templateUrl: './appointments.html',
@@ -37,24 +107,51 @@ import {
 })
 export class Appointments implements OnInit {
 
+
+  /* =======================================================
+     SERVICES
+     ======================================================= */
+
   private appointmentService =
     inject(AppointmentService);
-
-  private doctorService =
-    inject(DoctorService);
 
   private patientService =
     inject(PatientService);
 
+  private doctorService =
+    inject(DoctorService);
 
-  appointments: Appointment[] = [];
+  private router =
+    inject(Router);
 
-  doctors: Doctor[] = [];
+
+  /* =======================================================
+     DATA
+     ======================================================= */
+
+  appointments: AppointmentRow[] = [];
 
   patients: Patient[] = [];
 
+  doctors: Doctor[] = [];
+
+  filteredAppointments: AppointmentRow[] = [];
+
+
+  /* =======================================================
+     LOADING
+     ======================================================= */
+
   loading = false;
 
+  saving = false;
+
+  deleting = false;
+
+
+  /* =======================================================
+     FORM FIELDS
+     ======================================================= */
 
   patientId: number | null = null;
 
@@ -66,26 +163,30 @@ export class Appointments implements OnInit {
 
   reason = '';
 
-  status = 'PENDING';
+  status = 'SCHEDULED';
 
+
+  /* =======================================================
+     EDIT MODE
+     ======================================================= */
 
   editingId: number | null = null;
 
 
-  searchTerm = '';
+  /* =======================================================
+     MODALS
+     ======================================================= */
 
-  statusFilter = 'ALL';
+  showAppointmentModal = false;
+
+  showDeleteModal = false;
+
+  selectedAppointment: AppointmentRow | null = null;
 
 
-  sortField:
-    | 'id'
-    | 'date'
-    | 'patient'
-    | 'doctor'
-    | 'status' = 'id';
-
-  sortDirection: 'asc' | 'desc' = 'asc';
-
+  /* =======================================================
+     TOAST
+     ======================================================= */
 
   showPopup = false;
 
@@ -94,23 +195,85 @@ export class Appointments implements OnInit {
   popupType: 'success' | 'error' = 'success';
 
 
+  /* =======================================================
+     FILTERS
+     ======================================================= */
+
+  searchTerm = '';
+
+  patientFilter = 'ALL';
+
+  doctorFilter = 'ALL';
+
+  statusFilter = 'ALL';
+
+  patientColumnFilter = '';
+
+  doctorColumnFilter = '';
+
+  dateColumnFilter = '';
+
+  timeColumnFilter = '';
+
+  reasonColumnFilter = '';
+
+  statusColumnFilter = '';
+
+
+  /* =======================================================
+     SORTING
+     ======================================================= */
+
+  sortColumn = 'appointmentDate';
+
+  sortDirection: 'asc' | 'desc' = 'desc';
+
+
+  /* =======================================================
+     PAGINATION
+     ======================================================= */
+
+  currentPage = 1;
+
+  pageSize = 5;
+
+  pageSizeOptions = [
+    5,
+    10,
+    20
+  ];
+
+
+  /* =======================================================
+     STATUS OPTIONS
+     ======================================================= */
+
   statuses = [
-    'PENDING',
+    'SCHEDULED',
     'CONFIRMED',
     'COMPLETED',
     'CANCELLED'
   ];
 
 
+  /* =======================================================
+     INITIALIZE
+     ======================================================= */
+
   ngOnInit(): void {
 
-    this.loadAppointments();
+    this.loadPatients();
 
     this.loadDoctors();
 
-    this.loadPatients();
+    this.loadAppointments();
+
   }
 
+
+  /* =======================================================
+     LOAD APPOINTMENTS
+     ======================================================= */
 
   loadAppointments(): void {
 
@@ -120,51 +283,152 @@ export class Appointments implements OnInit {
       .getAppointments()
       .subscribe({
 
-        next: data => {
+        next: (data: any[]) => {
 
-          this.appointments = data;
-
-          this.loading = false;
-        },
-
-        error: (error: HttpErrorResponse) => {
-
-          console.error(error);
-
-          this.loading = false;
-
-          this.showError(
-            this.getErrorMessage(
-              error,
-              'Failed to load appointments.'
-            )
+          console.log(
+            'Appointments loaded:',
+            data
           );
-        }
-      });
-  }
 
+          this.appointments =
+            data.map(
+              appointment =>
+                this.mapAppointment(
+                  appointment
+                )
+            );
 
-  loadDoctors(): void {
+          this.loading = false;
 
-    this.doctorService
-      .getDoctors()
-      .subscribe({
+          this.applyFilters();
 
-        next: data => {
-
-          this.doctors = data;
         },
 
-        error: error => {
+        error: (
+          error: HttpErrorResponse
+        ) => {
 
           console.error(
-            'Failed to load doctors',
+            'Error loading appointments:',
             error
           );
+
+          this.loading = false;
+
+          if (
+            error.status === 401
+          ) {
+
+            this.showError(
+              'Please login again.'
+            );
+
+          } else if (
+            error.status === 403
+          ) {
+
+            this.showError(
+              'You do not have permission to view appointments.'
+            );
+
+          } else {
+
+            this.showError(
+              'Failed to load appointments.'
+            );
+
+          }
+
         }
+
       });
+
   }
 
+
+  /* =======================================================
+     MAP BACKEND APPOINTMENT
+     ======================================================= */
+
+  private mapAppointment(
+    appointment: any
+  ): AppointmentRow {
+
+    const patient =
+      appointment.patient;
+
+    const doctor =
+      appointment.doctor;
+
+    return {
+
+      id:
+        appointment.id,
+
+      patientId:
+        Number(
+          appointment.patientId ??
+          patient?.id ??
+          0
+        ),
+
+      patientName:
+        appointment.patientName ??
+        patient?.name ??
+        'Unknown Patient',
+
+      patientDisease:
+        appointment.patientDisease ??
+        patient?.disease ??
+        '',
+
+      patientAddress:
+        appointment.patientAddress ??
+        patient?.address ??
+        '',
+
+      doctorId:
+        Number(
+          appointment.doctorId ??
+          doctor?.id ??
+          0
+        ),
+
+      doctorName:
+        appointment.doctorName ??
+        doctor?.name ??
+        'Unknown Doctor',
+
+      doctorSpecialization:
+        appointment.doctorSpecialization ??
+        doctor?.specialization ??
+        '',
+
+      appointmentDate:
+        appointment.appointmentDate ??
+        '',
+
+      appointmentTime:
+        this.formatTimeForInput(
+          appointment.appointmentTime
+        ),
+
+      reason:
+        appointment.reason ??
+        '',
+
+      status:
+        appointment.status ??
+        'SCHEDULED'
+
+    };
+
+  }
+
+
+  /* =======================================================
+     LOAD PATIENTS
+     ======================================================= */
 
   loadPatients(): void {
 
@@ -172,269 +436,739 @@ export class Appointments implements OnInit {
       .getPatients()
       .subscribe({
 
-        next: data => {
+        next: (
+          data: Patient[]
+        ) => {
 
           this.patients = data;
+
         },
 
-        error: error => {
+        error: (
+          error: HttpErrorResponse
+        ) => {
 
           console.error(
-            'Failed to load patients',
+            'Error loading patients:',
             error
           );
+
         }
+
       });
+
   }
 
 
-  get filteredAppointments(): Appointment[] {
+  /* =======================================================
+     LOAD DOCTORS
+     ======================================================= */
+
+  loadDoctors(): void {
+
+    this.doctorService
+      .getDoctors()
+      .subscribe({
+
+        next: (
+          data: Doctor[]
+        ) => {
+
+          this.doctors = data;
+
+        },
+
+        error: (
+          error: HttpErrorResponse
+        ) => {
+
+          console.error(
+            'Error loading doctors:',
+            error
+          );
+
+        }
+
+      });
+
+  }
+
+
+  /* =======================================================
+     REFRESH
+     ======================================================= */
+
+  refreshAppointments(): void {
+
+    this.loadPatients();
+
+    this.loadDoctors();
+
+    this.loadAppointments();
+
+  }
+
+
+  /* =======================================================
+     BACK TO DASHBOARD
+     ======================================================= */
+
+  backToDashboard(): void {
+
+    this.router.navigate(
+      ['/admin']
+    );
+
+  }
+
+
+  /* =======================================================
+     SEARCH
+     ======================================================= */
+
+  onSearchChange(): void {
+
+    this.currentPage = 1;
+
+    this.applyFilters();
+
+  }
+
+
+  /* =======================================================
+     FILTER CHANGE
+     ======================================================= */
+
+  onFilterChange(): void {
+
+    this.currentPage = 1;
+
+    this.applyFilters();
+
+  }
+
+
+  /* =======================================================
+     CLEAR SEARCH
+     ======================================================= */
+
+  clearSearch(): void {
+
+    this.searchTerm = '';
+
+    this.currentPage = 1;
+
+    this.applyFilters();
+
+  }
+
+
+  /* =======================================================
+     CLEAR ALL FILTERS
+     ======================================================= */
+
+  clearAllFilters(): void {
+
+    this.searchTerm = '';
+
+    this.patientFilter = 'ALL';
+
+    this.doctorFilter = 'ALL';
+
+    this.statusFilter = 'ALL';
+
+    this.clearColumnFilters();
+
+  }
+
+
+  /* =======================================================
+     CLEAR COLUMN FILTERS
+     ======================================================= */
+
+  clearColumnFilters(): void {
+
+    this.patientColumnFilter = '';
+
+    this.doctorColumnFilter = '';
+
+    this.dateColumnFilter = '';
+
+    this.timeColumnFilter = '';
+
+    this.reasonColumnFilter = '';
+
+    this.statusColumnFilter = '';
+
+    this.currentPage = 1;
+
+    this.applyFilters();
+
+  }
+
+
+  /* =======================================================
+     APPLY FILTERS
+     ======================================================= */
+
+  applyFilters(): void {
 
     const search =
       this.searchTerm
         .trim()
         .toLowerCase();
 
-    let result =
+    const patientColumn =
+      this.patientColumnFilter
+        .trim()
+        .toLowerCase();
+
+    const doctorColumn =
+      this.doctorColumnFilter
+        .trim()
+        .toLowerCase();
+
+    const dateColumn =
+      this.dateColumnFilter
+        .trim()
+        .toLowerCase();
+
+    const timeColumn =
+      this.timeColumnFilter
+        .trim()
+        .toLowerCase();
+
+    const reasonColumn =
+      this.reasonColumnFilter
+        .trim()
+        .toLowerCase();
+
+    const statusColumn =
+      this.statusColumnFilter
+        .trim()
+        .toLowerCase();
+
+
+    this.filteredAppointments =
       this.appointments.filter(
         appointment => {
 
+          const searchableText =
+            [
+
+              appointment.id,
+
+              appointment.patientId,
+
+              appointment.patientName,
+
+              appointment.patientDisease,
+
+              appointment.patientAddress,
+
+              appointment.doctorId,
+
+              appointment.doctorName,
+
+              appointment.doctorSpecialization,
+
+              appointment.appointmentDate,
+
+              appointment.appointmentTime,
+
+              appointment.reason,
+
+              appointment.status
+
+            ]
+              .join(' ')
+              .toLowerCase();
+
+
           const matchesSearch =
             !search ||
-            appointment.patientName
-              .toLowerCase()
-              .includes(search) ||
-            appointment.doctorName
-              .toLowerCase()
-              .includes(search) ||
-            appointment.reason
-              .toLowerCase()
-              .includes(search);
+            searchableText.includes(
+              search
+            );
+
+
+          const matchesPatient =
+            this.patientFilter === 'ALL' ||
+            String(
+              appointment.patientId
+            ) ===
+              String(
+                this.patientFilter
+              );
+
+
+          const matchesDoctor =
+            this.doctorFilter === 'ALL' ||
+            String(
+              appointment.doctorId
+            ) ===
+              String(
+                this.doctorFilter
+              );
+
 
           const matchesStatus =
             this.statusFilter === 'ALL' ||
             appointment.status ===
               this.statusFilter;
 
+
+          const matchesPatientColumn =
+            !patientColumn ||
+            [
+
+              appointment.patientId,
+
+              appointment.patientName,
+
+              appointment.patientDisease,
+
+              appointment.patientAddress
+
+            ]
+              .join(' ')
+              .toLowerCase()
+              .includes(
+                patientColumn
+              );
+
+
+          const matchesDoctorColumn =
+            !doctorColumn ||
+            [
+
+              appointment.doctorId,
+
+              appointment.doctorName,
+
+              appointment.doctorSpecialization
+
+            ]
+              .join(' ')
+              .toLowerCase()
+              .includes(
+                doctorColumn
+              );
+
+
+          const matchesDateColumn =
+            !dateColumn ||
+            appointment.appointmentDate
+              .toLowerCase()
+              .includes(
+                dateColumn
+              );
+
+
+          const matchesTimeColumn =
+            !timeColumn ||
+            appointment.appointmentTime
+              .toLowerCase()
+              .includes(
+                timeColumn
+              );
+
+
+          const matchesReasonColumn =
+            !reasonColumn ||
+            appointment.reason
+              .toLowerCase()
+              .includes(
+                reasonColumn
+              );
+
+
+          const matchesStatusColumn =
+            !statusColumn ||
+            appointment.status
+              .toLowerCase()
+              .includes(
+                statusColumn
+              );
+
+
           return (
+
             matchesSearch &&
-            matchesStatus
+
+            matchesPatient &&
+
+            matchesDoctor &&
+
+            matchesStatus &&
+
+            matchesPatientColumn &&
+
+            matchesDoctorColumn &&
+
+            matchesDateColumn &&
+
+            matchesTimeColumn &&
+
+            matchesReasonColumn &&
+
+            matchesStatusColumn
+
           );
+
         }
       );
 
 
-    result = [...result].sort(
-      (a, b) => {
+    this.applySorting();
 
-        let first = '';
-        let second = '';
+    this.fixCurrentPage();
 
-        if (this.sortField === 'id') {
-
-          return this.sortDirection === 'asc'
-            ? (a.id ?? 0) - (b.id ?? 0)
-            : (b.id ?? 0) - (a.id ?? 0);
-        }
-
-        if (this.sortField === 'date') {
-
-          first =
-            `${a.appointmentDate} ${a.appointmentTime}`;
-
-          second =
-            `${b.appointmentDate} ${b.appointmentTime}`;
-        }
-
-        if (this.sortField === 'patient') {
-
-          first =
-            a.patientName.toLowerCase();
-
-          second =
-            b.patientName.toLowerCase();
-        }
-
-        if (this.sortField === 'doctor') {
-
-          first =
-            a.doctorName.toLowerCase();
-
-          second =
-            b.doctorName.toLowerCase();
-        }
-
-        if (this.sortField === 'status') {
-
-          first = a.status;
-
-          second = b.status;
-        }
-
-        const comparison =
-          first < second
-            ? -1
-            : first > second
-              ? 1
-              : 0;
-
-        return this.sortDirection === 'asc'
-          ? comparison
-          : -comparison;
-      }
-    );
-
-    return result;
   }
 
 
+  /* =======================================================
+     SORTING
+     ======================================================= */
+
   sortBy(
-    field:
-      | 'id'
-      | 'date'
-      | 'patient'
-      | 'doctor'
-      | 'status'
+    column: string
   ): void {
 
-    if (this.sortField === field) {
+    if (
+      this.sortColumn === column
+    ) {
 
       this.sortDirection =
         this.sortDirection === 'asc'
           ? 'desc'
           : 'asc';
 
-      return;
+    } else {
+
+      this.sortColumn = column;
+
+      this.sortDirection = 'asc';
+
     }
 
-    this.sortField = field;
+    this.applySorting();
 
-    this.sortDirection = 'asc';
   }
 
 
-  saveAppointment(): void {
+  /* =======================================================
+     APPLY SORTING
+     ======================================================= */
+
+  applySorting(): void {
+
+    this.filteredAppointments.sort(
+      (a, b) => {
+
+        const first =
+          this.getSortValue(
+            a,
+            this.sortColumn
+          );
+
+        const second =
+          this.getSortValue(
+            b,
+            this.sortColumn
+          );
+
+
+        if (
+          first < second
+        ) {
+
+          return this.sortDirection === 'asc'
+            ? -1
+            : 1;
+
+        }
+
+
+        if (
+          first > second
+        ) {
+
+          return this.sortDirection === 'asc'
+            ? 1
+            : -1;
+
+        }
+
+
+        return 0;
+
+      }
+    );
+
+  }
+
+
+  /* =======================================================
+     SORT VALUE
+     ======================================================= */
+
+  private getSortValue(
+    appointment: AppointmentRow,
+    column: string
+  ): string | number {
+
+    switch (column) {
+
+      case 'id':
+
+        return appointment.id ?? 0;
+
+
+      case 'patient':
+
+        return appointment.patientName
+          .toLowerCase();
+
+
+      case 'doctor':
+
+        return appointment.doctorName
+          .toLowerCase();
+
+
+      case 'appointmentDate':
+
+        return appointment.appointmentDate;
+
+
+      case 'appointmentTime':
+
+        return appointment.appointmentTime;
+
+
+      case 'reason':
+
+        return appointment.reason
+          .toLowerCase();
+
+
+      case 'status':
+
+        return appointment.status
+          .toLowerCase();
+
+
+      default:
+
+        return '';
+
+    }
+
+  }
+
+
+  /* =======================================================
+     SORT ICON
+     ======================================================= */
+
+  getSortIcon(
+    column: string
+  ): string {
 
     if (
-      this.patientId === null ||
-      this.doctorId === null ||
-      !this.appointmentDate ||
-      !this.appointmentTime ||
-      !this.reason.trim()
+      this.sortColumn !== column
     ) {
 
-      this.showError(
-        'Please fill all appointment fields.'
-      );
+      return '↕';
 
-      return;
     }
 
+    return this.sortDirection === 'asc'
+      ? '↑'
+      : '↓';
 
-    const request: AppointmentRequest = {
-
-      patientId:
-        this.patientId,
-
-      doctorId:
-        this.doctorId,
-
-      appointmentDate:
-        this.appointmentDate,
-
-      appointmentTime:
-        this.appointmentTime,
-
-      reason:
-        this.reason.trim(),
-
-      status:
-        this.status
-    };
-
-
-    if (this.editingId === null) {
-
-      this.appointmentService
-        .createAppointment(request)
-        .subscribe({
-
-          next: response => {
-
-            this.appointments = [
-              ...this.appointments,
-              response
-            ];
-
-            this.clearForm();
-
-            this.loadAppointments();
-
-            this.showSuccess(
-              'Appointment created successfully.'
-            );
-          },
-
-          error: (error: HttpErrorResponse) => {
-
-            console.error(error);
-
-            this.showError(
-              this.getErrorMessage(
-                error,
-                'Failed to create appointment.'
-              )
-            );
-          }
-        });
-
-      return;
-    }
-
-
-    this.appointmentService
-      .updateAppointment(
-        this.editingId,
-        request
-      )
-      .subscribe({
-
-        next: response => {
-
-          this.appointments =
-            this.appointments.map(
-              item =>
-                item.id === response.id
-                  ? response
-                  : item
-            );
-
-          this.clearForm();
-
-          this.loadAppointments();
-
-          this.showSuccess(
-            'Appointment updated successfully.'
-          );
-        },
-
-        error: (error: HttpErrorResponse) => {
-
-          console.error(error);
-
-          this.showError(
-            this.getErrorMessage(
-              error,
-              'Failed to update appointment.'
-            )
-          );
-        }
-      });
   }
 
 
-  editAppointment(
-    appointment: Appointment
+  /* =======================================================
+     PAGINATION
+     ======================================================= */
+
+  get totalRecords(): number {
+
+    return this.filteredAppointments.length;
+
+  }
+
+
+  get totalPages(): number {
+
+    return Math.max(
+      1,
+      Math.ceil(
+        this.totalRecords /
+        this.pageSize
+      )
+    );
+
+  }
+
+
+  get pages(): number[] {
+
+    const result: number[] = [];
+
+    for (
+      let page = 1;
+      page <= this.totalPages;
+      page++
+    ) {
+
+      result.push(page);
+
+    }
+
+    return result;
+
+  }
+
+
+  get paginatedAppointments():
+    AppointmentRow[] {
+
+    const start =
+      (this.currentPage - 1) *
+      this.pageSize;
+
+    const end =
+      start + this.pageSize;
+
+    return this.filteredAppointments.slice(
+      start,
+      end
+    );
+
+  }
+
+
+  get startRecord(): number {
+
+    if (
+      this.totalRecords === 0
+    ) {
+
+      return 0;
+
+    }
+
+    return (
+      (this.currentPage - 1) *
+      this.pageSize
+    ) + 1;
+
+  }
+
+
+  get endRecord(): number {
+
+    return Math.min(
+      this.currentPage *
+        this.pageSize,
+      this.totalRecords
+    );
+
+  }
+
+
+  previousPage(): void {
+
+    if (
+      this.currentPage > 1
+    ) {
+
+      this.currentPage--;
+
+    }
+
+  }
+
+
+  nextPage(): void {
+
+    if (
+      this.currentPage <
+      this.totalPages
+    ) {
+
+      this.currentPage++;
+
+    }
+
+  }
+
+
+  goToPage(
+    page: number
+  ): void {
+
+    if (
+      page >= 1 &&
+      page <= this.totalPages
+    ) {
+
+      this.currentPage = page;
+
+    }
+
+  }
+
+
+  onPageSizeChange(): void {
+
+    this.currentPage = 1;
+
+    this.fixCurrentPage();
+
+  }
+
+
+  private fixCurrentPage(): void {
+
+    if (
+      this.currentPage >
+      this.totalPages
+    ) {
+
+      this.currentPage =
+        this.totalPages;
+
+    }
+
+  }
+
+
+  /* =======================================================
+     ADD APPOINTMENT
+     ======================================================= */
+
+  openAddAppointmentModal(): void {
+
+    this.clearForm();
+
+    this.editingId = null;
+
+    this.showAppointmentModal = true;
+
+  }
+
+
+  /* =======================================================
+     EDIT APPOINTMENT
+     ======================================================= */
+
+  openEditAppointmentModal(
+    appointment: AppointmentRow
   ): void {
 
     this.editingId =
@@ -450,72 +1184,370 @@ export class Appointments implements OnInit {
       appointment.appointmentDate;
 
     this.appointmentTime =
-      appointment.appointmentTime.substring(
-        0,
-        5
+      this.formatTimeForInput(
+        appointment.appointmentTime
       );
 
     this.reason =
       appointment.reason;
 
     this.status =
-      appointment.status;
+      appointment.status ||
+      'SCHEDULED';
 
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth'
-    });
+    this.showAppointmentModal = true;
+
   }
 
 
-  deleteAppointment(
-    id: number | undefined
-  ): void {
+  /* =======================================================
+     CLOSE APPOINTMENT MODAL
+     ======================================================= */
 
-    if (id === undefined) {
-      return;
-    }
+  closeAppointmentModal(): void {
 
     if (
-      !confirm(
-        'Are you sure you want to delete this appointment?'
-      )
+      this.saving
     ) {
+
       return;
+
     }
+
+    this.showAppointmentModal = false;
+
+    this.clearForm();
+
+  }
+
+
+  /* =======================================================
+     SAVE APPOINTMENT
+     ======================================================= */
+
+  saveAppointment(): void {
+
+    if (
+      this.patientId === null ||
+      this.patientId === undefined
+    ) {
+
+      this.showError(
+        'Please select a patient.'
+      );
+
+      return;
+
+    }
+
+
+    if (
+      this.doctorId === null ||
+      this.doctorId === undefined
+    ) {
+
+      this.showError(
+        'Please select a doctor.'
+      );
+
+      return;
+
+    }
+
+
+    if (
+      !this.appointmentDate.trim()
+    ) {
+
+      this.showError(
+        'Please select appointment date.'
+      );
+
+      return;
+
+    }
+
+
+    if (
+      !this.appointmentTime.trim()
+    ) {
+
+      this.showError(
+        'Please select appointment time.'
+      );
+
+      return;
+
+    }
+
+
+    if (
+      !this.reason.trim()
+    ) {
+
+      this.showError(
+        'Please enter appointment reason.'
+      );
+
+      return;
+
+    }
+
+
+    if (
+      !this.status.trim()
+    ) {
+
+      this.showError(
+        'Please select appointment status.'
+      );
+
+      return;
+
+    }
+
+
+    const request:
+      AppointmentRequest = {
+
+      patientId:
+        Number(
+          this.patientId
+        ),
+
+      doctorId:
+        Number(
+          this.doctorId
+        ),
+
+      appointmentDate:
+        this.appointmentDate,
+
+      appointmentTime:
+        this.appointmentTime.length === 5
+          ? this.appointmentTime + ':00'
+          : this.appointmentTime,
+
+      reason:
+        this.reason.trim(),
+
+      status:
+        this.status
+
+    };
+
+
+    console.log(
+      'Appointment request:',
+      request
+    );
+
+
+    this.saving = true;
+
+
+    if (
+      this.editingId === null
+    ) {
+
+      this.appointmentService
+        .createAppointment(request)
+        .subscribe({
+
+          next: () => {
+
+            this.saving = false;
+
+            this.showAppointmentModal =
+              false;
+
+            this.clearForm();
+
+            this.showSuccess(
+              'Appointment created successfully.'
+            );
+
+            this.loadAppointments();
+
+          },
+
+          error: (
+            error: HttpErrorResponse
+          ) => {
+
+            this.saving = false;
+
+            console.error(
+              'Create appointment error:',
+              error
+            );
+
+            this.handleAppointmentError(
+              error,
+              'Failed to create appointment.'
+            );
+
+          }
+
+        });
+
+    } else {
+
+      this.appointmentService
+        .updateAppointment(
+          this.editingId,
+          request
+        )
+        .subscribe({
+
+          next: () => {
+
+            this.saving = false;
+
+            this.showAppointmentModal =
+              false;
+
+            this.clearForm();
+
+            this.showSuccess(
+              'Appointment updated successfully.'
+            );
+
+            this.loadAppointments();
+
+          },
+
+          error: (
+            error: HttpErrorResponse
+          ) => {
+
+            this.saving = false;
+
+            console.error(
+              'Update appointment error:',
+              error
+            );
+
+            this.handleAppointmentError(
+              error,
+              'Failed to update appointment.'
+            );
+
+          }
+
+        });
+
+    }
+
+  }
+
+
+  /* =======================================================
+     OPEN DELETE MODAL
+     ======================================================= */
+
+  openDeleteModal(
+    appointment: AppointmentRow
+  ): void {
+
+    this.selectedAppointment =
+      appointment;
+
+    this.showDeleteModal = true;
+
+  }
+
+
+  /* =======================================================
+     CLOSE DELETE MODAL
+     ======================================================= */
+
+  closeDeleteModal(): void {
+
+    if (
+      this.deleting
+    ) {
+
+      return;
+
+    }
+
+    this.showDeleteModal = false;
+
+    this.selectedAppointment =
+      null;
+
+  }
+
+
+  /* =======================================================
+     CONFIRM DELETE
+     ======================================================= */
+
+  confirmDeleteAppointment(): void {
+
+    if (
+      !this.selectedAppointment?.id
+    ) {
+
+      return;
+
+    }
+
+
+    this.deleting = true;
 
 
     this.appointmentService
-      .deleteAppointment(id)
+      .deleteAppointment(
+        this.selectedAppointment.id
+      )
       .subscribe({
 
         next: () => {
 
-          this.appointments =
-            this.appointments.filter(
-              appointment =>
-                appointment.id !== id
-            );
+          this.deleting = false;
+
+          this.showDeleteModal =
+            false;
 
           this.showSuccess(
             'Appointment deleted successfully.'
           );
+
+          this.selectedAppointment =
+            null;
+
+          this.loadAppointments();
+
         },
 
-        error: (error: HttpErrorResponse) => {
+        error: (
+          error: HttpErrorResponse
+        ) => {
 
-          console.error(error);
+          this.deleting = false;
 
-          this.showError(
-            this.getErrorMessage(
-              error,
-              'Failed to delete appointment.'
-            )
+          console.error(
+            'Delete appointment error:',
+            error
           );
+
+          this.handleAppointmentError(
+            error,
+            'Failed to delete appointment.'
+          );
+
         }
+
       });
+
   }
 
+
+  /* =======================================================
+     CLEAR FORM
+     ======================================================= */
 
   clearForm(): void {
 
@@ -529,51 +1561,176 @@ export class Appointments implements OnInit {
 
     this.reason = '';
 
-    this.status = 'PENDING';
+    this.status = 'SCHEDULED';
 
     this.editingId = null;
+
   }
 
 
-  showSuccess(message: string): void {
+  /* =======================================================
+     FORMAT TIME
+     ======================================================= */
 
-    this.popupMessage = message;
-
-    this.popupType = 'success';
-
-    this.showPopup = true;
-
-    setTimeout(() => {
-
-      this.showPopup = false;
-
-    }, 2500);
-  }
-
-
-  showError(message: string): void {
-
-    this.popupMessage = message;
-
-    this.popupType = 'error';
-
-    this.showPopup = true;
-
-    setTimeout(() => {
-
-      this.showPopup = false;
-
-    }, 3000);
-  }
-
-
-  private getErrorMessage(
-    error: HttpErrorResponse,
-    fallback: string
+  private formatTimeForInput(
+    time: any
   ): string {
 
-    return error.error?.message
-      || error.error?.detail
-      || fallback;
+    if (
+      !time
+    ) {
+
+      return '';
+
+    }
+
+
+    const value =
+      String(time);
+
+
+    if (
+      value.length >= 5
+    ) {
+
+      return value.substring(
+        0,
+        5
+      );
+
+    }
+
+
+    return value;
+
   }
+
+
+  /* =======================================================
+     ERROR HANDLING
+     ======================================================= */
+
+  private handleAppointmentError(
+    error: HttpErrorResponse,
+    defaultMessage: string
+  ): void {
+
+    let message =
+      defaultMessage;
+
+
+    if (
+      error.status === 401
+    ) {
+
+      message =
+        'Please login again.';
+
+    } else if (
+      error.status === 403
+    ) {
+
+      message =
+        'You do not have permission for this operation.';
+
+    } else if (
+      error.status === 409
+    ) {
+
+      message =
+        'Appointment already exists for this doctor, date and time.';
+
+    } else if (
+      typeof error.error === 'string' &&
+      error.error.trim()
+    ) {
+
+      message =
+        error.error;
+
+    } else if (
+      error.error?.message
+    ) {
+
+      message =
+        error.error.message;
+
+    } else if (
+      error.error?.error
+    ) {
+
+      message =
+        error.error.error;
+
+    }
+
+
+    this.showError(
+      message
+    );
+
+  }
+
+
+  /* =======================================================
+     SUCCESS MESSAGE
+     ======================================================= */
+
+  private showSuccess(
+    message: string
+  ): void {
+
+    this.popupType =
+      'success';
+
+    this.popupMessage =
+      message;
+
+    this.showPopup =
+      true;
+
+
+    setTimeout(
+      () => {
+
+        this.showPopup =
+          false;
+
+      },
+      3500
+    );
+
+  }
+
+
+  /* =======================================================
+     ERROR MESSAGE
+     ======================================================= */
+
+  private showError(
+    message: string
+  ): void {
+
+    this.popupType =
+      'error';
+
+    this.popupMessage =
+      message;
+
+    this.showPopup =
+      true;
+
+
+    setTimeout(
+      () => {
+
+        this.showPopup =
+          false;
+
+      },
+      4500
+    );
+
+  }
+
 }

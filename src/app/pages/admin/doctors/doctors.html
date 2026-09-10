@@ -1,21 +1,23 @@
 <div class="management-page">
 
-  <!-- =========================
+  <!-- =====================================================
        PAGE HEADER
-       ========================= -->
+       ===================================================== -->
 
   <div class="page-header">
 
-    <div>
+    <div class="header-content">
 
       <span class="page-label">
         ADMIN MANAGEMENT
       </span>
 
-      <h2>Doctors</h2>
+      <h2>
+        Doctors
+      </h2>
 
       <p>
-        Create and manage doctor information.
+        Create, manage and maintain doctor information.
       </p>
 
     </div>
@@ -23,18 +25,15 @@
 
     <div class="header-actions">
 
-      <!-- BACK TO ADMIN -->
-
       <button
         type="button"
         class="back-button"
         (click)="backToDashboard()"
       >
-        ← Back to Dashboard
+        <span class="button-icon">←</span>
+        Back to Dashboard
       </button>
 
-
-      <!-- MANUAL REFRESH -->
 
       <button
         type="button"
@@ -42,7 +41,22 @@
         (click)="refreshDoctors()"
         [disabled]="loading"
       >
-        ↻ Refresh
+        <span class="refresh-icon">↻</span>
+        Refresh
+      </button>
+
+
+      <button
+        type="button"
+        class="add-doctor-button"
+        (click)="openAddDoctorModal()"
+        [disabled]="loading"
+      >
+        <span class="add-icon">
+          +
+        </span>
+
+        Add Doctor
       </button>
 
     </div>
@@ -50,9 +64,9 @@
   </div>
 
 
-  <!-- =========================
+  <!-- =====================================================
        MESSAGE
-       ========================= -->
+       ===================================================== -->
 
   @if (message) {
 
@@ -62,246 +76,115 @@
       [class.error]="messageType === 'error'"
     >
 
-      {{ message }}
+      <span class="message-icon">
+
+        @if (messageType === 'success') {
+          ✓
+        } @else {
+          !
+        }
+
+      </span>
+
+      <span>
+        {{ message }}
+      </span>
 
     </div>
 
   }
 
 
-  <!-- =========================
-       FORM
-       ========================= -->
+  <!-- =====================================================
+       DOCTOR LIST
+       ===================================================== -->
 
-  <section class="form-card">
+  <section class="list-section">
 
-    <div class="section-header">
+
+    <!-- LIST HEADER -->
+
+    <div class="list-header">
 
       <div>
 
-        <h3>
+        <div class="title-row">
 
-          {{ editingId !== null
-            ? 'Update Doctor'
-            : 'Add Doctor'
-          }}
+          <div class="section-icon">
+            D
+          </div>
 
-        </h3>
+          <div>
 
-        <p>
-          Enter doctor details below.
-        </p>
+            <h3>
+              Doctor List
+            </h3>
+
+            <p>
+              Manage all active doctors in the system.
+            </p>
+
+          </div>
+
+        </div>
 
       </div>
 
 
-      @if (editingId !== null) {
+      <div class="doctor-count">
 
-        <button
-          type="button"
-          class="cancel-button"
-          (click)="resetForm()"
-        >
-          Cancel Edit
-        </button>
+        <span class="count-number">
+          {{ filteredDoctors.length }}
+        </span>
 
-      }
+        <span class="count-label">
+          Doctors
+        </span>
+
+      </div>
 
     </div>
 
 
-    <form
-      #doctorForm="ngForm"
-      (ngSubmit)="submitDoctor()"
-    >
+    <!-- =================================================
+         GLOBAL SEARCH + FILTER
+         ================================================= -->
 
-      <div class="form-grid">
-
-
-        <!-- NAME -->
-
-        <div class="form-group">
-
-          <label>
-            Doctor Name
-          </label>
-
-          <input
-            type="text"
-            name="name"
-            [(ngModel)]="doctor.name"
-            placeholder="Enter doctor name"
-            required
-          />
-
-        </div>
+    <div class="filter-bar">
 
 
-        <!-- SPECIALIZATION -->
+      <!-- GLOBAL SEARCH -->
 
-        <div class="form-group">
+      <div class="search-box">
 
-          <label>
-            Specialization
-          </label>
+        <span class="search-icon">
+          ⌕
+        </span>
 
-          <input
-            type="text"
-            name="specialization"
-            [(ngModel)]="doctor.specialization"
-            placeholder="Enter specialization"
-            required
-          />
-
-        </div>
+        <input
+          type="text"
+          [(ngModel)]="searchTerm"
+          (ngModelChange)="onSearchChange()"
+          placeholder="Search all doctors..."
+        />
 
 
-        <!-- PHONE -->
-
-        <div class="form-group">
-
-          <label>
-            Phone
-          </label>
-
-          <input
-            type="text"
-            name="phone"
-            [(ngModel)]="doctor.phone"
-            placeholder="Enter 10 digit phone number"
-            maxlength="10"
-            required
-          />
-
-        </div>
-
-
-        <!-- EMAIL -->
-
-        <div class="form-group">
-
-          <label>
-            Email
-          </label>
-
-          <input
-            type="email"
-            name="email"
-            [(ngModel)]="doctor.email"
-            placeholder="Enter doctor email"
-            required
-          />
-
-        </div>
-
-
-        <!-- EXPERIENCE -->
-
-        <div class="form-group">
-
-          <label>
-            Experience (Years)
-          </label>
-
-          <input
-            type="number"
-            name="experience"
-            [(ngModel)]="doctor.experience"
-            min="0"
-            placeholder="Enter experience"
-            required
-          />
-
-        </div>
-
-      </div>
-
-
-      <!-- FORM ACTIONS -->
-
-      <div class="form-actions">
-
-        <button
-          type="submit"
-          class="primary-button"
-          [disabled]="loading"
-        >
-
-          {{ editingId !== null
-            ? 'Update Doctor'
-            : 'Add Doctor'
-          }}
-
-        </button>
-
-
-        @if (editingId !== null) {
+        @if (searchTerm) {
 
           <button
             type="button"
-            class="secondary-button"
-            (click)="resetForm()"
+            class="clear-search"
+            (click)="clearSearch()"
           >
-            Clear
+            ×
           </button>
 
         }
 
       </div>
 
-    </form>
 
-  </section>
-
-
-  <!-- =========================
-       DOCTOR LIST
-       ========================= -->
-
-  <section class="list-section">
-
-    <div class="list-header">
-
-      <div>
-
-        <h3>
-          Doctor List
-        </h3>
-
-        <p>
-          {{ filteredDoctors.length }}
-          doctor(s) found
-        </p>
-
-      </div>
-
-    </div>
-
-
-    <!-- =========================
-         SEARCH + FILTER
-         ========================= -->
-
-    <div class="filter-bar">
-
-
-      <!-- SEARCH -->
-
-      <div class="search-box">
-
-        <span>🔎</span>
-
-        <input
-          type="text"
-          [(ngModel)]="searchTerm"
-          (ngModelChange)="onSearchChange()"
-          placeholder="Search by name, specialization, phone or email..."
-        />
-
-      </div>
-
-
-      <!-- SPECIALIZATION FILTER -->
+      <!-- SPECIALIZATION -->
 
       <div class="filter-group">
 
@@ -337,9 +220,20 @@
       </div>
 
 
+      <!-- CLEAR COLUMN FILTERS -->
+
+      <button
+        type="button"
+        class="clear-filters-button"
+        (click)="clearColumnFilters()"
+      >
+        Clear Filters
+      </button>
+
+
       <!-- ROWS -->
 
-      <div class="filter-group">
+      <div class="filter-group rows-filter">
 
         <label>
           Rows
@@ -369,9 +263,9 @@
     </div>
 
 
-    <!-- =========================
+    <!-- =================================================
          TABLE
-         ========================= -->
+         ================================================= -->
 
     <div class="table-container">
 
@@ -379,72 +273,254 @@
 
         <thead>
 
+
+          <!-- =================================================
+               HEADER ROW
+               ================================================= -->
+
           <tr>
+
+            <!-- ID -->
 
             <th
               class="sortable"
               (click)="sortBy('id')"
             >
-              ID
 
-              <span>
-                {{ getSortIcon('id') }}
-              </span>
+              <div class="th-content">
+
+                <span>
+                  ID
+                </span>
+
+                <span class="sort-icon">
+                  {{ getSortIcon('id') }}
+                </span>
+
+              </div>
 
             </th>
 
+
+            <!-- NAME -->
 
             <th
               class="sortable"
               (click)="sortBy('name')"
             >
-              Name
 
-              <span>
-                {{ getSortIcon('name') }}
-              </span>
+              <div class="th-content">
+
+                <span>
+                  Doctor
+                </span>
+
+                <span class="sort-icon">
+                  {{ getSortIcon('name') }}
+                </span>
+
+              </div>
 
             </th>
 
+
+            <!-- SPECIALIZATION -->
 
             <th
               class="sortable"
               (click)="sortBy('specialization')"
             >
-              Specialization
 
-              <span>
-                {{ getSortIcon('specialization') }}
-              </span>
+              <div class="th-content">
+
+                <span>
+                  Specialization
+                </span>
+
+                <span class="sort-icon">
+                  {{ getSortIcon('specialization') }}
+                </span>
+
+              </div>
 
             </th>
 
+
+            <!-- PHONE -->
 
             <th>
               Phone
             </th>
 
 
+            <!-- EMAIL -->
+
             <th>
               Email
             </th>
 
 
+            <!-- EXPERIENCE -->
+
             <th
               class="sortable"
               (click)="sortBy('experience')"
             >
-              Experience
 
-              <span>
-                {{ getSortIcon('experience') }}
-              </span>
+              <div class="th-content">
+
+                <span>
+                  Experience
+                </span>
+
+                <span class="sort-icon">
+                  {{ getSortIcon('experience') }}
+                </span>
+
+              </div>
 
             </th>
 
 
+            <!-- ACTIONS -->
+
             <th>
               Actions
+            </th>
+
+          </tr>
+
+
+          <!-- =================================================
+               COLUMN FILTER ROW
+               ================================================= -->
+
+          <tr class="column-filter-row">
+
+
+            <!-- ID FILTER -->
+
+            <th>
+
+              <input
+                type="text"
+                class="column-filter-input"
+                [(ngModel)]="columnIdFilter"
+                (ngModelChange)="onColumnFilterChange()"
+                (click)="$event.stopPropagation()"
+                placeholder="Filter ID"
+              />
+
+            </th>
+
+
+            <!-- NAME FILTER -->
+
+            <th>
+
+              <input
+                type="text"
+                class="column-filter-input"
+                [(ngModel)]="columnNameFilter"
+                (ngModelChange)="onColumnFilterChange()"
+                (click)="$event.stopPropagation()"
+                placeholder="Filter name"
+              />
+
+            </th>
+
+
+            <!-- SPECIALIZATION FILTER -->
+
+            <th>
+
+              <select
+                class="column-filter-input"
+                [(ngModel)]="columnSpecializationFilter"
+                (ngModelChange)="onColumnFilterChange()"
+                (click)="$event.stopPropagation()"
+              >
+
+                <option value="ALL">
+                  All
+                </option>
+
+
+                @for (
+                  specialization of specializations;
+                  track specialization
+                ) {
+
+                  <option
+                    [value]="specialization"
+                  >
+                    {{ specialization }}
+                  </option>
+
+                }
+
+              </select>
+
+            </th>
+
+
+            <!-- PHONE FILTER -->
+
+            <th>
+
+              <input
+                type="text"
+                class="column-filter-input"
+                [(ngModel)]="columnPhoneFilter"
+                (ngModelChange)="onColumnFilterChange()"
+                placeholder="Filter phone"
+              />
+
+            </th>
+
+
+            <!-- EMAIL FILTER -->
+
+            <th>
+
+              <input
+                type="text"
+                class="column-filter-input"
+                [(ngModel)]="columnEmailFilter"
+                (ngModelChange)="onColumnFilterChange()"
+                placeholder="Filter email"
+              />
+
+            </th>
+
+
+            <!-- EXPERIENCE FILTER -->
+
+            <th>
+
+              <input
+                type="text"
+                class="column-filter-input"
+                [(ngModel)]="columnExperienceFilter"
+                (ngModelChange)="onColumnFilterChange()"
+                placeholder="Years"
+              />
+
+            </th>
+
+
+            <!-- ACTIONS -->
+
+            <th>
+
+              <button
+                type="button"
+                class="clear-column-button"
+                (click)="clearColumnFilters()"
+              >
+                Clear
+              </button>
+
             </th>
 
           </tr>
@@ -453,6 +529,11 @@
 
 
         <tbody>
+
+
+          <!-- =================================================
+               LOADING
+               ================================================= -->
 
           @if (
             loading &&
@@ -465,13 +546,27 @@
                 colspan="7"
                 class="empty-state"
               >
-                Loading doctors...
+
+                <div class="loading-state">
+
+                  <div class="loading-spinner"></div>
+
+                  <span>
+                    Loading doctors...
+                  </span>
+
+                </div>
+
               </td>
 
             </tr>
 
           }
 
+
+          <!-- =================================================
+               DOCTOR ROWS
+               ================================================= -->
 
           @for (
             doctor of paginatedDoctors;
@@ -480,70 +575,141 @@
 
             <tr>
 
-              <td>
-                {{ doctor.id }}
-              </td>
 
+              <!-- ID -->
 
               <td>
 
-                <strong>
-                  {{ doctor.name }}
-                </strong>
-
-              </td>
-
-
-              <td>
-
-                <span class="specialization-badge">
-                  {{ doctor.specialization }}
+                <span class="doctor-id">
+                  #{{ doctor.id }}
                 </span>
 
               </td>
 
 
+              <!-- NAME -->
+
               <td>
-                {{ doctor.phone }}
+
+                <div class="doctor-name-cell">
+
+                  <div class="doctor-avatar">
+
+                    {{ doctor.name.charAt(0).toUpperCase() }}
+
+                  </div>
+
+                  <div>
+
+                    <strong>
+                      {{ doctor.name }}
+                    </strong>
+
+                    <span>
+                      Doctor
+                    </span>
+
+                  </div>
+
+                </div>
+
               </td>
 
 
+              <!-- SPECIALIZATION -->
+
               <td>
-                {{ doctor.email }}
+
+                <span class="specialization-badge">
+
+                  <span class="badge-dot"></span>
+
+                  {{ doctor.specialization }}
+
+                </span>
+
               </td>
 
+
+              <!-- PHONE -->
+
+              <td>
+
+                <span class="table-text">
+                  {{ doctor.phone }}
+                </span>
+
+              </td>
+
+
+              <!-- EMAIL -->
+
+              <td>
+
+                <span class="table-text email-text">
+                  {{ doctor.email }}
+                </span>
+
+              </td>
+
+
+              <!-- EXPERIENCE -->
 
               <td>
 
                 <span class="experience-badge">
 
                   {{ doctor.experience }}
-                  years
+
+                  <small>
+                    years
+                  </small>
 
                 </span>
 
               </td>
 
 
+              <!-- ACTIONS -->
+
               <td>
 
                 <div class="action-buttons">
+
+
+                  <!-- EDIT -->
 
                   <button
                     type="button"
                     class="edit-button"
                     (click)="editDoctor(doctor)"
+                    [disabled]="loading"
                   >
+
+                    <span>
+                      ✎
+                    </span>
+
                     Edit
+
                   </button>
 
+
+                  <!-- DELETE -->
 
                   <button
                     type="button"
                     class="delete-button"
-                    (click)="deleteDoctor(doctor.id)"
+                    (click)="openDeleteModal(doctor)"
+                    [disabled]="loading"
                   >
+
+                    <span>
+                      ×
+                    </span>
+
                     Delete
+
                   </button>
 
                 </div>
@@ -554,6 +720,10 @@
 
           }
 
+
+          <!-- =================================================
+               EMPTY
+               ================================================= -->
 
           @if (
             paginatedDoctors.length === 0 &&
@@ -566,7 +736,19 @@
                 colspan="7"
                 class="empty-state"
               >
-                No doctors found.
+
+                <div class="empty-icon">
+                  D
+                </div>
+
+                <strong>
+                  No doctors found
+                </strong>
+
+                <span>
+                  Try changing your search or filters.
+                </span>
+
               </td>
 
             </tr>
@@ -580,15 +762,16 @@
     </div>
 
 
-    <!-- =========================
+    <!-- =================================================
          PAGINATION
-         ========================= -->
+         ================================================= -->
 
     @if (
       filteredDoctors.length > 0
     ) {
 
       <div class="pagination">
+
 
         <div class="pagination-info">
 
@@ -610,13 +793,17 @@
             {{ filteredDoctors.length }}
           </strong>
 
+          doctors
+
         </div>
 
 
         <div class="pagination-buttons">
 
+
           <button
             type="button"
+            class="page-arrow"
             (click)="previousPage()"
             [disabled]="currentPage === 1"
           >
@@ -636,7 +823,9 @@
               "
               (click)="changePage(page)"
             >
+
               {{ page }}
+
             </button>
 
           }
@@ -644,6 +833,7 @@
 
           <button
             type="button"
+            class="page-arrow"
             (click)="nextPage()"
             [disabled]="
               currentPage === totalPages
@@ -659,5 +849,332 @@
     }
 
   </section>
+
+
+  <!-- =====================================================
+       ADD / EDIT DOCTOR MODAL
+       ===================================================== -->
+
+  <app-modal
+
+    [show]="showDoctorModal"
+
+    [title]="
+      editingId !== null
+        ? 'Edit Doctor'
+        : 'Add Doctor'
+    "
+
+    [subtitle]="
+      editingId !== null
+        ? 'Update doctor information'
+        : 'Create a new doctor record'
+    "
+
+    [width]="'650px'"
+
+    (closed)="closeDoctorModal()"
+
+  >
+
+    <form
+      #doctorForm="ngForm"
+      (ngSubmit)="submitDoctor()"
+      class="doctor-modal-form"
+    >
+
+
+      <!-- FORM INTRO -->
+
+      <div class="form-intro">
+
+        <div class="form-intro-icon">
+          {{ editingId !== null ? '✎' : '+' }}
+        </div>
+
+        <div>
+
+          <strong>
+
+            @if (editingId !== null) {
+              Update Doctor Details
+            } @else {
+              Doctor Information
+            }
+
+          </strong>
+
+          <span>
+            Please enter the required information below.
+          </span>
+
+        </div>
+
+      </div>
+
+
+      <!-- FORM GRID -->
+
+      <div class="form-grid">
+
+
+        <!-- NAME -->
+
+        <div class="form-group">
+
+          <label>
+            Doctor Name
+            <span>*</span>
+          </label>
+
+          <input
+            type="text"
+            name="name"
+            [(ngModel)]="doctor.name"
+            placeholder="Enter doctor name"
+            required
+            autocomplete="off"
+          />
+
+        </div>
+
+
+        <!-- SPECIALIZATION -->
+
+        <div class="form-group">
+
+          <label>
+            Specialization
+            <span>*</span>
+          </label>
+
+          <input
+            type="text"
+            name="specialization"
+            [(ngModel)]="doctor.specialization"
+            placeholder="e.g. Cardiologist"
+            required
+            autocomplete="off"
+          />
+
+        </div>
+
+
+        <!-- PHONE -->
+
+        <div class="form-group">
+
+          <label>
+            Phone
+            <span>*</span>
+          </label>
+
+          <input
+            type="tel"
+            name="phone"
+            [(ngModel)]="doctor.phone"
+            placeholder="Enter 10 digit phone number"
+            maxlength="10"
+            required
+            autocomplete="off"
+          />
+
+        </div>
+
+
+        <!-- EMAIL -->
+
+        <div class="form-group">
+
+          <label>
+            Email
+            <span>*</span>
+          </label>
+
+          <input
+            type="email"
+            name="email"
+            [(ngModel)]="doctor.email"
+            placeholder="doctor@example.com"
+            required
+            autocomplete="off"
+          />
+
+        </div>
+
+
+        <!-- EXPERIENCE -->
+
+        <div class="form-group full-width">
+
+          <label>
+            Experience
+            <span>*</span>
+          </label>
+
+          <div class="input-with-suffix">
+
+            <input
+              type="number"
+              name="experience"
+              [(ngModel)]="doctor.experience"
+              min="0"
+              placeholder="Enter experience"
+              required
+            />
+
+            <span>
+              Years
+            </span>
+
+          </div>
+
+        </div>
+
+      </div>
+
+
+      <!-- FORM ACTIONS -->
+
+      <div class="modal-form-actions">
+
+        <button
+          type="button"
+          class="modal-cancel-button"
+          (click)="closeDoctorModal()"
+          [disabled]="saving"
+        >
+          Cancel
+        </button>
+
+
+        <button
+          type="submit"
+          class="modal-submit-button"
+          [disabled]="saving || !doctorForm.form.valid"
+        >
+
+          @if (saving) {
+
+            <span class="button-spinner"></span>
+
+            Saving...
+
+          } @else {
+
+            <span>
+              {{ editingId !== null ? 'Save Changes' : 'Add Doctor' }}
+            </span>
+
+          }
+
+        </button>
+
+      </div>
+
+    </form>
+
+  </app-modal>
+
+
+  <!-- =====================================================
+       DELETE CONFIRMATION MODAL
+       ===================================================== -->
+
+  <app-modal
+
+    [show]="showDeleteModal"
+
+    title="Delete Doctor"
+
+    subtitle="Confirm this action"
+
+    [width]="'480px'"
+
+    (closed)="closeDeleteModal()"
+
+  >
+
+    <div class="delete-confirmation">
+
+
+      <!-- WARNING ICON -->
+
+      <div class="delete-warning-icon">
+        !
+      </div>
+
+
+      <h3>
+        Delete Doctor?
+      </h3>
+
+
+      <p>
+
+        Are you sure you want to delete
+
+        <strong>
+          {{ deleteDoctorName }}
+        </strong>
+
+        ?
+
+      </p>
+
+
+      <div class="delete-warning">
+
+        <span>
+          ⚠
+        </span>
+
+        <span>
+          This doctor will be removed from the active doctor list.
+        </span>
+
+      </div>
+
+
+      <!-- ACTIONS -->
+
+      <div class="delete-modal-actions">
+
+        <button
+          type="button"
+          class="modal-cancel-button"
+          (click)="closeDeleteModal()"
+          [disabled]="deleting"
+        >
+          Cancel
+        </button>
+
+
+        <button
+          type="button"
+          class="confirm-delete-button"
+          (click)="confirmDeleteDoctor()"
+          [disabled]="deleting"
+        >
+
+          @if (deleting) {
+
+            <span class="button-spinner"></span>
+
+            Deleting...
+
+          } @else {
+
+            Delete Doctor
+
+          }
+
+        </button>
+
+      </div>
+
+    </div>
+
+  </app-modal>
 
 </div>

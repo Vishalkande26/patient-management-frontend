@@ -1,102 +1,207 @@
-import { Component, inject } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 
-import {
-  Doctor,
-  DoctorService
-} from '../../../services/doctor.service';
+import { DoctorService } from '../../../services/doctor.service';
+import { Modal } from '../../../shared/modal/modal';
+
+
+/*
+ * Doctor model used by this page.
+ */
+interface Doctor {
+  id?: number;
+  name: string;
+  specialization: string;
+  phone: string;
+  email: string;
+  experience: number;
+  deleted?: boolean;
+}
+
+
+type SortColumn =
+  | 'id'
+  | 'name'
+  | 'specialization'
+  | 'phone'
+  | 'email'
+  | 'experience';
+
+
+type SortDirection = 'asc' | 'desc';
+
 
 @Component({
   selector: 'app-doctors',
-  imports: [FormsModule],
+
+  imports: [
+    FormsModule,
+    Modal
+  ],
+
   templateUrl: './doctors.html',
+
   styleUrl: './doctors.css'
 })
-export class Doctors {
+export class Doctors implements OnInit {
 
   private doctorService = inject(DoctorService);
+
   private router = inject(Router);
 
 
-  /* =========================
-     FORM
-     ========================= */
-
-  doctor: Doctor = {
-    name: '',
-    specialization: '',
-    phone: '',
-    email: '',
-    experience: 0
-  };
-
-  editingId: number | null = null;
-
-  loading = false;
-
-  message = '';
-
-  messageType: 'success' | 'error' = 'success';
-
-
-  /* =========================
-     DOCTORS
-     ========================= */
+  // =========================================================
+  // DOCTOR DATA
+  // =========================================================
 
   doctors: Doctor[] = [];
 
+  filteredDoctors: Doctor[] = [];
 
-  /* =========================
-     SEARCH
-     ========================= */
+  paginatedDoctors: Doctor[] = [];
+
+
+  // =========================================================
+  // SINGLE DOCTOR FORM OBJECT
+  // =========================================================
+
+  doctor: Doctor = this.createEmptyDoctor();
+
+
+  // =========================================================
+  // EDITING
+  // =========================================================
+
+  editingId: number | null = null;
+
+
+  // =========================================================
+  // LOADING
+  // =========================================================
+
+  loading = false;
+
+  saving = false;
+
+  deleting = false;
+
+
+  // =========================================================
+  // GLOBAL SEARCH
+  // =========================================================
 
   searchTerm = '';
 
+
+  // =========================================================
+  // TOP SPECIALIZATION FILTER
+  // =========================================================
+
   specializationFilter = 'ALL';
 
-
-  /* =========================
-     SORT
-     ========================= */
-
-  sortField:
-    | 'id'
-    | 'name'
-    | 'specialization'
-    | 'experience' = 'id';
-
-  sortDirection: 'asc' | 'desc' = 'asc';
+  specializations: string[] = [];
 
 
-  /* =========================
-     PAGINATION
-     ========================= */
+  // =========================================================
+  // COLUMN FILTERS
+  // =========================================================
+
+  columnIdFilter = '';
+
+  columnNameFilter = '';
+
+  columnSpecializationFilter = 'ALL';
+
+  columnPhoneFilter = '';
+
+  columnEmailFilter = '';
+
+  columnExperienceFilter = '';
+
+
+  // =========================================================
+  // SORTING
+  // =========================================================
+
+  sortColumn: SortColumn = 'id';
+
+  sortDirection: SortDirection = 'desc';
+
+
+  // =========================================================
+  // PAGINATION
+  // =========================================================
 
   currentPage = 1;
 
   pageSize = 5;
 
 
-  constructor() {
+  // =========================================================
+  // MODALS
+  // =========================================================
+
+  showDoctorModal = false;
+
+  showDeleteModal = false;
+
+
+  deleteDoctorName = '';
+
+  selectedDoctor: Doctor | null = null;
+
+
+  // =========================================================
+  // MESSAGE
+  // =========================================================
+
+  message = '';
+
+  messageType: 'success' | 'error' | '' = '';
+
+
+  // =========================================================
+  // INIT
+  // =========================================================
+
+  ngOnInit(): void {
+
     this.loadDoctors();
-  }
-
-
-  /* =========================
-     BACK TO ADMIN DASHBOARD
-     ========================= */
-
-  backToDashboard(): void {
-
-    this.router.navigate(['/admin']);
 
   }
 
 
-  /* =========================
-     LOAD DOCTORS
-     ========================= */
+  // =========================================================
+  // EMPTY DOCTOR
+  // =========================================================
+
+  private createEmptyDoctor(): Doctor {
+
+    return {
+
+      id: undefined,
+
+      name: '',
+
+      specialization: '',
+
+      phone: '',
+
+      email: '',
+
+      experience: 0,
+
+      deleted: false
+
+    };
+
+  }
+
+
+  // =========================================================
+  // LOAD DOCTORS
+  // =========================================================
 
   loadDoctors(): void {
 
@@ -106,13 +211,23 @@ export class Doctors {
 
       next: (data: Doctor[]) => {
 
-        this.doctors = data;
+        /*
+         * Hide soft-deleted doctors.
+         */
+        this.doctors = data.filter(
+          doctor => !doctor.deleted
+        );
+
+
+        this.buildSpecializations();
+
+        this.applyFilters();
+
 
         this.loading = false;
 
-        this.fixCurrentPage();
-
       },
+
 
       error: (error: unknown) => {
 
@@ -121,7 +236,9 @@ export class Doctors {
           error
         );
 
+
         this.loading = false;
+
 
         this.showMessage(
           'Unable to load doctors.',
@@ -135,206 +252,924 @@ export class Doctors {
   }
 
 
-  /* =========================
-     SPECIALIZATION FILTER
-     ========================= */
+  // =========================================================
+  // REFRESH
+  // =========================================================
 
-  get specializations(): string[] {
+  refreshDoctors(): void {
 
-    return [
-      ...new Set(
-        this.doctors
-          .map(doctor => doctor.specialization)
-          .filter(value => value)
-      )
-    ].sort();
+    this.loadDoctors();
 
   }
 
 
-  /* =========================
-     FILTER + SEARCH + SORT
-     ========================= */
+  // =========================================================
+  // BACK TO DASHBOARD
+  // =========================================================
 
-  get filteredDoctors(): Doctor[] {
+  backToDashboard(): void {
 
-    const term =
+    this.router.navigate(['/admin']);
+
+  }
+
+
+  // =========================================================
+  // BUILD SPECIALIZATION LIST
+  // =========================================================
+
+  private buildSpecializations(): void {
+
+    const values = this.doctors
+
+      .map(
+        doctor =>
+          doctor.specialization?.trim()
+      )
+
+      .filter(
+        (value): value is string =>
+          !!value
+      );
+
+
+    this.specializations = Array.from(
+      new Set(values)
+    ).sort();
+
+  }
+
+
+  // =========================================================
+  // GLOBAL SEARCH CHANGE
+  // =========================================================
+
+  onSearchChange(): void {
+
+    this.currentPage = 1;
+
+    this.applyFilters();
+
+  }
+
+
+  // =========================================================
+  // TOP FILTER CHANGE
+  // =========================================================
+
+  onFilterChange(): void {
+
+    this.currentPage = 1;
+
+    this.applyFilters();
+
+  }
+
+
+  // =========================================================
+  // COLUMN FILTER CHANGE
+  // =========================================================
+
+  onColumnFilterChange(): void {
+
+    this.currentPage = 1;
+
+    this.applyFilters();
+
+  }
+
+
+  // =========================================================
+  // CLEAR ALL COLUMN FILTERS
+  // =========================================================
+
+  clearColumnFilters(): void {
+
+    this.columnIdFilter = '';
+
+    this.columnNameFilter = '';
+
+    this.columnSpecializationFilter = 'ALL';
+
+    this.columnPhoneFilter = '';
+
+    this.columnEmailFilter = '';
+
+    this.columnExperienceFilter = '';
+
+    this.currentPage = 1;
+
+    this.applyFilters();
+
+  }
+
+
+  // =========================================================
+  // CLEAR GLOBAL SEARCH
+  // =========================================================
+
+  clearSearch(): void {
+
+    this.searchTerm = '';
+
+    this.onSearchChange();
+
+  }
+
+
+  // =========================================================
+  // APPLY ALL FILTERS
+  // =========================================================
+
+  applyFilters(): void {
+
+    const search =
       this.searchTerm
         .trim()
         .toLowerCase();
 
 
-    const filtered =
-      this.doctors.filter(doctor => {
-
-        const matchesSearch =
-          !term ||
-
-          doctor.name
-            .toLowerCase()
-            .includes(term) ||
-
-          doctor.specialization
-            .toLowerCase()
-            .includes(term) ||
-
-          doctor.phone
-            .includes(term) ||
-
-          doctor.email
-            .toLowerCase()
-            .includes(term);
+    const idFilter =
+      this.columnIdFilter
+        .trim()
+        .toLowerCase();
 
 
-        const matchesSpecialization =
-          this.specializationFilter === 'ALL' ||
-          doctor.specialization ===
-          this.specializationFilter;
+    const nameFilter =
+      this.columnNameFilter
+        .trim()
+        .toLowerCase();
 
 
-        return (
-          matchesSearch &&
-          matchesSpecialization
-        );
-
-      });
+    const phoneFilter =
+      this.columnPhoneFilter
+        .trim()
+        .toLowerCase();
 
 
-    return [...filtered].sort((a, b) => {
-
-      let av: string | number;
-      let bv: string | number;
-
-
-      if (this.sortField === 'id') {
-
-        av = a.id ?? 0;
-        bv = b.id ?? 0;
-
-      }
-
-      else if (
-        this.sortField === 'experience'
-      ) {
-
-        av = a.experience;
-        bv = b.experience;
-
-      }
-
-      else if (
-        this.sortField === 'name'
-      ) {
-
-        av = a.name.toLowerCase();
-        bv = b.name.toLowerCase();
-
-      }
-
-      else {
-
-        av =
-          a.specialization.toLowerCase();
-
-        bv =
-          b.specialization.toLowerCase();
-
-      }
+    const emailFilter =
+      this.columnEmailFilter
+        .trim()
+        .toLowerCase();
 
 
-      const result =
-        av < bv
-          ? -1
-          : av > bv
-            ? 1
-            : 0;
+    const experienceFilter =
+      this.columnExperienceFilter
+        .trim()
+        .toLowerCase();
 
 
-      return this.sortDirection === 'asc'
-        ? result
-        : -result;
+    this.filteredDoctors =
+      this.doctors.filter(
+        doctor => {
 
-    });
+          // =================================================
+          // GLOBAL SEARCH
+          // =================================================
+
+          const matchesSearch =
+
+            !search ||
+
+            String(
+              doctor.id ?? ''
+            )
+              .toLowerCase()
+              .includes(search) ||
+
+            doctor.name
+              .toLowerCase()
+              .includes(search) ||
+
+            doctor.specialization
+              .toLowerCase()
+              .includes(search) ||
+
+            doctor.phone
+              .toLowerCase()
+              .includes(search) ||
+
+            doctor.email
+              .toLowerCase()
+              .includes(search) ||
+
+            String(
+              doctor.experience
+            )
+              .toLowerCase()
+              .includes(search);
+
+
+          // =================================================
+          // ID COLUMN FILTER
+          // =================================================
+
+          const matchesId =
+
+            !idFilter ||
+
+            String(
+              doctor.id ?? ''
+            )
+              .toLowerCase()
+              .includes(idFilter);
+
+
+          // =================================================
+          // NAME COLUMN FILTER
+          // =================================================
+
+          const matchesName =
+
+            !nameFilter ||
+
+            doctor.name
+              .toLowerCase()
+              .includes(nameFilter);
+
+
+          // =================================================
+          // SPECIALIZATION COLUMN FILTER
+          // =================================================
+
+          const matchesColumnSpecialization =
+
+            this.columnSpecializationFilter === 'ALL' ||
+
+            doctor.specialization ===
+              this.columnSpecializationFilter;
+
+
+          // =================================================
+          // PHONE COLUMN FILTER
+          // =================================================
+
+          const matchesPhone =
+
+            !phoneFilter ||
+
+            doctor.phone
+              .toLowerCase()
+              .includes(phoneFilter);
+
+
+          // =================================================
+          // EMAIL COLUMN FILTER
+          // =================================================
+
+          const matchesEmail =
+
+            !emailFilter ||
+
+            doctor.email
+              .toLowerCase()
+              .includes(emailFilter);
+
+
+          // =================================================
+          // EXPERIENCE COLUMN FILTER
+          // =================================================
+
+          const matchesExperience =
+
+            !experienceFilter ||
+
+            String(
+              doctor.experience
+            )
+              .toLowerCase()
+              .includes(experienceFilter);
+
+
+          return (
+
+            matchesSearch &&
+
+            matchesId &&
+
+            matchesName &&
+
+            matchesColumnSpecialization &&
+
+            matchesPhone &&
+
+            matchesEmail &&
+
+            matchesExperience
+
+          );
+
+        }
+      );
+
+
+    this.applySorting();
+
+    this.updatePagination();
 
   }
 
 
-  /* =========================
-     PAGINATION
-     ========================= */
+  // =========================================================
+  // SORT
+  // =========================================================
 
-  get totalPages(): number {
+  sortBy(column: SortColumn): void {
 
-    return Math.max(
-      1,
-      Math.ceil(
-        this.filteredDoctors.length /
-        this.pageSize
-      )
+    if (this.sortColumn === column) {
+
+      this.sortDirection =
+        this.sortDirection === 'asc'
+          ? 'desc'
+          : 'asc';
+
+    } else {
+
+      this.sortColumn = column;
+
+      this.sortDirection = 'asc';
+
+    }
+
+
+    this.applySorting();
+
+    this.updatePagination();
+
+  }
+
+
+  // =========================================================
+  // APPLY SORTING
+  // =========================================================
+
+  private applySorting(): void {
+
+    const direction =
+      this.sortDirection === 'asc'
+        ? 1
+        : -1;
+
+
+    this.filteredDoctors.sort(
+      (a, b) => {
+
+        if (
+          this.sortColumn === 'id' ||
+          this.sortColumn === 'experience'
+        ) {
+
+          const valueA =
+            Number(
+              a[this.sortColumn] ?? 0
+            );
+
+
+          const valueB =
+            Number(
+              b[this.sortColumn] ?? 0
+            );
+
+
+          return (
+            (valueA - valueB) *
+            direction
+          );
+
+        }
+
+
+        const valueA =
+          String(
+            a[this.sortColumn] ?? ''
+          ).toLowerCase();
+
+
+        const valueB =
+          String(
+            b[this.sortColumn] ?? ''
+          ).toLowerCase();
+
+
+        return (
+          valueA.localeCompare(valueB) *
+          direction
+        );
+
+      }
     );
 
   }
 
 
-  get paginatedDoctors(): Doctor[] {
+  // =========================================================
+  // EDIT DOCTOR
+  // =========================================================
+
+  editDoctor(doctor: Doctor): void {
+
+    this.editingId =
+      doctor.id ?? null;
+
+
+    this.doctor = {
+
+      id: doctor.id,
+
+      name: doctor.name,
+
+      specialization:
+        doctor.specialization,
+
+      phone: doctor.phone,
+
+      email: doctor.email,
+
+      experience:
+        doctor.experience,
+
+      deleted:
+        doctor.deleted
+
+    };
+
+
+    this.showDoctorModal = true;
+
+  }
+
+
+  // =========================================================
+  // OPEN ADD DOCTOR MODAL
+  // =========================================================
+
+  openAddDoctorModal(): void {
+
+    this.editingId = null;
+
+    this.selectedDoctor = null;
+
+    this.doctor =
+      this.createEmptyDoctor();
+
+
+    this.showDoctorModal = true;
+
+  }
+
+
+  // =========================================================
+  // CLOSE DOCTOR MODAL
+  // =========================================================
+
+  closeDoctorModal(): void {
+
+    if (this.saving) {
+
+      return;
+
+    }
+
+
+    this.showDoctorModal = false;
+
+    this.editingId = null;
+
+    this.selectedDoctor = null;
+
+    this.doctor =
+      this.createEmptyDoctor();
+
+  }
+
+
+  // =========================================================
+  // SUBMIT DOCTOR
+  // =========================================================
+
+  submitDoctor(): void {
+
+    if (!this.isDoctorValid()) {
+
+      this.showMessage(
+        'Please fill all required fields.',
+        'error'
+      );
+
+      return;
+
+    }
+
+
+    this.saving = true;
+
+
+    const doctorPayload: Doctor = {
+
+      name:
+        this.doctor.name.trim(),
+
+      specialization:
+        this.doctor.specialization.trim(),
+
+      phone:
+        this.doctor.phone.trim(),
+
+      email:
+        this.doctor.email.trim(),
+
+      experience:
+        Number(this.doctor.experience),
+
+      deleted: false
+
+    };
+
+
+    // =======================================================
+    // ADD DOCTOR
+    // =======================================================
+
+    if (this.editingId === null) {
+
+      this.doctorService
+        .createDoctor(doctorPayload)
+        .subscribe({
+
+          next: (createdDoctor: Doctor) => {
+
+            /*
+             * IMPORTANT:
+             * Do not call loadDoctors().
+             *
+             * The backend already returns the newly
+             * created doctor. Add it directly to the
+             * local array.
+             */
+
+            this.doctors = [
+              ...this.doctors,
+              createdDoctor
+            ];
+
+
+            /*
+             * Rebuild specialization filter because
+             * a new specialization may have been added.
+             */
+
+            this.buildSpecializations();
+
+
+            /*
+             * Reapply search, filters, sorting and
+             * pagination without another HTTP GET.
+             */
+
+            this.applyFilters();
+
+
+            this.saving = false;
+
+            this.closeDoctorModal();
+
+
+            this.showMessage(
+              'Doctor added successfully.',
+              'success'
+            );
+
+          },
+
+
+          error: (error: unknown) => {
+
+            console.error(
+              'Error creating doctor:',
+              error
+            );
+
+
+            this.saving = false;
+
+
+            this.showMessage(
+              'Unable to add doctor.',
+              'error'
+            );
+
+          }
+
+        });
+
+
+      return;
+
+    }
+
+
+    // =======================================================
+    // UPDATE DOCTOR
+    // =======================================================
+
+    const doctorId =
+      this.editingId;
+
+
+    this.doctorService
+      .updateDoctor(
+        doctorId,
+        doctorPayload
+      )
+      .subscribe({
+
+        next: (updatedDoctor: Doctor) => {
+
+          /*
+           * Find the updated doctor in the local array.
+           */
+
+          const index =
+            this.doctors.findIndex(
+              existingDoctor =>
+                existingDoctor.id ===
+                updatedDoctor.id
+            );
+
+
+          /*
+           * Replace only that doctor.
+           */
+
+          if (index !== -1) {
+
+            this.doctors[index] =
+              updatedDoctor;
+
+          }
+
+
+          /*
+           * Rebuild specialization list because
+           * specialization may have changed.
+           */
+
+          this.buildSpecializations();
+
+
+          /*
+           * Reapply filters/sorting/pagination
+           * without calling GET again.
+           */
+
+          this.applyFilters();
+
+
+          this.saving = false;
+
+          this.closeDoctorModal();
+
+
+          this.showMessage(
+            'Doctor updated successfully.',
+            'success'
+          );
+
+        },
+
+
+        error: (error: unknown) => {
+
+          console.error(
+            'Error updating doctor:',
+            error
+          );
+
+
+          this.saving = false;
+
+
+          this.showMessage(
+            'Unable to update doctor.',
+            'error'
+          );
+
+        }
+
+      });
+
+  }
+
+
+  // =========================================================
+  // VALIDATE DOCTOR
+  // =========================================================
+
+  private isDoctorValid(): boolean {
+
+    return (
+
+      this.doctor.name.trim().length > 0 &&
+
+      this.doctor.specialization
+        .trim()
+        .length > 0 &&
+
+      this.doctor.phone.trim().length > 0 &&
+
+      this.doctor.email.trim().length > 0 &&
+
+      Number(this.doctor.experience) >= 0
+
+    );
+
+  }
+
+
+  // =========================================================
+  // OPEN DELETE MODAL
+  // =========================================================
+
+  openDeleteModal(doctor: Doctor): void {
+
+    this.selectedDoctor = doctor;
+
+    this.deleteDoctorName =
+      doctor.name;
+
+    this.showDeleteModal = true;
+
+  }
+
+
+  // =========================================================
+  // CLOSE DELETE MODAL
+  // =========================================================
+
+  closeDeleteModal(): void {
+
+    if (this.deleting) {
+
+      return;
+
+    }
+
+
+    this.showDeleteModal = false;
+
+    this.selectedDoctor = null;
+
+    this.deleteDoctorName = '';
+
+  }
+
+
+  // =========================================================
+  // CONFIRM DELETE
+  // =========================================================
+
+  confirmDeleteDoctor(): void {
+
+    if (!this.selectedDoctor?.id) {
+
+      return;
+
+    }
+
+
+    this.deleting = true;
+
+
+    const doctorId =
+      this.selectedDoctor.id;
+
+
+    this.doctorService
+      .deleteDoctor(doctorId)
+      .subscribe({
+
+        next: () => {
+
+          /*
+           * Soft delete succeeded on the backend.
+           *
+           * Remove the doctor from the local active
+           * doctor array instead of performing another
+           * GET request.
+           */
+
+          this.doctors =
+            this.doctors.filter(
+              doctor =>
+                doctor.id !== doctorId
+            );
+
+
+          /*
+           * Rebuild specialization list because
+           * the deleted doctor may have been the
+           * only doctor with that specialization.
+           */
+
+          this.buildSpecializations();
+
+
+          /*
+           * Reapply filters and pagination.
+           */
+
+          this.currentPage = Math.min(
+            this.currentPage,
+            this.totalPages
+          );
+
+
+          this.applyFilters();
+
+
+          this.deleting = false;
+
+          this.showDeleteModal = false;
+
+          this.selectedDoctor = null;
+
+          this.deleteDoctorName = '';
+
+
+          this.showMessage(
+            'Doctor deleted successfully.',
+            'success'
+          );
+
+        },
+
+
+        error: (error: unknown) => {
+
+          console.error(
+            'Error deleting doctor:',
+            error
+          );
+
+
+          this.deleting = false;
+
+
+          this.showMessage(
+            'Unable to delete doctor.',
+            'error'
+          );
+
+        }
+
+      });
+
+  }
+
+
+  // =========================================================
+  // PAGINATION
+  // =========================================================
+
+  updatePagination(): void {
+
+    /*
+     * Make sure current page is still valid
+     * after applying a filter.
+     */
+
+    if (
+      this.currentPage >
+      this.totalPages
+    ) {
+
+      this.currentPage =
+        this.totalPages;
+
+    }
+
 
     const start =
       (this.currentPage - 1) *
       this.pageSize;
 
+
     const end =
       start + this.pageSize;
 
 
-    return this.filteredDoctors.slice(
-      start,
-      end
-    );
+    this.paginatedDoctors =
+      this.filteredDoctors.slice(
+        start,
+        end
+      );
 
   }
 
 
-  get startRecord(): number {
-
-    if (
-      this.filteredDoctors.length === 0
-    ) {
-
-      return 0;
-
-    }
-
-
-    return (
-      (this.currentPage - 1) *
-      this.pageSize
-    ) + 1;
-
-  }
-
-
-  get endRecord(): number {
-
-    return Math.min(
-      this.currentPage *
-      this.pageSize,
-      this.filteredDoctors.length
-    );
-
-  }
-
-
-  get pageNumbers(): number[] {
-
-    return Array.from(
-      {
-        length: this.totalPages
-      },
-      (_, index) => index + 1
-    );
-
-  }
-
+  // =========================================================
+  // CHANGE PAGE
+  // =========================================================
 
   changePage(page: number): void {
 
@@ -350,114 +1185,154 @@ export class Doctors {
 
     this.currentPage = page;
 
+    this.updatePagination();
+
   }
 
+
+  // =========================================================
+  // PREVIOUS PAGE
+  // =========================================================
 
   previousPage(): void {
 
-    this.changePage(
-      this.currentPage - 1
-    );
+    if (this.currentPage > 1) {
+
+      this.currentPage--;
+
+      this.updatePagination();
+
+    }
 
   }
 
+
+  // =========================================================
+  // NEXT PAGE
+  // =========================================================
 
   nextPage(): void {
 
-    this.changePage(
-      this.currentPage + 1
-    );
+    if (
+      this.currentPage <
+      this.totalPages
+    ) {
+
+      this.currentPage++;
+
+      this.updatePagination();
+
+    }
 
   }
 
+
+  // =========================================================
+  // PAGE SIZE
+  // =========================================================
 
   onPageSizeChange(): void {
 
     this.currentPage = 1;
 
+    this.updatePagination();
+
   }
 
 
-  private fixCurrentPage(): void {
+  // =========================================================
+  // TOTAL PAGES
+  // =========================================================
+
+  get totalPages(): number {
+
+    return Math.max(
+
+      1,
+
+      Math.ceil(
+        this.filteredDoctors.length /
+        this.pageSize
+      )
+
+    );
+
+  }
+
+
+  // =========================================================
+  // PAGE NUMBERS
+  // =========================================================
+
+  get pageNumbers(): number[] {
+
+    return Array.from(
+
+      {
+        length: this.totalPages
+      },
+
+      (_, index) =>
+        index + 1
+
+    );
+
+  }
+
+
+  // =========================================================
+  // START RECORD
+  // =========================================================
+
+  get startRecord(): number {
 
     if (
-      this.currentPage >
-      this.totalPages
+      this.filteredDoctors.length === 0
     ) {
 
-      this.currentPage =
-        this.totalPages;
-
-    }
-
-  }
-
-
-  /* =========================
-     SEARCH / FILTER
-     ========================= */
-
-  onSearchChange(): void {
-
-    this.currentPage = 1;
-
-  }
-
-
-  onFilterChange(): void {
-
-    this.currentPage = 1;
-
-  }
-
-
-  /* =========================
-     SORT
-     ========================= */
-
-  sortBy(
-    field:
-      | 'id'
-      | 'name'
-      | 'specialization'
-      | 'experience'
-  ): void {
-
-    if (
-      this.sortField === field
-    ) {
-
-      this.sortDirection =
-        this.sortDirection === 'asc'
-          ? 'desc'
-          : 'asc';
-
-    }
-
-    else {
-
-      this.sortField = field;
-
-      this.sortDirection = 'asc';
+      return 0;
 
     }
 
 
-    this.currentPage = 1;
+    return (
+
+      (this.currentPage - 1) *
+      this.pageSize
+
+    ) + 1;
 
   }
 
+
+  // =========================================================
+  // END RECORD
+  // =========================================================
+
+  get endRecord(): number {
+
+    return Math.min(
+
+      this.currentPage *
+      this.pageSize,
+
+      this.filteredDoctors.length
+
+    );
+
+  }
+
+
+  // =========================================================
+  // SORT ICON
+  // =========================================================
 
   getSortIcon(
-    field:
-      | 'id'
-      | 'name'
-      | 'specialization'
-      | 'experience'
+    column: SortColumn
   ): string {
 
     if (
-      this.sortField !== field
+      this.sortColumn !== column
     ) {
 
       return '↕';
@@ -472,345 +1347,13 @@ export class Doctors {
   }
 
 
-  /* =========================
-     SUBMIT
-     ========================= */
-
-  submitDoctor(): void {
-
-    if (
-      !this.doctor.name ||
-      !this.doctor.specialization ||
-      !this.doctor.phone ||
-      !this.doctor.email
-    ) {
-
-      this.showMessage(
-        'Please fill all required fields.',
-        'error'
-      );
-
-      return;
-
-    }
-
-
-    if (
-      this.editingId !== null
-    ) {
-
-      this.updateDoctor();
-
-    }
-
-    else {
-
-      this.createDoctor();
-
-    }
-
-  }
-
-
-  /* =========================
-     CREATE
-     ========================= */
-
-  private createDoctor(): void {
-
-    this.loading = true;
-
-
-    this.doctorService
-      .createDoctor(this.doctor)
-      .subscribe({
-
-        next: (createdDoctor: Doctor) => {
-
-          this.doctors = [
-            ...this.doctors,
-            createdDoctor
-          ];
-
-
-          this.loading = false;
-
-
-          this.showMessage(
-            'Doctor created successfully.'
-          );
-
-
-          this.resetForm();
-
-
-          this.currentPage =
-            this.totalPages;
-
-        },
-
-
-        error: (error: unknown) => {
-
-          console.error(
-            'Error creating doctor:',
-            error
-          );
-
-
-          this.loading = false;
-
-
-          this.showMessage(
-            'Unable to create doctor.',
-            'error'
-          );
-
-        }
-
-      });
-
-  }
-
-
-  /* =========================
-     EDIT
-     ========================= */
-
-  editDoctor(doctor: Doctor): void {
-
-    this.editingId =
-      doctor.id ?? null;
-
-
-    this.doctor = {
-
-      name: doctor.name,
-
-      specialization:
-        doctor.specialization,
-
-      phone: doctor.phone,
-
-      email: doctor.email,
-
-      experience: doctor.experience
-
-    };
-
-
-    window.scrollTo({
-
-      top: 0,
-
-      behavior: 'smooth'
-
-    });
-
-  }
-
-
-  /* =========================
-     UPDATE
-     ========================= */
-
-  private updateDoctor(): void {
-
-    if (
-      this.editingId === null
-    ) {
-
-      return;
-
-    }
-
-
-    this.loading = true;
-
-
-    this.doctorService
-      .updateDoctor(
-        this.editingId,
-        this.doctor
-      )
-      .subscribe({
-
-        next: (updatedDoctor: Doctor) => {
-
-          this.doctors =
-            this.doctors.map(doctor =>
-
-              doctor.id === this.editingId
-                ? updatedDoctor
-                : doctor
-
-            );
-
-
-          this.loading = false;
-
-
-          this.showMessage(
-            'Doctor updated successfully.'
-          );
-
-
-          this.resetForm();
-
-        },
-
-
-        error: (error: unknown) => {
-
-          console.error(
-            'Error updating doctor:',
-            error
-          );
-
-
-          this.loading = false;
-
-
-          this.showMessage(
-            'Unable to update doctor.',
-            'error'
-          );
-
-        }
-
-      });
-
-  }
-
-
-  /* =========================
-     DELETE
-     ========================= */
-
-  deleteDoctor(
-    id: number | undefined
-  ): void {
-
-    if (
-      id === undefined
-    ) {
-
-      return;
-
-    }
-
-
-    const confirmed =
-      window.confirm(
-        'Are you sure you want to delete this doctor?'
-      );
-
-
-    if (!confirmed) {
-
-      return;
-
-    }
-
-
-    this.loading = true;
-
-
-    this.doctorService
-      .deleteDoctor(id)
-      .subscribe({
-
-        next: () => {
-
-          this.doctors =
-            this.doctors.filter(
-              doctor =>
-                doctor.id !== id
-            );
-
-
-          this.loading = false;
-
-
-          this.fixCurrentPage();
-
-
-          this.showMessage(
-            'Doctor deleted successfully.'
-          );
-
-        },
-
-
-        error: (error: unknown) => {
-
-          console.error(
-            'Error deleting doctor:',
-            error
-          );
-
-
-          this.loading = false;
-
-
-          this.showMessage(
-            'Unable to delete doctor.',
-            'error'
-          );
-
-        }
-
-      });
-
-  }
-
-
-  /* =========================
-     RESET FORM
-     ========================= */
-
-  resetForm(): void {
-
-    this.doctor = {
-
-      name: '',
-
-      specialization: '',
-
-      phone: '',
-
-      email: '',
-
-      experience: 0
-
-    };
-
-
-    this.editingId = null;
-
-  }
-
-
-  /* =========================
-     MANUAL REFRESH
-     ========================= */
-
-  refreshDoctors(): void {
-
-    this.loadDoctors();
-
-  }
-
-
-  /* =========================
-     MESSAGE
-     ========================= */
+  // =========================================================
+  // MESSAGE
+  // =========================================================
 
   private showMessage(
     message: string,
-    type:
-      'success'
-      | 'error' = 'success'
+    type: 'success' | 'error'
   ): void {
 
     this.message = message;
@@ -822,7 +1365,9 @@ export class Doctors {
 
       this.message = '';
 
-    }, 3000);
+      this.messageType = '';
+
+    }, 3500);
 
   }
 

@@ -5,6 +5,7 @@ import {
   RouterLinkActive,
   RouterOutlet
 } from '@angular/router';
+
 import { AuthService } from '../../services/auth.service';
 
 @Component({
@@ -50,7 +51,9 @@ export class Admin {
   }
 
   logout(): void {
+
     this.authService.logout();
+
     this.router.navigate(['/login']);
   }
 }

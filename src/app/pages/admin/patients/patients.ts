@@ -1,61 +1,156 @@
-import { Component, inject } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 
-import {
-  Patient,
-  PatientService
-} from '../../../services/patient.service';
+import { PatientService } from '../../../services/patient.service';
+import { Modal } from '../../../shared/modal/modal';
+
+interface Patient {
+  id?: number;
+  name: string;
+  age: number;
+  gender: string;
+  phone: string;
+  disease: string;
+  address: string;
+}
+
+type SortColumn =
+  | 'id'
+  | 'name'
+  | 'age'
+  | 'gender'
+  | 'phone'
+  | 'disease'
+  | 'address';
+
+type SortDirection = 'asc' | 'desc';
 
 @Component({
   selector: 'app-patients',
-  imports: [FormsModule],
+  imports: [
+    FormsModule,
+    Modal
+  ],
   templateUrl: './patients.html',
   styleUrl: './patients.css'
 })
-export class Patients {
+export class Patients implements OnInit {
 
   private patientService = inject(PatientService);
   private router = inject(Router);
 
-  patient: Patient = {
-    name: '',
-    age: 1,
-    gender: '',
-    phone: '',
-    disease: '',
-    address: ''
-  };
+  // =========================================================
+  // PATIENT DATA
+  // =========================================================
+
+  patients: Patient[] = [];
+  filteredPatients: Patient[] = [];
+  paginatedPatients: Patient[] = [];
+
+  // =========================================================
+  // PATIENT FORM
+  // =========================================================
+
+  patient: Patient = this.createEmptyPatient();
+
+  // =========================================================
+  // EDITING
+  // =========================================================
 
   editingId: number | null = null;
 
+  // =========================================================
+  // LOADING
+  // =========================================================
+
   loading = false;
+  saving = false;
+  deleting = false;
 
-  message = '';
-
-  messageType: 'success' | 'error' = 'success';
-
-  patients: Patient[] = [];
+  // =========================================================
+  // SEARCH
+  // =========================================================
 
   searchTerm = '';
 
+  // =========================================================
+  // GENDER FILTER
+  // =========================================================
+
   genderFilter = 'ALL';
+  genders: string[] = [];
 
-  sortField:
-    | 'id'
-    | 'name'
-    | 'age'
-    | 'gender' = 'id';
+  // =========================================================
+  // COLUMN FILTERS
+  // =========================================================
 
-  sortDirection: 'asc' | 'desc' = 'asc';
+  columnIdFilter = '';
+  columnNameFilter = '';
+  columnAgeFilter = '';
+  columnGenderFilter = 'ALL';
+  columnPhoneFilter = '';
+  columnDiseaseFilter = '';
+  columnAddressFilter = '';
+
+  // =========================================================
+  // SORTING
+  // =========================================================
+
+  sortColumn: SortColumn = 'id';
+  sortDirection: SortDirection = 'desc';
+
+  // =========================================================
+  // PAGINATION
+  // =========================================================
 
   currentPage = 1;
-
   pageSize = 5;
 
-  constructor() {
+  // =========================================================
+  // MODALS
+  // =========================================================
+
+  showPatientModal = false;
+  showDeleteModal = false;
+
+  deletePatientName = '';
+
+  selectedPatient: Patient | null = null;
+
+  // =========================================================
+  // MESSAGE
+  // =========================================================
+
+  message = '';
+  messageType: 'success' | 'error' | '' = '';
+
+  // =========================================================
+  // INIT
+  // =========================================================
+
+  ngOnInit(): void {
     this.loadPatients();
   }
+
+  // =========================================================
+  // EMPTY PATIENT
+  // =========================================================
+
+  private createEmptyPatient(): Patient {
+    return {
+      name: '',
+      age: 0,
+      gender: '',
+      phone: '',
+      disease: '',
+      address: ''
+    };
+  }
+
+  // =========================================================
+  // LOAD PATIENTS
+  // =========================================================
 
   loadPatients(): void {
 
@@ -65,16 +160,23 @@ export class Patients {
 
       next: (data: Patient[]) => {
 
-        this.patients = data;
+        this.patients = data ?? [];
+
+        this.buildGenders();
+
+        this.currentPage = 1;
+
+        this.applyFilters();
 
         this.loading = false;
-
-        this.fixCurrentPage();
       },
 
       error: (error: unknown) => {
 
-        console.error('Error loading patients:', error);
+        console.error(
+          'Error loading patients:',
+          error
+        );
 
         this.loading = false;
 
@@ -83,80 +185,752 @@ export class Patients {
           'error'
         );
       }
+
     });
   }
 
-  get genders(): string[] {
+  // =========================================================
+  // REFRESH
+  // =========================================================
 
-    return [
-      ...new Set(
-        this.patients
-          .map(patient => patient.gender)
-          .filter(value => value)
-      )
-    ].sort();
+  refreshPatients(): void {
+    this.loadPatients();
   }
 
-  get filteredPatients(): Patient[] {
+  // =========================================================
+  // BACK TO DASHBOARD
+  // =========================================================
 
-    const term =
-      this.searchTerm.trim().toLowerCase();
+  backToDashboard(): void {
+    this.router.navigate(['/admin']);
+  }
 
-    const filtered =
-      this.patients.filter(patient => {
+  // =========================================================
+  // BUILD GENDERS
+  // =========================================================
+
+  private buildGenders(): void {
+
+    const values = this.patients
+      .map(patient => patient.gender?.trim())
+      .filter(
+        (value): value is string =>
+          !!value
+      );
+
+    this.genders = Array.from(
+      new Set(values)
+    ).sort();
+  }
+
+  // =========================================================
+  // SEARCH CHANGE
+  // =========================================================
+
+  onSearchChange(): void {
+
+    this.currentPage = 1;
+
+    this.applyFilters();
+  }
+
+  // =========================================================
+  // TOP FILTER CHANGE
+  // =========================================================
+
+  onFilterChange(): void {
+
+    this.currentPage = 1;
+
+    this.applyFilters();
+  }
+
+  // =========================================================
+  // COLUMN FILTER CHANGE
+  // =========================================================
+
+  onColumnFilterChange(): void {
+
+    this.currentPage = 1;
+
+    this.applyFilters();
+  }
+
+  // =========================================================
+  // CLEAR FILTERS
+  // =========================================================
+
+  clearColumnFilters(): void {
+
+    this.columnIdFilter = '';
+    this.columnNameFilter = '';
+    this.columnAgeFilter = '';
+    this.columnGenderFilter = 'ALL';
+    this.columnPhoneFilter = '';
+    this.columnDiseaseFilter = '';
+    this.columnAddressFilter = '';
+
+    this.genderFilter = 'ALL';
+
+    this.currentPage = 1;
+
+    this.applyFilters();
+  }
+
+  // =========================================================
+  // CLEAR SEARCH
+  // =========================================================
+
+  clearSearch(): void {
+
+    this.searchTerm = '';
+
+    this.currentPage = 1;
+
+    this.applyFilters();
+  }
+
+  // =========================================================
+  // APPLY FILTERS
+  // =========================================================
+
+  applyFilters(): void {
+
+    const search =
+      this.searchTerm
+        .trim()
+        .toLowerCase();
+
+    const idFilter =
+      this.columnIdFilter
+        .trim()
+        .toLowerCase();
+
+    const nameFilter =
+      this.columnNameFilter
+        .trim()
+        .toLowerCase();
+
+    const ageFilter =
+      this.columnAgeFilter
+        .trim()
+        .toLowerCase();
+
+    const phoneFilter =
+      this.columnPhoneFilter
+        .trim()
+        .toLowerCase();
+
+    const diseaseFilter =
+      this.columnDiseaseFilter
+        .trim()
+        .toLowerCase();
+
+    const addressFilter =
+      this.columnAddressFilter
+        .trim()
+        .toLowerCase();
+
+    this.filteredPatients = this.patients.filter(
+      patient => {
+
+        const patientId =
+          String(patient.id ?? '').toLowerCase();
+
+        const patientName =
+          String(patient.name ?? '').toLowerCase();
+
+        const patientAge =
+          String(patient.age ?? '').toLowerCase();
+
+        const patientGender =
+          String(patient.gender ?? '').toLowerCase();
+
+        const patientPhone =
+          String(patient.phone ?? '').toLowerCase();
+
+        const patientDisease =
+          String(patient.disease ?? '').toLowerCase();
+
+        const patientAddress =
+          String(patient.address ?? '').toLowerCase();
+
+        // Global search
 
         const matchesSearch =
-          !term ||
-          patient.name.toLowerCase().includes(term) ||
-          patient.phone.includes(term) ||
-          patient.disease.toLowerCase().includes(term) ||
-          patient.address.toLowerCase().includes(term);
+          !search ||
+          patientId.includes(search) ||
+          patientName.includes(search) ||
+          patientAge.includes(search) ||
+          patientGender.includes(search) ||
+          patientPhone.includes(search) ||
+          patientDisease.includes(search) ||
+          patientAddress.includes(search);
+
+        // ID
+
+        const matchesId =
+          !idFilter ||
+          patientId.includes(idFilter);
+
+        // Name
+
+        const matchesName =
+          !nameFilter ||
+          patientName.includes(nameFilter);
+
+        // Age
+
+        const matchesAge =
+          !ageFilter ||
+          patientAge.includes(ageFilter);
+
+        // Gender
 
         const matchesGender =
           this.genderFilter === 'ALL' ||
           patient.gender === this.genderFilter;
 
-        return matchesSearch && matchesGender;
-      });
+        // Column gender
 
-    return [...filtered].sort((a, b) => {
+        const matchesColumnGender =
+          this.columnGenderFilter === 'ALL' ||
+          patient.gender === this.columnGenderFilter;
 
-      let av: string | number;
-      let bv: string | number;
+        // Phone
 
-      if (this.sortField === 'id') {
+        const matchesPhone =
+          !phoneFilter ||
+          patientPhone.includes(phoneFilter);
 
-        av = a.id ?? 0;
-        bv = b.id ?? 0;
+        // Disease
 
-      } else if (this.sortField === 'age') {
+        const matchesDisease =
+          !diseaseFilter ||
+          patientDisease.includes(diseaseFilter);
 
-        av = a.age;
-        bv = b.age;
+        // Address
 
-      } else if (this.sortField === 'name') {
+        const matchesAddress =
+          !addressFilter ||
+          patientAddress.includes(addressFilter);
 
-        av = a.name.toLowerCase();
-        bv = b.name.toLowerCase();
-
-      } else {
-
-        av = a.gender.toLowerCase();
-        bv = b.gender.toLowerCase();
+        return (
+          matchesSearch &&
+          matchesId &&
+          matchesName &&
+          matchesAge &&
+          matchesGender &&
+          matchesColumnGender &&
+          matchesPhone &&
+          matchesDisease &&
+          matchesAddress
+        );
       }
+    );
 
-      const result =
-        av < bv
-          ? -1
-          : av > bv
-            ? 1
-            : 0;
+    this.applySorting();
 
-      return this.sortDirection === 'asc'
-        ? result
-        : -result;
-    });
+    this.updatePagination();
   }
+
+  // =========================================================
+  // SORT
+  // =========================================================
+
+  sortBy(column: SortColumn): void {
+
+    if (this.sortColumn === column) {
+
+      this.sortDirection =
+        this.sortDirection === 'asc'
+          ? 'desc'
+          : 'asc';
+
+    } else {
+
+      this.sortColumn = column;
+
+      this.sortDirection = 'asc';
+    }
+
+    this.applySorting();
+
+    this.updatePagination();
+  }
+
+  // =========================================================
+  // SORT DATA
+  // =========================================================
+
+  private applySorting(): void {
+
+    const direction =
+      this.sortDirection === 'asc'
+        ? 1
+        : -1;
+
+    this.filteredPatients.sort(
+      (a, b) => {
+
+        if (
+          this.sortColumn === 'id' ||
+          this.sortColumn === 'age'
+        ) {
+
+          const valueA =
+            Number(
+              a[this.sortColumn] ?? 0
+            );
+
+          const valueB =
+            Number(
+              b[this.sortColumn] ?? 0
+            );
+
+          return (
+            (valueA - valueB) *
+            direction
+          );
+        }
+
+        const valueA =
+          String(
+            a[this.sortColumn] ?? ''
+          ).toLowerCase();
+
+        const valueB =
+          String(
+            b[this.sortColumn] ?? ''
+          ).toLowerCase();
+
+        return (
+          valueA.localeCompare(valueB) *
+          direction
+        );
+      }
+    );
+  }
+
+  // =========================================================
+  // EDIT PATIENT
+  // =========================================================
+
+  editPatient(patient: Patient): void {
+
+    this.editingId =
+      patient.id ?? null;
+
+    this.selectedPatient = patient;
+
+    this.patient = {
+      id: patient.id,
+      name: patient.name ?? '',
+      age: Number(patient.age ?? 0),
+      gender: patient.gender ?? '',
+      phone: patient.phone ?? '',
+      disease: patient.disease ?? '',
+      address: patient.address ?? ''
+    };
+
+    this.showPatientModal = true;
+  }
+
+  // =========================================================
+  // ADD PATIENT MODAL
+  // =========================================================
+
+  openAddPatientModal(): void {
+
+    this.editingId = null;
+
+    this.selectedPatient = null;
+
+    this.patient =
+      this.createEmptyPatient();
+
+    this.showPatientModal = true;
+  }
+
+  // =========================================================
+  // CLOSE PATIENT MODAL
+  // =========================================================
+
+  closePatientModal(): void {
+
+    if (this.saving) {
+      return;
+    }
+
+    this.showPatientModal = false;
+
+    this.editingId = null;
+
+    this.selectedPatient = null;
+
+    this.patient =
+      this.createEmptyPatient();
+  }
+
+  // =========================================================
+  // SUBMIT PATIENT
+  // =========================================================
+
+  submitPatient(): void {
+
+    if (!this.isPatientValid()) {
+
+      this.showMessage(
+        'Please fill all required fields.',
+        'error'
+      );
+
+      return;
+    }
+
+    this.saving = true;
+
+    const patientPayload: Patient = {
+
+      name:
+        this.patient.name.trim(),
+
+      age:
+        Number(this.patient.age),
+
+      gender:
+        this.patient.gender.trim(),
+
+      phone:
+        this.patient.phone.trim(),
+
+      disease:
+        (this.patient.disease ?? '').trim(),
+
+      address:
+        (this.patient.address ?? '').trim()
+    };
+
+    // =======================================================
+    // CREATE
+    // =======================================================
+
+    if (this.editingId === null) {
+
+      this.patientService
+        .createPatient(patientPayload)
+        .subscribe({
+
+          next: (createdPatient: Patient) => {
+
+            this.patients = [
+              ...this.patients,
+              createdPatient
+            ];
+
+            this.buildGenders();
+
+            this.applyFilters();
+
+            this.saving = false;
+
+            this.closePatientModal();
+
+            this.showMessage(
+              'Patient added successfully.',
+              'success'
+            );
+          },
+
+          error: (error: unknown) => {
+
+            console.error(
+              'Error creating patient:',
+              error
+            );
+
+            this.saving = false;
+
+            this.showMessage(
+              'Unable to add patient.',
+              'error'
+            );
+          }
+
+        });
+
+      return;
+    }
+
+    // =======================================================
+    // UPDATE
+    // =======================================================
+
+    const patientId =
+      this.editingId;
+
+    this.patientService
+      .updatePatient(
+        patientId,
+        patientPayload
+      )
+      .subscribe({
+
+        next: (updatedPatient: Patient) => {
+
+          const index =
+            this.patients.findIndex(
+              existingPatient =>
+                existingPatient.id ===
+                updatedPatient.id
+            );
+
+          if (index !== -1) {
+
+            this.patients[index] =
+              updatedPatient;
+          }
+
+          this.buildGenders();
+
+          this.applyFilters();
+
+          this.saving = false;
+
+          this.closePatientModal();
+
+          this.showMessage(
+            'Patient updated successfully.',
+            'success'
+          );
+        },
+
+        error: (error: unknown) => {
+
+          console.error(
+            'Error updating patient:',
+            error
+          );
+
+          this.saving = false;
+
+          this.showMessage(
+            'Unable to update patient.',
+            'error'
+          );
+        }
+
+      });
+  }
+
+  // =========================================================
+  // VALIDATION
+  // =========================================================
+
+  private isPatientValid(): boolean {
+
+    return (
+
+      this.patient.name.trim().length > 0 &&
+
+      Number(this.patient.age) > 0 &&
+
+      this.patient.gender.trim().length > 0 &&
+
+      this.patient.phone.trim().length > 0
+
+    );
+  }
+
+  // =========================================================
+  // OPEN DELETE MODAL
+  // =========================================================
+
+  openDeleteModal(patient: Patient): void {
+
+    this.selectedPatient = patient;
+
+    this.deletePatientName =
+      patient.name;
+
+    this.showDeleteModal = true;
+  }
+
+  // =========================================================
+  // CLOSE DELETE MODAL
+  // =========================================================
+
+  closeDeleteModal(): void {
+
+    if (this.deleting) {
+      return;
+    }
+
+    this.showDeleteModal = false;
+
+    this.selectedPatient = null;
+
+    this.deletePatientName = '';
+  }
+
+  // =========================================================
+  // CONFIRM DELETE
+  // =========================================================
+
+  confirmDeletePatient(): void {
+
+    if (
+      !this.selectedPatient ||
+      this.selectedPatient.id === undefined
+    ) {
+      return;
+    }
+
+    this.deleting = true;
+
+    const patientId =
+      this.selectedPatient.id;
+
+    this.patientService
+      .deletePatient(patientId)
+      .subscribe({
+
+        next: () => {
+
+          this.patients =
+            this.patients.filter(
+              patient =>
+                patient.id !== patientId
+            );
+
+          this.buildGenders();
+
+          this.applyFilters();
+
+          this.deleting = false;
+
+          this.showDeleteModal = false;
+
+          this.selectedPatient = null;
+
+          this.deletePatientName = '';
+
+          this.showMessage(
+            'Patient deleted successfully.',
+            'success'
+          );
+        },
+
+        error: (error: unknown) => {
+
+          console.error(
+            'Error deleting patient:',
+            error
+          );
+
+          this.deleting = false;
+
+          this.showMessage(
+            'Unable to delete patient.',
+            'error'
+          );
+        }
+
+      });
+  }
+
+  // =========================================================
+  // PAGINATION
+  // =========================================================
+
+  updatePagination(): void {
+
+    if (
+      this.currentPage >
+      this.totalPages
+    ) {
+
+      this.currentPage =
+        this.totalPages;
+    }
+
+    const start =
+      (this.currentPage - 1) *
+      this.pageSize;
+
+    const end =
+      start + this.pageSize;
+
+    this.paginatedPatients =
+      this.filteredPatients.slice(
+        start,
+        end
+      );
+  }
+
+  // =========================================================
+  // CHANGE PAGE
+  // =========================================================
+
+  changePage(page: number): void {
+
+    if (
+      page < 1 ||
+      page > this.totalPages
+    ) {
+      return;
+    }
+
+    this.currentPage = page;
+
+    this.updatePagination();
+  }
+
+  // =========================================================
+  // PREVIOUS PAGE
+  // =========================================================
+
+  previousPage(): void {
+
+    if (this.currentPage > 1) {
+
+      this.currentPage--;
+
+      this.updatePagination();
+    }
+  }
+
+  // =========================================================
+  // NEXT PAGE
+  // =========================================================
+
+  nextPage(): void {
+
+    if (
+      this.currentPage <
+      this.totalPages
+    ) {
+
+      this.currentPage++;
+
+      this.updatePagination();
+    }
+  }
+
+  // =========================================================
+  // PAGE SIZE
+  // =========================================================
+
+  onPageSizeChange(): void {
+
+    this.currentPage = 1;
+
+    this.updatePagination();
+  }
+
+  // =========================================================
+  // TOTAL PAGES
+  // =========================================================
 
   get totalPages(): number {
 
@@ -169,24 +943,30 @@ export class Patients {
     );
   }
 
-  get paginatedPatients(): Patient[] {
+  // =========================================================
+  // PAGE NUMBERS
+  // =========================================================
 
-    const start =
-      (this.currentPage - 1) *
-      this.pageSize;
+  get pageNumbers(): number[] {
 
-    const end =
-      start + this.pageSize;
-
-    return this.filteredPatients.slice(
-      start,
-      end
+    return Array.from(
+      {
+        length: this.totalPages
+      },
+      (_, index) =>
+        index + 1
     );
   }
 
+  // =========================================================
+  // START RECORD
+  // =========================================================
+
   get startRecord(): number {
 
-    if (this.filteredPatients.length === 0) {
+    if (
+      this.filteredPatients.length === 0
+    ) {
       return 0;
     }
 
@@ -196,108 +976,30 @@ export class Patients {
     ) + 1;
   }
 
+  // =========================================================
+  // END RECORD
+  // =========================================================
+
   get endRecord(): number {
 
     return Math.min(
-      this.currentPage * this.pageSize,
+      this.currentPage *
+      this.pageSize,
       this.filteredPatients.length
     );
   }
 
-  get pageNumbers(): number[] {
-
-    return Array.from(
-      { length: this.totalPages },
-      (_, index) => index + 1
-    );
-  }
-
-  changePage(page: number): void {
-
-    if (
-      page < 1 ||
-      page > this.totalPages
-    ) {
-      return;
-    }
-
-    this.currentPage = page;
-  }
-
-  previousPage(): void {
-
-    this.changePage(
-      this.currentPage - 1
-    );
-  }
-
-  nextPage(): void {
-
-    this.changePage(
-      this.currentPage + 1
-    );
-  }
-
-  onPageSizeChange(): void {
-
-    this.currentPage = 1;
-  }
-
-  private fixCurrentPage(): void {
-
-    if (
-      this.currentPage >
-      this.totalPages
-    ) {
-      this.currentPage =
-        this.totalPages;
-    }
-  }
-
-  onSearchChange(): void {
-
-    this.currentPage = 1;
-  }
-
-  onFilterChange(): void {
-
-    this.currentPage = 1;
-  }
-
-  sortBy(
-    field:
-      | 'id'
-      | 'name'
-      | 'age'
-      | 'gender'
-  ): void {
-
-    if (this.sortField === field) {
-
-      this.sortDirection =
-        this.sortDirection === 'asc'
-          ? 'desc'
-          : 'asc';
-
-    } else {
-
-      this.sortField = field;
-
-      this.sortDirection = 'asc';
-    }
-
-    this.currentPage = 1;
-  }
+  // =========================================================
+  // SORT ICON
+  // =========================================================
 
   getSortIcon(
-    field:
-      | 'id'
-      | 'name'
-      | 'age'
-      | 'gender'
+    column: SortColumn
   ): string {
 
-    if (this.sortField !== field) {
+    if (
+      this.sortColumn !== column
+    ) {
       return '↕';
     }
 
@@ -306,244 +1008,13 @@ export class Patients {
       : '↓';
   }
 
-  submitPatient(): void {
-
-    if (
-      !this.patient.name ||
-      !this.patient.gender ||
-      !this.patient.phone ||
-      !this.patient.disease ||
-      !this.patient.address
-    ) {
-
-      this.showMessage(
-        'Please fill all required fields.',
-        'error'
-      );
-
-      return;
-    }
-
-    if (this.editingId !== null) {
-
-      this.updatePatient();
-
-    } else {
-
-      this.createPatient();
-    }
-  }
-
-  private createPatient(): void {
-
-    this.loading = true;
-
-    this.patientService
-      .createPatient(this.patient)
-      .subscribe({
-
-        next: (createdPatient: Patient) => {
-
-          this.patients = [
-            ...this.patients,
-            createdPatient
-          ];
-
-          this.loading = false;
-
-          this.showMessage(
-            'Patient created successfully.'
-          );
-
-          this.resetForm();
-
-          this.currentPage =
-            this.totalPages;
-        },
-
-        error: (error: unknown) => {
-
-          console.error(
-            'Error creating patient:',
-            error
-          );
-
-          this.loading = false;
-
-          this.showMessage(
-            'Unable to create patient.',
-            'error'
-          );
-        }
-      });
-  }
-
-  editPatient(patient: Patient): void {
-
-    this.editingId =
-      patient.id ?? null;
-
-    this.patient = {
-
-      name: patient.name,
-
-      age: patient.age,
-
-      gender: patient.gender,
-
-      phone: patient.phone,
-
-      disease: patient.disease,
-
-      address: patient.address
-    };
-
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth'
-    });
-  }
-
-  private updatePatient(): void {
-
-    if (this.editingId === null) {
-      return;
-    }
-
-    this.loading = true;
-
-    this.patientService
-      .updatePatient(
-        this.editingId,
-        this.patient
-      )
-      .subscribe({
-
-        next: (updatedPatient: Patient) => {
-
-          this.patients =
-            this.patients.map(patient =>
-              patient.id === this.editingId
-                ? updatedPatient
-                : patient
-            );
-
-          this.loading = false;
-
-          this.showMessage(
-            'Patient updated successfully.'
-          );
-
-          this.resetForm();
-        },
-
-        error: (error: unknown) => {
-
-          console.error(
-            'Error updating patient:',
-            error
-          );
-
-          this.loading = false;
-
-          this.showMessage(
-            'Unable to update patient.',
-            'error'
-          );
-        }
-      });
-  }
-
-  deletePatient(
-    id: number | undefined
-  ): void {
-
-    if (id === undefined) {
-      return;
-    }
-
-    const confirmed =
-      window.confirm(
-        'Are you sure you want to delete this patient?'
-      );
-
-    if (!confirmed) {
-      return;
-    }
-
-    this.loading = true;
-
-    this.patientService
-      .deletePatient(id)
-      .subscribe({
-
-        next: () => {
-
-          this.patients =
-            this.patients.filter(
-              patient =>
-                patient.id !== id
-            );
-
-          this.loading = false;
-
-          this.fixCurrentPage();
-
-          this.showMessage(
-            'Patient deleted successfully.'
-          );
-        },
-
-        error: (error: unknown) => {
-
-          console.error(
-            'Error deleting patient:',
-            error
-          );
-
-          this.loading = false;
-
-          this.showMessage(
-            'Unable to delete patient.',
-            'error'
-          );
-        }
-      });
-  }
-
-  resetForm(): void {
-
-    this.patient = {
-
-      name: '',
-
-      age: 1,
-
-      gender: '',
-
-      phone: '',
-
-      disease: '',
-
-      address: ''
-    };
-
-    this.editingId = null;
-  }
-
-  refreshPatients(): void {
-
-    this.loadPatients();
-  }
-
-  backToDashboard(): void {
-
-    this.router.navigate(['/admin']);
-  }
+  // =========================================================
+  // MESSAGE
+  // =========================================================
 
   private showMessage(
     message: string,
-    type: 'success' | 'error' = 'success'
+    type: 'success' | 'error'
   ): void {
 
     this.message = message;
@@ -554,6 +1025,8 @@ export class Patients {
 
       this.message = '';
 
-    }, 3000);
+      this.messageType = '';
+
+    }, 3500);
   }
 }

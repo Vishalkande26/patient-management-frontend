@@ -1,11 +1,12 @@
 <div class="admin-layout">
 
-  <!-- SIDEBAR -->
-  <aside class="sidebar">
+  <!-- TOP NAVIGATION -->
+  <header class="top-navigation">
 
-    <div class="brand">
+    <!-- BRAND -->
+    <div class="brand-section">
 
-      <div class="brand-icon">
+      <div class="brand-logo">
         PM
       </div>
 
@@ -17,63 +18,83 @@
     </div>
 
 
-    <nav class="sidebar-nav">
+    <!-- NAVIGATION -->
+    <nav class="main-navigation">
 
       <a
         routerLink="/admin"
         routerLinkActive="active"
         [routerLinkActiveOptions]="{ exact: true }"
-      >
+        class="nav-item">
+
         <span class="nav-icon">⌂</span>
         <span>Dashboard</span>
+
       </a>
 
 
       <a
         routerLink="/admin/doctors"
         routerLinkActive="active"
-      >
+        class="nav-item">
+
         <span class="nav-icon">D</span>
-        <span>Manage Doctors</span>
+        <span>Doctors</span>
+
       </a>
 
 
       <a
         routerLink="/admin/patients"
         routerLinkActive="active"
-      >
+        class="nav-item">
+
         <span class="nav-icon">P</span>
-        <span>Manage Patients</span>
+        <span>Patients</span>
+
       </a>
 
 
       <a
         routerLink="/admin/users"
         routerLinkActive="active"
-      >
+        class="nav-item">
+
         <span class="nav-icon">U</span>
-        <span>Manage Users</span>
+        <span>Users</span>
+
       </a>
 
 
       <a
         routerLink="/admin/appointments"
         routerLinkActive="active"
-      >
+        class="nav-item">
+
         <span class="nav-icon">A</span>
-        <span>Manage Appointments</span>
+        <span>Appointments</span>
+
       </a>
 
     </nav>
 
 
-    <div class="sidebar-footer">
+    <!-- USER SECTION -->
+    <div class="user-section">
 
-      <div class="admin-user">
+      <div class="user-info">
 
-        <strong>{{ username }}</strong>
+        <div class="user-avatar">
+          {{ username.charAt(0).toUpperCase() }}
+        </div>
 
-        <span>ADMIN</span>
+        <div class="user-details">
+
+          <strong>{{ username }}</strong>
+
+          <span>ADMIN</span>
+
+        </div>
 
       </div>
 
@@ -81,25 +102,26 @@
       <button
         type="button"
         class="logout-button"
-        (click)="logout()"
-      >
+        (click)="logout()">
+
         Logout
+
       </button>
 
     </div>
 
-  </aside>
+  </header>
 
 
-  <!-- MAIN AREA -->
-  <section class="main-area">
+  <!-- PAGE AREA -->
+  <section class="page-area">
 
-    <!-- TOP NAVBAR -->
-    <header class="top-nav">
+    <!-- PAGE HEADER -->
+    <header class="page-header">
 
-      <div class="page-heading">
+      <div>
 
-        <span class="eyebrow">
+        <span class="page-eyebrow">
           ADMIN PANEL
         </span>
 
@@ -110,16 +132,17 @@
       </div>
 
 
-      <div class="top-user">
+      <div class="welcome-message">
 
-        Welcome, {{ username }}
+        Welcome,
+        <strong>{{ username }}</strong>
 
       </div>
 
     </header>
 
 
-    <!-- PAGE CONTENT -->
+    <!-- CHILD PAGE -->
     <main class="content-area">
 
       <router-outlet></router-outlet>

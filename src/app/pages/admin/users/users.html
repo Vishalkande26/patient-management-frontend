@@ -1,5 +1,9 @@
 <div class="management-page">
 
+  <!-- =====================================================
+       TOAST MESSAGE
+       ===================================================== -->
+
   @if (showPopup) {
 
     <div
@@ -7,10 +11,27 @@
       [class.success]="popupType === 'success'"
       [class.error]="popupType === 'error'">
 
-      {{ popupMessage }}
+      <div class="toast-content">
+
+        <span class="toast-icon">
+
+          @if (popupType === 'success') {
+            ✓
+          } @else {
+            !
+          }
+
+        </span>
+
+        <span>
+          {{ popupMessage }}
+        </span>
+
+      </div>
 
       <button
         type="button"
+        class="toast-close"
         (click)="showPopup = false">
 
         ×
@@ -22,65 +43,150 @@
   }
 
 
-  <section class="form-card">
+  <!-- =====================================================
+       PAGE HEADER
+       ===================================================== -->
 
-    <span>USER MANAGEMENT</span>
+  <section class="page-header">
 
-    <h2>
-      {{ editingId === null
-          ? 'Add User'
-          : 'Update User' }}
-    </h2>
+    <div class="header-content">
+
+      <div>
+
+        <div class="page-label">
+          USER MANAGEMENT
+        </div>
+
+        <h1>
+          Manage Users
+        </h1>
+
+        <p>
+          Create, update and manage system users and their roles.
+        </p>
+
+      </div>
 
 
-    <div class="form-grid">
+      <div class="header-actions">
 
-      <div class="form-group">
+        <button
+          type="button"
+          class="refresh-button"
+          (click)="refreshUsers()"
+          [disabled]="loading">
 
-        <label>Username</label>
+          <span class="button-icon">
+            ↻
+          </span>
+
+          Refresh
+
+        </button>
+
+
+        <button
+          type="button"
+          class="add-button"
+          (click)="openAddUserModal()">
+
+          <span class="button-icon">
+            +
+          </span>
+
+          Add User
+
+        </button>
+
+      </div>
+
+    </div>
+
+  </section>
+
+
+  <!-- =====================================================
+       USER LIST
+       ===================================================== -->
+
+  <section class="list-section">
+
+    <div class="list-header">
+
+      <div class="title-row">
+
+        <div class="section-icon">
+          U
+        </div>
+
+        <div>
+
+          <h2>
+            Users
+          </h2>
+
+          <span class="record-count">
+            {{ totalRecords }} records
+          </span>
+
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         FILTER BAR
+         ===================================================== -->
+
+    <div class="filter-bar">
+
+      <!-- SEARCH -->
+
+      <div class="search-box">
+
+        <span class="search-icon">
+          ⌕
+        </span>
 
         <input
           type="text"
-          [(ngModel)]="username"
-          placeholder="Username">
+          [(ngModel)]="searchTerm"
+          (input)="onSearchChange()"
+          placeholder="Search username, email or role...">
+
+        @if (searchTerm) {
+
+          <button
+            type="button"
+            class="clear-search"
+            (click)="clearSearch()">
+
+            ×
+
+          </button>
+
+        }
 
       </div>
 
 
-      <div class="form-group">
+      <!-- ROLE FILTER -->
 
-        <label>Email</label>
-
-        <input
-          type="email"
-          [(ngModel)]="email"
-          placeholder="Email">
-
-      </div>
-
-
-      <div class="form-group">
+      <div class="filter-group">
 
         <label>
-          Password
-          @if (editingId !== null) {
-            <small>(leave blank to keep current)</small>
-          }
+          Role
         </label>
 
-        <input
-          type="password"
-          [(ngModel)]="password"
-          placeholder="Password">
+        <select
+          [(ngModel)]="roleFilter"
+          (change)="onFilterChange()">
 
-      </div>
-
-
-      <div class="form-group">
-
-        <label>Role</label>
-
-        <select [(ngModel)]="role">
+          <option value="ALL">
+            All Roles
+          </option>
 
           @for (
             item of roles;
@@ -97,206 +203,387 @@
 
       </div>
 
-    </div>
 
+      <!-- ROWS -->
 
-    <div class="form-actions">
+      <div class="filter-group rows-filter">
 
-      <button
-        type="button"
-        class="primary-button"
-        (click)="saveUser()">
+        <label>
+          Rows
+        </label>
 
-        {{ editingId === null
-            ? 'Add User'
-            : 'Update User' }}
+        <select
+          [(ngModel)]="pageSize"
+          (change)="onPageSizeChange()">
 
-      </button>
+          @for (
+            size of pageSizeOptions;
+            track size
+          ) {
 
+            <option [ngValue]="size">
+              {{ size }}
+            </option>
 
-      @if (editingId !== null) {
+          }
 
-        <button
-          type="button"
-          class="secondary-button"
-          (click)="clearForm()">
-
-          Cancel
-
-        </button>
-
-      }
-
-    </div>
-
-  </section>
-
-
-  <section class="table-card">
-
-    <div class="list-heading">
-
-      <div>
-
-        <span>RECORDS</span>
-
-        <h2>Users</h2>
+        </select>
 
       </div>
 
+
+      <!-- CLEAR FILTERS -->
+
       <button
         type="button"
-        class="refresh-button"
-        (click)="loadUsers()">
+        class="clear-filters-button"
+        (click)="clearAllFilters()">
 
-        Refresh
+        Clear filters
 
       </button>
 
     </div>
 
 
-    <div class="filters">
-
-      <input
-        type="text"
-        [(ngModel)]="searchTerm"
-        placeholder="Search username or email">
-
-
-      <select [(ngModel)]="roleFilter">
-
-        <option value="ALL">
-          All Roles
-        </option>
-
-        @for (
-          item of roles;
-          track item
-        ) {
-
-          <option [value]="item">
-            {{ item }}
-          </option>
-
-        }
-
-      </select>
-
-    </div>
-
+    <!-- =====================================================
+         LOADING
+         ===================================================== -->
 
     @if (loading) {
 
-      <div class="empty">
-        Loading users...
+      <div class="loading-state">
+
+        <div class="loading-spinner"></div>
+
+        <p>
+          Loading users...
+        </p>
+
       </div>
 
-    } @else if (filteredUsers.length === 0) {
+    }
 
-      <div class="empty">
-        No users found.
+
+    <!-- =====================================================
+         EMPTY
+         ===================================================== -->
+
+    @else if (filteredUsers.length === 0) {
+
+      <div class="empty-state">
+
+        <div class="empty-icon">
+          U
+        </div>
+
+        <h3>
+          No users found
+        </h3>
+
+        <p>
+          Try changing your search or filter settings.
+        </p>
+
+        <button
+          type="button"
+          class="empty-button"
+          (click)="clearAllFilters()">
+
+          Clear filters
+
+        </button>
+
       </div>
 
-    } @else {
+    }
 
-      <div class="table-wrapper">
+
+    <!-- =====================================================
+         TABLE
+         ===================================================== -->
+
+    @else {
+
+      <div class="table-container">
 
         <table>
 
           <thead>
 
+            <!-- MAIN HEADER -->
+
             <tr>
 
               <th>
+
                 <button
+                  type="button"
                   class="sort-button"
                   (click)="sortBy('id')">
 
-                  ID
+                  <span>
+                    ID
+                  </span>
+
+                  <span class="sort-icon">
+                    {{ getSortIcon('id') }}
+                  </span>
 
                 </button>
+
               </th>
 
+
               <th>
+
                 <button
+                  type="button"
                   class="sort-button"
                   (click)="sortBy('username')">
 
-                  Username
+                  <span>
+                    Username
+                  </span>
+
+                  <span class="sort-icon">
+                    {{ getSortIcon('username') }}
+                  </span>
 
                 </button>
+
               </th>
 
+
               <th>
+
                 <button
+                  type="button"
                   class="sort-button"
                   (click)="sortBy('email')">
 
-                  Email
+                  <span>
+                    Email
+                  </span>
+
+                  <span class="sort-icon">
+                    {{ getSortIcon('email') }}
+                  </span>
 
                 </button>
+
               </th>
 
+
               <th>
+
                 <button
+                  type="button"
                   class="sort-button"
                   (click)="sortBy('role')">
 
-                  Role
+                  <span>
+                    Role
+                  </span>
+
+                  <span class="sort-icon">
+                    {{ getSortIcon('role') }}
+                  </span>
 
                 </button>
+
               </th>
 
-              <th>Actions</th>
+
+              <th>
+                Actions
+              </th>
+
+            </tr>
+
+
+            <!-- COLUMN FILTERS -->
+
+            <tr class="column-filter-row">
+
+              <th>
+
+                <span class="column-filter-placeholder">
+                  ID
+                </span>
+
+              </th>
+
+
+              <th>
+
+                <input
+                  type="text"
+                  class="column-filter-input"
+                  [(ngModel)]="usernameFilter"
+                  (input)="onFilterChange()"
+                  placeholder="Filter username">
+
+              </th>
+
+
+              <th>
+
+                <input
+                  type="text"
+                  class="column-filter-input"
+                  [(ngModel)]="emailFilter"
+                  (input)="onFilterChange()"
+                  placeholder="Filter email">
+
+              </th>
+
+
+              <th>
+
+                <input
+                  type="text"
+                  class="column-filter-input"
+                  [(ngModel)]="roleColumnFilter"
+                  (input)="onFilterChange()"
+                  placeholder="Filter role">
+
+              </th>
+
+
+              <th>
+
+                <button
+                  type="button"
+                  class="column-clear-button"
+                  (click)="clearColumnFilters()">
+
+                  Clear
+
+                </button>
+
+              </th>
 
             </tr>
 
           </thead>
 
 
+          <!-- TABLE BODY -->
+
           <tbody>
 
             @for (
-              user of filteredUsers;
+              user of paginatedUsers;
               track user.id
             ) {
 
               <tr>
 
-                <td>{{ user.id }}</td>
-
-                <td>{{ user.username }}</td>
-
-                <td>{{ user.email }}</td>
+                <!-- ID -->
 
                 <td>
 
-                  <span class="role-badge">
-                    {{ user.role }}
+                  <span class="user-id">
+                    #{{ user.id }}
                   </span>
 
                 </td>
 
-                <td class="actions">
 
-                  <button
-                    type="button"
-                    class="edit-button"
-                    (click)="editUser(user)">
+                <!-- USERNAME -->
 
-                    Edit
+                <td>
 
-                  </button>
+                  <div class="user-cell">
 
-                  <button
-                    type="button"
-                    class="delete-button"
-                    (click)="deleteUser(user.id)">
+                    <div class="user-avatar">
 
-                    Delete
+                      {{ user.username.charAt(0).toUpperCase() }}
 
-                  </button>
+                    </div>
+
+                    <div class="user-info">
+
+                      <strong>
+                        {{ user.username }}
+                      </strong>
+
+                      <span>
+                        System user
+                      </span>
+
+                    </div>
+
+                  </div>
+
+                </td>
+
+
+                <!-- EMAIL -->
+
+                <td>
+
+                  <span class="email-text">
+                    {{ user.email }}
+                  </span>
+
+                </td>
+
+
+                <!-- ROLE -->
+
+                <td>
+
+                  <span
+                    class="role-badge"
+                    [class.admin]="user.role === 'ADMIN'"
+                    [class.doctor]="user.role === 'DOCTOR'"
+                    [class.patient]="user.role === 'PATIENT'">
+
+                    <span class="role-dot"></span>
+
+                    {{ user.role }}
+
+                  </span>
+
+                </td>
+
+
+                <!-- ACTIONS -->
+
+                <td>
+
+                  <div class="actions">
+
+                    <button
+                      type="button"
+                      class="action-button edit-button"
+                      (click)="openEditUserModal(user)">
+
+                      <span>
+                        ✎
+                      </span>
+
+                      Edit
+
+                    </button>
+
+
+                    <button
+                      type="button"
+                      class="action-button delete-button"
+                      (click)="openDeleteModal(user)">
+
+                      <span>
+                        ×
+                      </span>
+
+                      Delete
+
+                    </button>
+
+                  </div>
 
                 </td>
 
@@ -310,8 +597,420 @@
 
       </div>
 
+
+      <!-- =====================================================
+           PAGINATION
+           ===================================================== -->
+
+      <div class="pagination">
+
+        <div class="pagination-info">
+
+          Showing
+
+          <strong>
+            {{ startRecord }}
+          </strong>
+
+          -
+
+          <strong>
+            {{ endRecord }}
+          </strong>
+
+          of
+
+          <strong>
+            {{ totalRecords }}
+          </strong>
+
+        </div>
+
+
+        <div class="pagination-controls">
+
+          <button
+            type="button"
+            class="page-button"
+            [disabled]="currentPage === 1"
+            (click)="previousPage()">
+
+            ‹
+
+          </button>
+
+
+          @for (
+            page of pages;
+            track page
+          ) {
+
+            <button
+              type="button"
+              class="page-button"
+              [class.active]="currentPage === page"
+              (click)="goToPage(page)">
+
+              {{ page }}
+
+            </button>
+
+          }
+
+
+          <button
+            type="button"
+            class="page-button"
+            [disabled]="currentPage === totalPages"
+            (click)="nextPage()">
+
+            ›
+
+          </button>
+
+        </div>
+
+      </div>
+
     }
 
   </section>
+
+
+  <!-- =====================================================
+       ADD / EDIT USER MODAL
+       ===================================================== -->
+
+  <app-modal
+    [title]="editingId === null
+      ? 'Add New User'
+      : 'Edit User'"
+
+    [subtitle]="editingId === null
+      ? 'Create a new system user'
+      : 'Update user information'"
+
+    [show]="showUserModal"
+
+    [width]="'650px'"
+
+    (closed)="closeUserModal()">
+
+
+    <form
+      class="user-modal-form"
+      (ngSubmit)="saveUser()">
+
+
+      <!-- FORM INTRO -->
+
+      <div class="form-intro">
+
+        <div class="form-intro-icon">
+          U
+        </div>
+
+        <div>
+
+          <strong>
+
+            {{ editingId === null
+              ? 'User information'
+              : 'Update user information' }}
+
+          </strong>
+
+          <p>
+            Enter the required details below.
+          </p>
+
+        </div>
+
+      </div>
+
+
+      <!-- FORM GRID -->
+
+      <div class="form-grid">
+
+
+        <!-- USERNAME -->
+
+        <div class="form-group">
+
+          <label>
+
+            Username
+
+            <span>
+              *
+            </span>
+
+          </label>
+
+          <input
+            type="text"
+            [(ngModel)]="username"
+            name="username"
+            placeholder="Enter username"
+            autocomplete="off"
+            required>
+
+        </div>
+
+
+        <!-- EMAIL -->
+
+        <div class="form-group">
+
+          <label>
+
+            Email
+
+            <span>
+              *
+            </span>
+
+          </label>
+
+          <input
+            type="email"
+            [(ngModel)]="email"
+            name="email"
+            placeholder="Enter email address"
+            autocomplete="off"
+            required>
+
+        </div>
+
+
+        <!-- PASSWORD -->
+
+        <div class="form-group">
+
+          <label>
+
+            Password
+
+            @if (editingId === null) {
+
+              <span>
+                *
+              </span>
+
+            } @else {
+
+              <small>
+                Leave blank to keep current password
+              </small>
+
+            }
+
+          </label>
+
+          <input
+            type="password"
+            [(ngModel)]="password"
+            name="password"
+            [placeholder]="editingId === null
+              ? 'Enter password'
+              : 'Enter new password'"
+            autocomplete="new-password">
+
+        </div>
+
+
+        <!-- ROLE -->
+
+        <div class="form-group">
+
+          <label>
+
+            Role
+
+            <span>
+              *
+            </span>
+
+          </label>
+
+          <select
+            [(ngModel)]="role"
+            name="role">
+
+            @for (
+              item of roles;
+              track item
+            ) {
+
+              <option [value]="item">
+                {{ item }}
+              </option>
+
+            }
+
+          </select>
+
+        </div>
+
+      </div>
+
+
+      <!-- PASSWORD HINT -->
+
+      <div class="password-hint">
+
+        <span>
+          ⓘ
+        </span>
+
+        Password must contain at least 6 characters.
+
+      </div>
+
+
+      <!-- FORM ACTIONS -->
+
+      <div class="modal-form-actions">
+
+        <button
+          type="button"
+          class="modal-cancel-button"
+          (click)="closeUserModal()"
+          [disabled]="saving">
+
+          Cancel
+
+        </button>
+
+
+        <button
+          type="submit"
+          class="modal-submit-button"
+          [disabled]="saving">
+
+          @if (saving) {
+
+            <span class="button-spinner"></span>
+
+            Saving...
+
+          } @else {
+
+            {{ editingId === null
+              ? 'Create User'
+              : 'Save Changes' }}
+
+          }
+
+        </button>
+
+      </div>
+
+    </form>
+
+  </app-modal>
+
+
+  <!-- =====================================================
+       DELETE CONFIRMATION MODAL
+       ===================================================== -->
+
+  <app-modal
+    title="Delete User"
+
+    subtitle="This action cannot be undone."
+
+    [show]="showDeleteModal"
+
+    [width]="'480px'"
+
+    (closed)="closeDeleteModal()">
+
+
+    <div class="delete-confirmation">
+
+      <!-- DELETE ICON -->
+
+      <div class="delete-icon">
+        !
+      </div>
+
+
+      <h3>
+        Delete this user?
+      </h3>
+
+
+      @if (selectedUser) {
+
+        <p>
+
+          You are about to permanently delete
+
+          <strong>
+            {{ selectedUser.username }}
+          </strong>
+
+          from the system.
+
+        </p>
+
+      }
+
+
+      <!-- WARNING -->
+
+      <div class="delete-warning">
+
+        <span>
+          ⚠
+        </span>
+
+        This operation cannot be reversed.
+
+      </div>
+
+
+      <!-- ACTIONS -->
+
+      <div class="modal-form-actions">
+
+        <button
+          type="button"
+          class="modal-cancel-button"
+          (click)="closeDeleteModal()"
+          [disabled]="deleting">
+
+          Cancel
+
+        </button>
+
+
+        <button
+          type="button"
+          class="modal-delete-button"
+          (click)="confirmDeleteUser()"
+          [disabled]="deleting">
+
+          @if (deleting) {
+
+            <span class="button-spinner"></span>
+
+            Deleting...
+
+          } @else {
+
+            Delete User
+
+          }
+
+        </button>
+
+      </div>
+
+    </div>
+
+  </app-modal>
 
 </div>

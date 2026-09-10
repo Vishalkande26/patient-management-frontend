@@ -1,5 +1,10 @@
 <div class="management-page">
 
+
+  <!-- =====================================================
+       TOAST MESSAGE
+       ===================================================== -->
+
   @if (showPopup) {
 
     <div
@@ -7,10 +12,28 @@
       [class.success]="popupType === 'success'"
       [class.error]="popupType === 'error'">
 
-      {{ popupMessage }}
+      <div class="toast-content">
+
+        <span class="toast-icon">
+
+          @if (popupType === 'success') {
+            ✓
+          } @else {
+            !
+          }
+
+        </span>
+
+        <span>
+          {{ popupMessage }}
+        </span>
+
+      </div>
+
 
       <button
         type="button"
+        class="toast-close"
         (click)="showPopup = false">
 
         ×
@@ -22,27 +45,164 @@
   }
 
 
-  <section class="form-card">
+  <!-- =====================================================
+       PAGE HEADER
+       ===================================================== -->
 
-    <span>APPOINTMENT MANAGEMENT</span>
+  <section class="page-header">
 
-    <h2>
-      {{ editingId === null
-          ? 'Create Appointment'
-          : 'Update Appointment' }}
-    </h2>
+    <div class="header-content">
+
+      <div>
+
+        <div class="page-label">
+          APPOINTMENT MANAGEMENT
+        </div>
+
+        <h1>
+          Manage Appointments
+        </h1>
+
+        <p>
+          Create, update and manage patient appointments.
+        </p>
+
+      </div>
 
 
-    <div class="form-grid">
+      <div class="header-actions">
 
-      <div class="form-group">
+        <button
+          type="button"
+          class="back-button"
+          (click)="backToDashboard()">
 
-        <label>Patient</label>
+          ← Dashboard
 
-        <select [(ngModel)]="patientId">
+        </button>
 
-          <option [ngValue]="null">
-            Select patient
+
+        <button
+          type="button"
+          class="refresh-button"
+          (click)="refreshAppointments()"
+          [disabled]="loading">
+
+          <span class="button-icon">
+            ↻
+          </span>
+
+          Refresh
+
+        </button>
+
+
+        <button
+          type="button"
+          class="add-button"
+          (click)="openAddAppointmentModal()">
+
+          <span class="button-icon">
+            +
+          </span>
+
+          Add Appointment
+
+        </button>
+
+      </div>
+
+    </div>
+
+  </section>
+
+
+  <!-- =====================================================
+       APPOINTMENT LIST
+       ===================================================== -->
+
+  <section class="list-section">
+
+
+    <!-- LIST HEADER -->
+
+    <div class="list-header">
+
+      <div class="title-row">
+
+        <div class="section-icon">
+          A
+        </div>
+
+        <div>
+
+          <h2>
+            Appointments
+          </h2>
+
+          <span class="record-count">
+            {{ totalRecords }} records
+          </span>
+
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <!-- ===================================================
+         FILTER BAR
+         =================================================== -->
+
+    <div class="filter-bar">
+
+
+      <!-- SEARCH -->
+
+      <div class="search-box">
+
+        <span class="search-icon">
+          ⌕
+        </span>
+
+        <input
+          type="text"
+          [(ngModel)]="searchTerm"
+          (input)="onSearchChange()"
+          placeholder="Search patient, doctor, reason, date...">
+
+
+        @if (searchTerm) {
+
+          <button
+            type="button"
+            class="clear-search"
+            (click)="clearSearch()">
+
+            ×
+
+          </button>
+
+        }
+
+      </div>
+
+
+      <!-- PATIENT FILTER -->
+
+      <div class="filter-group">
+
+        <label>
+          Patient
+        </label>
+
+        <select
+          [(ngModel)]="patientFilter"
+          (change)="onFilterChange()">
+
+          <option value="ALL">
+            All Patients
           </option>
 
           @for (
@@ -50,10 +210,10 @@
             track patient.id
           ) {
 
-            <option [ngValue]="patient.id">
+            <option
+              [value]="patient.id">
 
               {{ patient.name }}
-              (ID: {{ patient.id }})
 
             </option>
 
@@ -64,14 +224,20 @@
       </div>
 
 
-      <div class="form-group">
+      <!-- DOCTOR FILTER -->
 
-        <label>Doctor</label>
+      <div class="filter-group">
 
-        <select [(ngModel)]="doctorId">
+        <label>
+          Doctor
+        </label>
 
-          <option [ngValue]="null">
-            Select doctor
+        <select
+          [(ngModel)]="doctorFilter"
+          (change)="onFilterChange()">
+
+          <option value="ALL">
+            All Doctors
           </option>
 
           @for (
@@ -79,11 +245,10 @@
             track doctor.id
           ) {
 
-            <option [ngValue]="doctor.id">
+            <option
+              [value]="doctor.id">
 
               {{ doctor.name }}
-              -
-              {{ doctor.specialization }}
 
             </option>
 
@@ -94,33 +259,21 @@
       </div>
 
 
-      <div class="form-group">
+      <!-- STATUS FILTER -->
 
-        <label>Date</label>
+      <div class="filter-group">
 
-        <input
-          type="date"
-          [(ngModel)]="appointmentDate">
+        <label>
+          Status
+        </label>
 
-      </div>
+        <select
+          [(ngModel)]="statusFilter"
+          (change)="onFilterChange()">
 
-
-      <div class="form-group">
-
-        <label>Time</label>
-
-        <input
-          type="time"
-          [(ngModel)]="appointmentTime">
-
-      </div>
-
-
-      <div class="form-group">
-
-        <label>Status</label>
-
-        <select [(ngModel)]="status">
+          <option value="ALL">
+            All Status
+          </option>
 
           @for (
             item of statuses;
@@ -138,121 +291,110 @@
       </div>
 
 
-      <div class="form-group">
+      <!-- ROWS -->
 
-        <label>Reason</label>
+      <div class="filter-group rows-filter">
 
-        <input
-          type="text"
-          [(ngModel)]="reason"
-          placeholder="Appointment reason">
+        <label>
+          Rows
+        </label>
 
-      </div>
+        <select
+          [(ngModel)]="pageSize"
+          (change)="onPageSizeChange()">
 
-    </div>
+          @for (
+            size of pageSizeOptions;
+            track size
+          ) {
 
+            <option [ngValue]="size">
+              {{ size }}
+            </option>
 
-    <div class="form-actions">
+          }
 
-      <button
-        type="button"
-        class="primary-button"
-        (click)="saveAppointment()">
-
-        {{ editingId === null
-            ? 'Create Appointment'
-            : 'Update Appointment' }}
-
-      </button>
-
-
-      @if (editingId !== null) {
-
-        <button
-          type="button"
-          class="secondary-button"
-          (click)="clearForm()">
-
-          Cancel
-
-        </button>
-
-      }
-
-    </div>
-
-  </section>
-
-
-  <section class="table-card">
-
-    <div class="list-heading">
-
-      <div>
-
-        <span>RECORDS</span>
-
-        <h2>Appointments</h2>
+        </select>
 
       </div>
 
+
+      <!-- CLEAR -->
+
       <button
         type="button"
-        class="refresh-button"
-        (click)="loadAppointments()">
+        class="clear-filters-button"
+        (click)="clearAllFilters()">
 
-        Refresh
+        Clear filters
 
       </button>
 
     </div>
 
 
-    <div class="filters">
-
-      <input
-        type="text"
-        [(ngModel)]="searchTerm"
-        placeholder="Search patient, doctor or reason">
-
-
-      <select [(ngModel)]="statusFilter">
-
-        <option value="ALL">
-          All Status
-        </option>
-
-        @for (
-          item of statuses;
-          track item
-        ) {
-
-          <option [value]="item">
-            {{ item }}
-          </option>
-
-        }
-
-      </select>
-
-    </div>
-
+    <!-- ===================================================
+         LOADING
+         =================================================== -->
 
     @if (loading) {
 
-      <div class="empty">
-        Loading appointments...
+      <div class="loading-state">
+
+        <div class="loading-spinner"></div>
+
+        <p>
+          Loading appointments...
+        </p>
+
       </div>
 
-    } @else if (filteredAppointments.length === 0) {
+    }
 
-      <div class="empty">
-        No appointments found.
+
+    <!-- ===================================================
+         EMPTY
+         =================================================== -->
+
+    @else if (
+      filteredAppointments.length === 0
+    ) {
+
+      <div class="empty-state">
+
+        <div class="empty-icon">
+          A
+        </div>
+
+        <h3>
+          No appointments found
+        </h3>
+
+        <p>
+          Try changing your search or filter settings.
+        </p>
+
+        <button
+          type="button"
+          class="empty-button"
+          (click)="clearAllFilters()">
+
+          Clear filters
+
+        </button>
+
       </div>
 
-    } @else {
+    }
 
-      <div class="table-wrapper">
+
+    <!-- ===================================================
+         TABLE
+         =================================================== -->
+
+    @else {
+
+      <div class="table-container">
 
         <table>
 
@@ -260,105 +402,457 @@
 
             <tr>
 
+              <!-- ID -->
+
               <th>
+
                 <button
+                  type="button"
                   class="sort-button"
                   (click)="sortBy('id')">
 
-                  ID
+                  <span>
+                    ID
+                  </span>
+
+                  <span class="sort-icon">
+                    {{ getSortIcon('id') }}
+                  </span>
 
                 </button>
+
               </th>
 
+
+              <!-- PATIENT -->
+
               <th>
+
                 <button
+                  type="button"
                   class="sort-button"
                   (click)="sortBy('patient')">
 
-                  Patient
+                  <span>
+                    Patient
+                  </span>
+
+                  <span class="sort-icon">
+                    {{ getSortIcon('patient') }}
+                  </span>
 
                 </button>
+
               </th>
 
+
+              <!-- DOCTOR -->
+
               <th>
+
                 <button
+                  type="button"
                   class="sort-button"
                   (click)="sortBy('doctor')">
 
-                  Doctor
+                  <span>
+                    Doctor
+                  </span>
+
+                  <span class="sort-icon">
+                    {{ getSortIcon('doctor') }}
+                  </span>
 
                 </button>
+
               </th>
 
+
+              <!-- DATE -->
+
               <th>
+
                 <button
+                  type="button"
                   class="sort-button"
-                  (click)="sortBy('date')">
+                  (click)="sortBy('appointmentDate')">
 
-                  Date / Time
+                  <span>
+                    Date
+                  </span>
+
+                  <span class="sort-icon">
+                    {{ getSortIcon('appointmentDate') }}
+                  </span>
 
                 </button>
+
               </th>
 
-              <th>Reason</th>
+
+              <!-- TIME -->
 
               <th>
+
                 <button
+                  type="button"
+                  class="sort-button"
+                  (click)="sortBy('appointmentTime')">
+
+                  <span>
+                    Time
+                  </span>
+
+                  <span class="sort-icon">
+                    {{ getSortIcon('appointmentTime') }}
+                  </span>
+
+                </button>
+
+              </th>
+
+
+              <!-- REASON -->
+
+              <th>
+
+                <button
+                  type="button"
+                  class="sort-button"
+                  (click)="sortBy('reason')">
+
+                  <span>
+                    Reason
+                  </span>
+
+                  <span class="sort-icon">
+                    {{ getSortIcon('reason') }}
+                  </span>
+
+                </button>
+
+              </th>
+
+
+              <!-- STATUS -->
+
+              <th>
+
+                <button
+                  type="button"
                   class="sort-button"
                   (click)="sortBy('status')">
 
-                  Status
+                  <span>
+                    Status
+                  </span>
+
+                  <span class="sort-icon">
+                    {{ getSortIcon('status') }}
+                  </span>
 
                 </button>
+
               </th>
 
-              <th>Actions</th>
+
+              <!-- ACTIONS -->
+
+              <th>
+                Actions
+              </th>
+
+            </tr>
+
+
+            <!-- =================================================
+                 COLUMN FILTERS
+                 ================================================= -->
+
+            <tr class="column-filter-row">
+
+              <!-- ID -->
+
+              <th>
+
+                <span class="column-filter-placeholder">
+                  ID
+                </span>
+
+              </th>
+
+
+              <!-- PATIENT -->
+
+              <th>
+
+                <input
+                  type="text"
+                  class="column-filter-input"
+                  [(ngModel)]="patientColumnFilter"
+                  (input)="onFilterChange()"
+                  placeholder="Filter patient">
+
+              </th>
+
+
+              <!-- DOCTOR -->
+
+              <th>
+
+                <input
+                  type="text"
+                  class="column-filter-input"
+                  [(ngModel)]="doctorColumnFilter"
+                  (input)="onFilterChange()"
+                  placeholder="Filter doctor">
+
+              </th>
+
+
+              <!-- DATE -->
+
+              <th>
+
+                <input
+                  type="text"
+                  class="column-filter-input"
+                  [(ngModel)]="dateColumnFilter"
+                  (input)="onFilterChange()"
+                  placeholder="YYYY-MM-DD">
+
+              </th>
+
+
+              <!-- TIME -->
+
+              <th>
+
+                <input
+                  type="text"
+                  class="column-filter-input"
+                  [(ngModel)]="timeColumnFilter"
+                  (input)="onFilterChange()"
+                  placeholder="HH:MM">
+
+              </th>
+
+
+              <!-- REASON -->
+
+              <th>
+
+                <input
+                  type="text"
+                  class="column-filter-input"
+                  [(ngModel)]="reasonColumnFilter"
+                  (input)="onFilterChange()"
+                  placeholder="Filter reason">
+
+              </th>
+
+
+              <!-- STATUS -->
+
+              <th>
+
+                <input
+                  type="text"
+                  class="column-filter-input"
+                  [(ngModel)]="statusColumnFilter"
+                  (input)="onFilterChange()"
+                  placeholder="Filter status">
+
+              </th>
+
+
+              <!-- CLEAR -->
+
+              <th>
+
+                <button
+                  type="button"
+                  class="column-clear-button"
+                  (click)="clearColumnFilters()">
+
+                  Clear
+
+                </button>
+
+              </th>
 
             </tr>
 
           </thead>
 
 
+          <!-- =================================================
+               TABLE BODY
+               ================================================= -->
+
           <tbody>
 
             @for (
-              appointment of filteredAppointments;
+              appointment of paginatedAppointments;
               track appointment.id
             ) {
 
               <tr>
 
-                <td>{{ appointment.id }}</td>
+                <!-- ID -->
 
                 <td>
 
-                  {{ appointment.patientName }}
+                  <span class="appointment-id">
+                    #{{ appointment.id }}
+                  </span>
 
                 </td>
 
+
+                <!-- PATIENT -->
+
                 <td>
 
-                  {{ appointment.doctorName }}
+                  <div class="person-cell">
+
+                    <div class="person-avatar patient-avatar">
+
+                      {{
+                        appointment.patientName
+                          .charAt(0)
+                          .toUpperCase()
+                      }}
+
+                    </div>
+
+                    <div class="person-info">
+
+                      <strong>
+                        {{ appointment.patientName }}
+                      </strong>
+
+                      <span>
+                        ID #{{ appointment.patientId }}
+                      </span>
+
+                      @if (
+                        appointment.patientDisease
+                      ) {
+
+                        <small>
+                          {{ appointment.patientDisease }}
+                        </small>
+
+                      }
+
+                    </div>
+
+                  </div>
 
                 </td>
 
+
+                <!-- DOCTOR -->
+
                 <td>
 
-                  {{ appointment.appointmentDate }}
-                  <br>
-                  {{ appointment.appointmentTime }}
+                  <div class="person-cell">
+
+                    <div class="person-avatar doctor-avatar">
+
+                      {{
+                        appointment.doctorName
+                          .charAt(0)
+                          .toUpperCase()
+                      }}
+
+                    </div>
+
+                    <div class="person-info">
+
+                      <strong>
+                        {{ appointment.doctorName }}
+                      </strong>
+
+                      <span>
+                        ID #{{ appointment.doctorId }}
+                      </span>
+
+                      @if (
+                        appointment.doctorSpecialization
+                      ) {
+
+                        <small>
+                          {{ appointment.doctorSpecialization }}
+                        </small>
+
+                      }
+
+                    </div>
+
+                  </div>
 
                 </td>
 
+
+                <!-- DATE -->
+
                 <td>
 
-                  {{ appointment.reason }}
+                  <span class="date-text">
+                    {{ appointment.appointmentDate }}
+                  </span>
 
                 </td>
 
+
+                <!-- TIME -->
+
                 <td>
 
-                  <span class="status-badge">
+                  <span class="time-badge">
+                    {{ appointment.appointmentTime }}
+                  </span>
+
+                </td>
+
+
+                <!-- REASON -->
+
+                <td>
+
+                  <span
+                    class="reason-text"
+                    [title]="appointment.reason">
+
+                    {{ appointment.reason }}
+
+                  </span>
+
+                </td>
+
+
+                <!-- STATUS -->
+
+                <td>
+
+                  <span
+                    class="status-badge"
+                    [class.scheduled]="
+                      appointment.status === 'SCHEDULED'
+                    "
+                    [class.confirmed]="
+                      appointment.status === 'CONFIRMED'
+                    "
+                    [class.completed]="
+                      appointment.status === 'COMPLETED'
+                    "
+                    [class.cancelled]="
+                      appointment.status === 'CANCELLED'
+                    ">
+
+                    <span class="status-dot"></span>
 
                     {{ appointment.status }}
 
@@ -366,25 +860,49 @@
 
                 </td>
 
-                <td class="actions">
 
-                  <button
-                    type="button"
-                    class="edit-button"
-                    (click)="editAppointment(appointment)">
+                <!-- ACTIONS -->
 
-                    Edit
+                <td>
 
-                  </button>
+                  <div class="actions">
 
-                  <button
-                    type="button"
-                    class="delete-button"
-                    (click)="deleteAppointment(appointment.id)">
+                    <button
+                      type="button"
+                      class="action-button edit-button"
+                      (click)="
+                        openEditAppointmentModal(
+                          appointment
+                        )
+                      ">
 
-                    Delete
+                      <span>
+                        ✎
+                      </span>
 
-                  </button>
+                      Edit
+
+                    </button>
+
+
+                    <button
+                      type="button"
+                      class="action-button delete-button"
+                      (click)="
+                        openDeleteModal(
+                          appointment
+                        )
+                      ">
+
+                      <span>
+                        ×
+                      </span>
+
+                      Delete
+
+                    </button>
+
+                  </div>
 
                 </td>
 
@@ -398,8 +916,513 @@
 
       </div>
 
+
+      <!-- =================================================
+           PAGINATION
+           ================================================= -->
+
+      <div class="pagination">
+
+        <div class="pagination-info">
+
+          Showing
+
+          <strong>
+            {{ startRecord }}
+          </strong>
+
+          -
+
+          <strong>
+            {{ endRecord }}
+          </strong>
+
+          of
+
+          <strong>
+            {{ totalRecords }}
+          </strong>
+
+        </div>
+
+
+        <div class="pagination-controls">
+
+          <button
+            type="button"
+            class="page-button"
+            [disabled]="currentPage === 1"
+            (click)="previousPage()">
+
+            ‹
+
+          </button>
+
+
+          @for (
+            page of pages;
+            track page
+          ) {
+
+            <button
+              type="button"
+              class="page-button"
+              [class.active]="
+                currentPage === page
+              "
+              (click)="goToPage(page)">
+
+              {{ page }}
+
+            </button>
+
+          }
+
+
+          <button
+            type="button"
+            class="page-button"
+            [disabled]="
+              currentPage === totalPages
+            "
+            (click)="nextPage()">
+
+            ›
+
+          </button>
+
+        </div>
+
+      </div>
+
     }
 
   </section>
+
+
+  <!-- =====================================================
+       ADD / EDIT APPOINTMENT MODAL
+       ===================================================== -->
+
+  <app-modal
+
+    [title]="
+      editingId === null
+        ? 'Add New Appointment'
+        : 'Edit Appointment'
+    "
+
+    [subtitle]="
+      editingId === null
+        ? 'Create a new patient appointment'
+        : 'Update appointment information'
+    "
+
+    [show]="showAppointmentModal"
+
+    (closed)="closeAppointmentModal()">
+
+
+    <form
+      class="appointment-modal-form"
+      (ngSubmit)="saveAppointment()">
+
+
+      <!-- FORM INTRO -->
+
+      <div class="form-intro">
+
+        <div class="form-intro-icon">
+          A
+        </div>
+
+        <div>
+
+          <strong>
+
+            {{
+              editingId === null
+                ? 'Appointment information'
+                : 'Update appointment information'
+            }}
+
+          </strong>
+
+          <p>
+            Select the patient, doctor, date and time.
+          </p>
+
+        </div>
+
+      </div>
+
+
+      <!-- FORM GRID -->
+
+      <div class="form-grid">
+
+
+        <!-- PATIENT -->
+
+        <div class="form-group">
+
+          <label>
+            Patient
+            <span>*</span>
+          </label>
+
+          <select
+            [(ngModel)]="patientId"
+            name="patientId"
+            required>
+
+            <option [ngValue]="null">
+              Select patient
+            </option>
+
+            @for (
+              patient of patients;
+              track patient.id
+            ) {
+
+              <option
+                [ngValue]="patient.id">
+
+                {{ patient.name }}
+
+                @if (patient.id) {
+
+                  - #{{ patient.id }}
+
+                }
+
+              </option>
+
+            }
+
+          </select>
+
+        </div>
+
+
+        <!-- DOCTOR -->
+
+        <div class="form-group">
+
+          <label>
+            Doctor
+            <span>*</span>
+          </label>
+
+          <select
+            [(ngModel)]="doctorId"
+            name="doctorId"
+            required>
+
+            <option [ngValue]="null">
+              Select doctor
+            </option>
+
+            @for (
+              doctor of doctors;
+              track doctor.id
+            ) {
+
+              <option
+                [ngValue]="doctor.id">
+
+                {{ doctor.name }}
+
+                @if (doctor.specialization) {
+
+                  -
+                  {{ doctor.specialization }}
+
+                }
+
+              </option>
+
+            }
+
+          </select>
+
+        </div>
+
+
+        <!-- DATE -->
+
+        <div class="form-group">
+
+          <label>
+            Appointment Date
+            <span>*</span>
+          </label>
+
+          <input
+            type="date"
+            [(ngModel)]="appointmentDate"
+            name="appointmentDate"
+            required>
+
+        </div>
+
+
+        <!-- TIME -->
+
+        <div class="form-group">
+
+          <label>
+            Appointment Time
+            <span>*</span>
+          </label>
+
+          <input
+            type="time"
+            [(ngModel)]="appointmentTime"
+            name="appointmentTime"
+            required>
+
+        </div>
+
+
+        <!-- STATUS -->
+
+        <div class="form-group">
+
+          <label>
+            Status
+            <span>*</span>
+          </label>
+
+          <select
+            [(ngModel)]="status"
+            name="status"
+            required>
+
+            @for (
+              item of statuses;
+              track item
+            ) {
+
+              <option [value]="item">
+                {{ item }}
+              </option>
+
+            }
+
+          </select>
+
+        </div>
+
+
+        <!-- REASON -->
+
+        <div class="form-group full-width">
+
+          <label>
+            Reason
+            <span>*</span>
+          </label>
+
+          <textarea
+            [(ngModel)]="reason"
+            name="reason"
+            rows="4"
+            placeholder="Enter appointment reason"
+            required></textarea>
+
+        </div>
+
+      </div>
+
+
+      <!-- APPOINTMENT HINT -->
+
+      <div class="appointment-hint">
+
+        <span>
+          ⓘ
+        </span>
+
+        The same doctor cannot have two appointments
+        at the same date and time.
+
+      </div>
+
+
+      <!-- FORM BUTTONS -->
+
+      <div class="modal-form-actions">
+
+        <button
+          type="button"
+          class="modal-cancel-button"
+          (click)="closeAppointmentModal()"
+          [disabled]="saving">
+
+          Cancel
+
+        </button>
+
+
+        <button
+          type="submit"
+          class="modal-submit-button"
+          [disabled]="saving">
+
+          @if (saving) {
+
+            <span class="button-spinner"></span>
+
+            Saving...
+
+          } @else {
+
+            {{
+              editingId === null
+                ? 'Create Appointment'
+                : 'Save Changes'
+            }}
+
+          }
+
+        </button>
+
+      </div>
+
+    </form>
+
+  </app-modal>
+
+
+  <!-- =====================================================
+       DELETE CONFIRMATION MODAL
+       ===================================================== -->
+
+  <app-modal
+
+    title="Delete Appointment"
+
+    subtitle="This action cannot be undone."
+
+    [show]="showDeleteModal"
+
+    (closed)="closeDeleteModal()">
+
+
+    <div class="delete-confirmation">
+
+
+      <div class="delete-icon">
+        !
+      </div>
+
+
+      <h3>
+        Delete this appointment?
+      </h3>
+
+
+      @if (selectedAppointment) {
+
+        <p>
+
+          You are about to permanently delete the
+          appointment for
+
+          <strong>
+            {{ selectedAppointment.patientName }}
+          </strong>
+
+          with
+
+          <strong>
+            {{ selectedAppointment.doctorName }}
+          </strong>.
+
+        </p>
+
+
+        <div class="appointment-delete-details">
+
+          <div>
+
+            <span>
+              Date
+            </span>
+
+            <strong>
+              {{ selectedAppointment.appointmentDate }}
+            </strong>
+
+          </div>
+
+
+          <div>
+
+            <span>
+              Time
+            </span>
+
+            <strong>
+              {{ selectedAppointment.appointmentTime }}
+            </strong>
+
+          </div>
+
+        </div>
+
+      }
+
+
+      <div class="delete-warning">
+
+        <span>
+          ⚠
+        </span>
+
+        This operation cannot be reversed.
+
+      </div>
+
+
+      <div class="modal-form-actions">
+
+        <button
+          type="button"
+          class="modal-cancel-button"
+          (click)="closeDeleteModal()"
+          [disabled]="deleting">
+
+          Cancel
+
+        </button>
+
+
+        <button
+          type="button"
+          class="modal-delete-button"
+          (click)="confirmDeleteAppointment()"
+          [disabled]="deleting">
+
+          @if (deleting) {
+
+            <span class="button-spinner"></span>
+
+            Deleting...
+
+          } @else {
+
+            Delete Appointment
+
+          }
+
+        </button>
+
+      </div>
+
+    </div>
+
+  </app-modal>
 
 </div>

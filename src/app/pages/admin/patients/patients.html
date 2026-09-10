@@ -1,18 +1,21 @@
 <div class="management-page">
 
   <!-- PAGE HEADER -->
-  <section class="page-header">
 
-    <div class="page-header-text">
+  <div class="page-header">
+
+    <div class="header-content">
 
       <span class="page-label">
         ADMIN MANAGEMENT
       </span>
 
-      <h2>Patients</h2>
+      <h2>
+        Patients
+      </h2>
 
       <p>
-        Create and manage patient information.
+        Create, manage and maintain patient information.
       </p>
 
     </div>
@@ -22,122 +25,924 @@
       <button
         type="button"
         class="back-button"
-        (click)="backToDashboard()">
-
-        ← Back to Dashboard
-
+        (click)="backToDashboard()"
+      >
+        <span class="button-icon">←</span>
+        Back to Dashboard
       </button>
 
       <button
         type="button"
         class="refresh-button"
         (click)="refreshPatients()"
-        [disabled]="loading">
+        [disabled]="loading"
+      >
+        <span class="refresh-icon">↻</span>
+        Refresh
+      </button>
 
-        ↻ Refresh
-
+      <button
+        type="button"
+        class="add-patient-button"
+        (click)="openAddPatientModal()"
+        [disabled]="loading"
+      >
+        <span class="add-icon">+</span>
+        Add Patient
       </button>
 
     </div>
 
-  </section>
+  </div>
 
 
   <!-- MESSAGE -->
+
   @if (message) {
 
     <div
       class="message"
       [class.success]="messageType === 'success'"
-      [class.error]="messageType === 'error'">
+      [class.error]="messageType === 'error'"
+    >
 
-      {{ message }}
+      <span class="message-icon">
+
+        @if (messageType === 'success') {
+          ✓
+        } @else {
+          !
+        }
+
+      </span>
+
+      <span>
+        {{ message }}
+      </span>
 
     </div>
 
   }
 
 
-  <!-- PATIENT FORM -->
-  <section class="form-card">
+  <!-- PATIENT LIST -->
 
-    <div class="section-header">
+  <section class="list-section">
+
+    <!-- LIST HEADER -->
+
+    <div class="list-header">
 
       <div>
 
-        <h3>
-          {{ editingId !== null
-            ? 'Edit Patient'
-            : 'Add Patient' }}
-        </h3>
+        <div class="title-row">
 
-        <p>
-          {{
-            editingId !== null
-              ? 'Update patient details below.'
-              : 'Enter patient details below.'
-          }}
-        </p>
+          <div class="section-icon">
+            P
+          </div>
+
+          <div>
+
+            <h3>
+              Patient List
+            </h3>
+
+            <p>
+              Manage all patients in the system.
+            </p>
+
+          </div>
+
+        </div>
+
+      </div>
+
+      <div class="patient-count">
+
+        <span class="count-number">
+          {{ filteredPatients.length }}
+        </span>
+
+        <span class="count-label">
+          Patients
+        </span>
 
       </div>
 
     </div>
 
 
+    <!-- SEARCH + FILTERS -->
+
+    <div class="filter-bar">
+
+      <!-- SEARCH -->
+
+      <div class="search-box">
+
+        <span class="search-icon">
+          ⌕
+        </span>
+
+        <input
+          type="text"
+          [(ngModel)]="searchTerm"
+          (ngModelChange)="onSearchChange()"
+          placeholder="Search all patients..."
+        />
+
+        @if (searchTerm) {
+
+          <button
+            type="button"
+            class="clear-search"
+            (click)="clearSearch()"
+          >
+            ×
+          </button>
+
+        }
+
+      </div>
+
+
+      <!-- GENDER -->
+
+      <div class="filter-group">
+
+        <label>
+          Gender
+        </label>
+
+        <select
+          [(ngModel)]="genderFilter"
+          (ngModelChange)="onFilterChange()"
+        >
+
+          <option value="ALL">
+            All Genders
+          </option>
+
+          @for (
+            gender of genders;
+            track gender
+          ) {
+
+            <option [value]="gender">
+              {{ gender }}
+            </option>
+
+          }
+
+        </select>
+
+      </div>
+
+
+      <!-- CLEAR -->
+
+      <button
+        type="button"
+        class="clear-filters-button"
+        (click)="clearColumnFilters()"
+      >
+        Clear Filters
+      </button>
+
+
+      <!-- ROWS -->
+
+      <div class="filter-group rows-filter">
+
+        <label>
+          Rows
+        </label>
+
+        <select
+          [(ngModel)]="pageSize"
+          (ngModelChange)="onPageSizeChange()"
+        >
+
+          <option [ngValue]="5">
+            5
+          </option>
+
+          <option [ngValue]="10">
+            10
+          </option>
+
+          <option [ngValue]="20">
+            20
+          </option>
+
+        </select>
+
+      </div>
+
+    </div>
+
+
+    <!-- TABLE -->
+
+    <div class="table-container">
+
+      <table>
+
+        <thead>
+
+          <!-- HEADER ROW -->
+
+          <tr>
+
+            <th
+              class="sortable"
+              (click)="sortBy('id')"
+            >
+
+              <div class="th-content">
+
+                <span>ID</span>
+
+                <span class="sort-icon">
+                  {{ getSortIcon('id') }}
+                </span>
+
+              </div>
+
+            </th>
+
+
+            <th
+              class="sortable"
+              (click)="sortBy('name')"
+            >
+
+              <div class="th-content">
+
+                <span>Patient</span>
+
+                <span class="sort-icon">
+                  {{ getSortIcon('name') }}
+                </span>
+
+              </div>
+
+            </th>
+
+
+            <th
+              class="sortable"
+              (click)="sortBy('age')"
+            >
+
+              <div class="th-content">
+
+                <span>Age</span>
+
+                <span class="sort-icon">
+                  {{ getSortIcon('age') }}
+                </span>
+
+              </div>
+
+            </th>
+
+
+            <th
+              class="sortable"
+              (click)="sortBy('gender')"
+            >
+
+              <div class="th-content">
+
+                <span>Gender</span>
+
+                <span class="sort-icon">
+                  {{ getSortIcon('gender') }}
+                </span>
+
+              </div>
+
+            </th>
+
+
+            <th>
+              Phone
+            </th>
+
+
+            <th
+              class="sortable"
+              (click)="sortBy('disease')"
+            >
+
+              <div class="th-content">
+
+                <span>Disease</span>
+
+                <span class="sort-icon">
+                  {{ getSortIcon('disease') }}
+                </span>
+
+              </div>
+
+            </th>
+
+
+            <th>
+              Address
+            </th>
+
+
+            <th>
+              Actions
+            </th>
+
+          </tr>
+
+
+          <!-- COLUMN FILTERS -->
+
+          <tr class="column-filter-row">
+
+            <th>
+
+              <input
+                type="text"
+                class="column-filter-input"
+                [(ngModel)]="columnIdFilter"
+                (ngModelChange)="onColumnFilterChange()"
+                (click)="$event.stopPropagation()"
+                placeholder="Filter ID"
+              />
+
+            </th>
+
+
+            <th>
+
+              <input
+                type="text"
+                class="column-filter-input"
+                [(ngModel)]="columnNameFilter"
+                (ngModelChange)="onColumnFilterChange()"
+                placeholder="Filter name"
+              />
+
+            </th>
+
+
+            <th>
+
+              <input
+                type="text"
+                class="column-filter-input"
+                [(ngModel)]="columnAgeFilter"
+                (ngModelChange)="onColumnFilterChange()"
+                placeholder="Age"
+              />
+
+            </th>
+
+
+            <th>
+
+              <select
+                class="column-filter-input"
+                [(ngModel)]="columnGenderFilter"
+                (ngModelChange)="onColumnFilterChange()"
+                (click)="$event.stopPropagation()"
+              >
+
+                <option value="ALL">
+                  All
+                </option>
+
+                @for (
+                  gender of genders;
+                  track gender
+                ) {
+
+                  <option [value]="gender">
+                    {{ gender }}
+                  </option>
+
+                }
+
+              </select>
+
+            </th>
+
+
+            <th>
+
+              <input
+                type="text"
+                class="column-filter-input"
+                [(ngModel)]="columnPhoneFilter"
+                (ngModelChange)="onColumnFilterChange()"
+                placeholder="Phone"
+              />
+
+            </th>
+
+
+            <th>
+
+              <input
+                type="text"
+                class="column-filter-input"
+                [(ngModel)]="columnDiseaseFilter"
+                (ngModelChange)="onColumnFilterChange()"
+                placeholder="Disease"
+              />
+
+            </th>
+
+
+            <th>
+
+              <input
+                type="text"
+                class="column-filter-input"
+                [(ngModel)]="columnAddressFilter"
+                (ngModelChange)="onColumnFilterChange()"
+                placeholder="Address"
+              />
+
+            </th>
+
+
+            <th>
+
+              <button
+                type="button"
+                class="clear-column-button"
+                (click)="clearColumnFilters()"
+              >
+                Clear
+              </button>
+
+            </th>
+
+          </tr>
+
+        </thead>
+
+
+        <tbody>
+
+          <!-- LOADING -->
+
+          @if (
+            loading &&
+            patients.length === 0
+          ) {
+
+            <tr>
+
+              <td
+                colspan="8"
+                class="empty-state"
+              >
+
+                <div class="loading-state">
+
+                  <div class="loading-spinner"></div>
+
+                  <span>
+                    Loading patients...
+                  </span>
+
+                </div>
+
+              </td>
+
+            </tr>
+
+          }
+
+
+          <!-- PATIENT ROWS -->
+
+          @for (
+            patient of paginatedPatients;
+            track patient.id
+          ) {
+
+            <tr>
+
+              <!-- ID -->
+
+              <td>
+
+                <span class="patient-id">
+                  #{{ patient.id }}
+                </span>
+
+              </td>
+
+
+              <!-- NAME -->
+
+              <td>
+
+                <div class="patient-name-cell">
+
+                  <div class="patient-avatar">
+
+                    {{
+                      patient.name
+                        .charAt(0)
+                        .toUpperCase()
+                    }}
+
+                  </div>
+
+                  <div>
+
+                    <strong>
+                      {{ patient.name }}
+                    </strong>
+
+                    <span>
+                      Patient
+                    </span>
+
+                  </div>
+
+                </div>
+
+              </td>
+
+
+              <!-- AGE -->
+
+              <td>
+
+                <span class="age-badge">
+
+                  {{ patient.age }}
+
+                  <small>
+                    years
+                  </small>
+
+                </span>
+
+              </td>
+
+
+              <!-- GENDER -->
+
+              <td>
+
+                <span class="gender-badge">
+                  {{ patient.gender }}
+                </span>
+
+              </td>
+
+
+              <!-- PHONE -->
+
+              <td>
+
+                <span class="table-text">
+                  {{ patient.phone }}
+                </span>
+
+              </td>
+
+
+              <!-- DISEASE -->
+
+              <td>
+
+                @if (patient.disease) {
+
+                  <span class="disease-badge">
+                    {{ patient.disease }}
+                  </span>
+
+                } @else {
+
+                  <span class="muted-text">
+                    Not specified
+                  </span>
+
+                }
+
+              </td>
+
+
+              <!-- ADDRESS -->
+
+              <td>
+
+                @if (patient.address) {
+
+                  <span class="address-text">
+                    {{ patient.address }}
+                  </span>
+
+                } @else {
+
+                  <span class="muted-text">
+                    Not specified
+                  </span>
+
+                }
+
+              </td>
+
+
+              <!-- ACTIONS -->
+
+              <td>
+
+                <div class="action-buttons">
+
+                  <button
+                    type="button"
+                    class="edit-button"
+                    (click)="editPatient(patient)"
+                    [disabled]="loading || saving || deleting"
+                  >
+
+                    <span>
+                      ✎
+                    </span>
+
+                    Edit
+
+                  </button>
+
+
+                  <button
+                    type="button"
+                    class="delete-button"
+                    (click)="openDeleteModal(patient)"
+                    [disabled]="loading || saving || deleting"
+                  >
+
+                    <span>
+                      ×
+                    </span>
+
+                    Delete
+
+                  </button>
+
+                </div>
+
+              </td>
+
+            </tr>
+
+          }
+
+
+          <!-- EMPTY -->
+
+          @if (
+            paginatedPatients.length === 0 &&
+            !loading
+          ) {
+
+            <tr>
+
+              <td
+                colspan="8"
+                class="empty-state"
+              >
+
+                <div class="empty-icon">
+                  P
+                </div>
+
+                <strong>
+                  No patients found
+                </strong>
+
+                <span>
+                  Try changing your search or filters.
+                </span>
+
+              </td>
+
+            </tr>
+
+          }
+
+        </tbody>
+
+      </table>
+
+    </div>
+
+
+    <!-- PAGINATION -->
+
+    @if (
+      filteredPatients.length > 0
+    ) {
+
+      <div class="pagination">
+
+        <div class="pagination-info">
+
+          Showing
+
+          <strong>
+            {{ startRecord }}
+          </strong>
+
+          -
+
+          <strong>
+            {{ endRecord }}
+          </strong>
+
+          of
+
+          <strong>
+            {{ filteredPatients.length }}
+          </strong>
+
+          patients
+
+        </div>
+
+
+        <div class="pagination-buttons">
+
+          <button
+            type="button"
+            class="page-arrow"
+            (click)="previousPage()"
+            [disabled]="currentPage === 1"
+          >
+            ‹
+          </button>
+
+
+          @for (
+            page of pageNumbers;
+            track page
+          ) {
+
+            <button
+              type="button"
+              [class.active-page]="page === currentPage"
+              (click)="changePage(page)"
+            >
+              {{ page }}
+            </button>
+
+          }
+
+
+          <button
+            type="button"
+            class="page-arrow"
+            (click)="nextPage()"
+            [disabled]="currentPage === totalPages"
+          >
+            ›
+          </button>
+
+        </div>
+
+      </div>
+
+    }
+
+  </section>
+
+
+  <!-- =====================================================
+       ADD / EDIT PATIENT MODAL
+       ===================================================== -->
+
+  <app-modal
+    [show]="showPatientModal"
+
+    [title]="
+      editingId !== null
+        ? 'Edit Patient'
+        : 'Add Patient'
+    "
+
+    [subtitle]="
+      editingId !== null
+        ? 'Update patient information'
+        : 'Create a new patient record'
+    "
+
+    [width]="'650px'"
+
+    (closed)="closePatientModal()"
+  >
+
     <form
+      #patientForm="ngForm"
       (ngSubmit)="submitPatient()"
-      #patientForm="ngForm">
+      class="patient-modal-form"
+    >
+
+      <div class="form-intro">
+
+        <div class="form-intro-icon">
+
+          {{
+            editingId !== null
+              ? '✎'
+              : '+'
+          }}
+
+        </div>
+
+        <div>
+
+          <strong>
+
+            @if (editingId !== null) {
+              Update Patient Details
+            } @else {
+              Patient Information
+            }
+
+          </strong>
+
+          <span>
+            Please enter the required information below.
+          </span>
+
+        </div>
+
+      </div>
+
 
       <div class="form-grid">
 
         <!-- NAME -->
+
         <div class="form-group">
 
-          <label for="patientName">
+          <label>
             Patient Name
+            <span>*</span>
           </label>
 
           <input
-            id="patientName"
             type="text"
             name="name"
             [(ngModel)]="patient.name"
             placeholder="Enter patient name"
-            required />
+            required
+            autocomplete="off"
+          />
 
         </div>
 
 
         <!-- AGE -->
+
         <div class="form-group">
 
-          <label for="patientAge">
+          <label>
             Age
+            <span>*</span>
           </label>
 
           <input
-            id="patientAge"
             type="number"
             name="age"
             [(ngModel)]="patient.age"
             min="1"
-            required />
+            max="150"
+            placeholder="Enter age"
+            required
+          />
 
         </div>
 
 
         <!-- GENDER -->
+
         <div class="form-group">
 
-          <label for="patientGender">
+          <label>
             Gender
+            <span>*</span>
           </label>
 
           <select
-            id="patientGender"
             name="gender"
             [(ngModel)]="patient.gender"
-            required>
+            required
+          >
 
             <option value="">
               Select gender
@@ -161,56 +966,61 @@
 
 
         <!-- PHONE -->
+
         <div class="form-group">
 
-          <label for="patientPhone">
+          <label>
             Phone
+            <span>*</span>
           </label>
 
           <input
-            id="patientPhone"
-            type="text"
+            type="tel"
             name="phone"
             [(ngModel)]="patient.phone"
             placeholder="Enter 10 digit phone number"
             maxlength="10"
-            required />
+            required
+            autocomplete="off"
+          />
 
         </div>
 
 
         <!-- DISEASE -->
+
         <div class="form-group">
 
-          <label for="patientDisease">
+          <label>
             Disease
           </label>
 
           <input
-            id="patientDisease"
             type="text"
             name="disease"
             [(ngModel)]="patient.disease"
-            placeholder="Enter disease"
-            required />
+            placeholder="e.g. Fever"
+            autocomplete="off"
+          />
 
         </div>
 
 
         <!-- ADDRESS -->
+
         <div class="form-group">
 
-          <label for="patientAddress">
+          <label>
             Address
           </label>
 
           <input
-            id="patientAddress"
             type="text"
             name="address"
             [(ngModel)]="patient.address"
-            placeholder="Enter address"
-            required />
+            placeholder="Enter patient address"
+            autocomplete="off"
+          />
 
         </div>
 
@@ -218,381 +1028,142 @@
 
 
       <!-- FORM ACTIONS -->
-      <div class="form-actions">
+
+      <div class="modal-form-actions">
 
         <button
-          type="submit"
-          class="primary-button"
-          [disabled]="loading">
-
-          @if (editingId !== null) {
-            Update Patient
-          } @else {
-            Add Patient
-          }
-
+          type="button"
+          class="modal-cancel-button"
+          (click)="closePatientModal()"
+          [disabled]="saving"
+        >
+          Cancel
         </button>
 
 
-        @if (editingId !== null) {
+        <button
+          type="submit"
+          class="modal-submit-button"
+          [disabled]="saving || !patientForm.form.valid"
+        >
 
-          <button
-            type="button"
-            class="cancel-button"
-            (click)="resetForm()">
+          @if (saving) {
 
-            Cancel Edit
+            <span class="button-spinner"></span>
 
-          </button>
+            Saving...
 
-        }
+          } @else {
+
+            {{
+              editingId !== null
+                ? 'Save Changes'
+                : 'Add Patient'
+            }}
+
+          }
+
+        </button>
 
       </div>
 
     </form>
 
-  </section>
+  </app-modal>
 
 
-  <!-- PATIENT LIST -->
-  <section class="list-section">
+  <!-- =====================================================
+       DELETE CONFIRMATION MODAL
+       ===================================================== -->
 
-    <div class="list-header">
+  <app-modal
 
-      <div>
+    [show]="showDeleteModal"
 
-        <h3>
-          Patient List
-        </h3>
+    title="Delete Patient"
 
-        <p>
-          {{ filteredPatients.length }}
-          patient(s) found
-        </p>
+    subtitle="Confirm this action"
 
-      </div>
+    [width]="'480px'"
 
-    </div>
+    (closed)="closeDeleteModal()"
+  >
 
+    <div class="delete-confirmation">
 
-    <!-- FILTER BAR -->
-    <div class="filter-bar">
-
-      <!-- SEARCH -->
-      <div class="search-box">
-
-        <span>🔎</span>
-
-        <input
-          type="text"
-          [(ngModel)]="searchTerm"
-          (ngModelChange)="onSearchChange()"
-          placeholder="Search by name, phone, disease or address" />
-
+      <div class="delete-warning-icon">
+        !
       </div>
 
 
-      <!-- GENDER FILTER -->
-      <div class="filter-group">
+      <h3>
+        Delete Patient?
+      </h3>
 
-        <label for="genderFilter">
-          Gender
-        </label>
 
-        <select
-          id="genderFilter"
-          [(ngModel)]="genderFilter"
-          (ngModelChange)="onFilterChange()">
+      <p>
 
-          <option value="ALL">
-            All Genders
-          </option>
+        Are you sure you want to delete
 
-          @for (gender of genders; track gender) {
+        <strong>
+          {{ deletePatientName }}
+        </strong>
 
-            <option [value]="gender">
-              {{ gender }}
-            </option>
+        ?
+
+      </p>
+
+
+      <div class="delete-warning">
+
+        <span>
+          ⚠
+        </span>
+
+        <span>
+          This patient will be permanently removed from the system.
+        </span>
+
+      </div>
+
+
+      <div class="delete-modal-actions">
+
+        <button
+          type="button"
+          class="modal-cancel-button"
+          (click)="closeDeleteModal()"
+          [disabled]="deleting"
+        >
+          Cancel
+        </button>
+
+
+        <button
+          type="button"
+          class="confirm-delete-button"
+          (click)="confirmDeletePatient()"
+          [disabled]="deleting"
+        >
+
+          @if (deleting) {
+
+            <span class="button-spinner"></span>
+
+            Deleting...
+
+          } @else {
+
+            Delete Patient
 
           }
 
-        </select>
-
-      </div>
-
-
-      <!-- PAGE SIZE -->
-      <div class="filter-group rows-filter">
-
-        <label for="pageSize">
-          Rows
-        </label>
-
-        <select
-          id="pageSize"
-          [(ngModel)]="pageSize"
-          (ngModelChange)="onPageSizeChange()">
-
-          <option [ngValue]="5">
-            5
-          </option>
-
-          <option [ngValue]="10">
-            10
-          </option>
-
-          <option [ngValue]="20">
-            20
-          </option>
-
-        </select>
+        </button>
 
       </div>
 
     </div>
 
-
-    <!-- TABLE -->
-    <div class="table-container">
-
-      @if (loading && patients.length === 0) {
-
-        <div class="loading-state">
-          Loading patients...
-        </div>
-
-      } @else if (paginatedPatients.length === 0) {
-
-        <div class="empty-state">
-          No patients found.
-        </div>
-
-      } @else {
-
-        <table>
-
-          <thead>
-
-            <tr>
-
-              <th
-                class="sortable"
-                (click)="sortBy('id')">
-
-                ID
-
-                <span>
-                  {{ getSortIcon('id') }}
-                </span>
-
-              </th>
-
-
-              <th
-                class="sortable"
-                (click)="sortBy('name')">
-
-                Name
-
-                <span>
-                  {{ getSortIcon('name') }}
-                </span>
-
-              </th>
-
-
-              <th
-                class="sortable"
-                (click)="sortBy('age')">
-
-                Age
-
-                <span>
-                  {{ getSortIcon('age') }}
-                </span>
-
-              </th>
-
-
-              <th
-                class="sortable"
-                (click)="sortBy('gender')">
-
-                Gender
-
-                <span>
-                  {{ getSortIcon('gender') }}
-                </span>
-
-              </th>
-
-
-              <th>
-                Phone
-              </th>
-
-              <th>
-                Disease
-              </th>
-
-              <th>
-                Address
-              </th>
-
-              <th>
-                Actions
-              </th>
-
-            </tr>
-
-          </thead>
-
-
-          <tbody>
-
-            @for (
-              patient of paginatedPatients;
-              track patient.id
-            ) {
-
-              <tr>
-
-                <td>
-                  {{ patient.id }}
-                </td>
-
-                <td class="name-cell">
-                  {{ patient.name }}
-                </td>
-
-                <td>
-                  {{ patient.age }}
-                </td>
-
-                <td>
-
-                  <span class="gender-badge">
-                    {{ patient.gender }}
-                  </span>
-
-                </td>
-
-                <td>
-                  {{ patient.phone }}
-                </td>
-
-                <td>
-
-                  <span class="disease-badge">
-                    {{ patient.disease }}
-                  </span>
-
-                </td>
-
-                <td>
-                  {{ patient.address }}
-                </td>
-
-                <td>
-
-                  <div class="action-buttons">
-
-                    <button
-                      type="button"
-                      class="edit-button"
-                      (click)="editPatient(patient)">
-
-                      Edit
-
-                    </button>
-
-                    <button
-                      type="button"
-                      class="delete-button"
-                      (click)="deletePatient(patient.id)">
-
-                      Delete
-
-                    </button>
-
-                  </div>
-
-                </td>
-
-              </tr>
-
-            }
-
-          </tbody>
-
-        </table>
-
-      }
-
-    </div>
-
-
-    <!-- PAGINATION -->
-    @if (filteredPatients.length > 0) {
-
-      <div class="pagination">
-
-        <div class="pagination-info">
-
-          Showing
-          <strong>{{ startRecord }}</strong>
-          -
-          <strong>{{ endRecord }}</strong>
-          of
-          <strong>{{ filteredPatients.length }}</strong>
-
-        </div>
-
-
-        <div class="pagination-buttons">
-
-          <button
-            type="button"
-            (click)="previousPage()"
-            [disabled]="currentPage === 1">
-
-            ‹
-
-          </button>
-
-
-          @for (
-            page of pageNumbers;
-            track page
-          ) {
-
-            <button
-              type="button"
-              [class.active-page]="currentPage === page"
-              (click)="changePage(page)">
-
-              {{ page }}
-
-            </button>
-
-          }
-
-
-          <button
-            type="button"
-            (click)="nextPage()"
-            [disabled]="currentPage === totalPages">
-
-            ›
-
-          </button>
-
-        </div>
-
-      </div>
-
-    }
-
-  </section>
+  </app-modal>
 
 </div>
