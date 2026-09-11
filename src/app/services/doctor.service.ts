@@ -1,15 +1,32 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+
+import {
+  HttpClient,
+  HttpHeaders
+} from '@angular/common/http';
+
 import { Observable } from 'rxjs';
 
+
 export interface Doctor {
+
   id?: number;
+
   name: string;
+
   specialization: string;
+
   phone: string;
+
   email: string;
+
   experience: number;
+
+  deleted?: boolean;
+
+  isSaving?: boolean;
 }
+
 
 @Injectable({
   providedIn: 'root'
@@ -18,41 +35,65 @@ export class DoctorService {
 
   private http = inject(HttpClient);
 
-  private apiUrl = 'http://localhost:8080/api/doctors';
 
-  private cacheKey = 'doctors';
+  private apiUrl =
+    'http://localhost:8080/api/doctors';
+
+
+  private cacheKey =
+    'doctors';
+
 
   private getHeaders(): HttpHeaders {
-    const token = localStorage.getItem('token');
+
+    const token =
+      localStorage.getItem('token');
+
 
     return new HttpHeaders({
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`
+
+      'Content-Type':
+        'application/json',
+
+      'Authorization':
+        `Bearer ${token}`
+
     });
   }
 
+
   getDoctors(): Observable<Doctor[]> {
 
-    console.log('GET doctors:', this.apiUrl);
+    console.log(
+      'GET doctors:',
+      this.apiUrl
+    );
+
 
     return this.http.get<Doctor[]>(
       this.apiUrl,
       {
-        headers: this.getHeaders()
+        headers:
+          this.getHeaders()
       }
     );
   }
 
-  createDoctor(doctor: Doctor): Observable<Doctor> {
+
+  createDoctor(
+    doctor: Doctor
+  ): Observable<Doctor> {
 
     return this.http.post<Doctor>(
       this.apiUrl,
       doctor,
       {
-        headers: this.getHeaders()
+        headers:
+          this.getHeaders()
       }
     );
   }
+
 
   updateDoctor(
     id: number,
@@ -63,37 +104,55 @@ export class DoctorService {
       `${this.apiUrl}/${id}`,
       doctor,
       {
-        headers: this.getHeaders()
+        headers:
+          this.getHeaders()
       }
     );
   }
 
-  deleteDoctor(id: number): Observable<void> {
+
+  deleteDoctor(
+    id: number
+  ): Observable<void> {
 
     return this.http.delete<void>(
       `${this.apiUrl}/${id}`,
       {
-        headers: this.getHeaders()
+        headers:
+          this.getHeaders()
       }
     );
   }
 
+
   getCachedDoctors(): Doctor[] {
 
-    const data = localStorage.getItem(this.cacheKey);
+    const data =
+      localStorage.getItem(
+        this.cacheKey
+      );
+
 
     if (!data) {
+
       return [];
     }
 
+
     try {
+
       return JSON.parse(data);
+
     } catch {
+
       return [];
     }
   }
 
-  setCachedDoctors(doctors: Doctor[]): void {
+
+  setCachedDoctors(
+    doctors: Doctor[]
+  ): void {
 
     localStorage.setItem(
       this.cacheKey,
@@ -101,8 +160,12 @@ export class DoctorService {
     );
   }
 
+
   clearCache(): void {
 
-    localStorage.removeItem(this.cacheKey);
+    localStorage.removeItem(
+      this.cacheKey
+    );
   }
+
 }

@@ -65,6 +65,14 @@ interface AppointmentRow {
 
   status: string;
 
+  /*
+   * Frontend-only property.
+   *
+   * Used while Add / Update is running
+   * in the background.
+   */
+  isSaving?: boolean;
+
 }
 
 
@@ -96,6 +104,8 @@ interface AppointmentRequest {
 @Component({
   selector: 'app-appointments',
 
+  standalone: true,
+
   imports: [
     FormsModule,
     Modal
@@ -126,6 +136,14 @@ export class Appointments implements OnInit {
 
 
   /* =======================================================
+     CACHE
+     ======================================================= */
+
+  private readonly cacheKey =
+    'appointments';
+
+
+  /* =======================================================
      DATA
      ======================================================= */
 
@@ -139,12 +157,25 @@ export class Appointments implements OnInit {
 
 
   /* =======================================================
-     LOADING
+     LOADING STATES
      ======================================================= */
+
+  /*
+   * Full-page loading is only used when
+   * there is no cached appointment data.
+   */
 
   loading = false;
 
+  /*
+   * Used for Add / Update.
+   */
+
   saving = false;
+
+  /*
+   * Used for Delete.
+   */
 
   deleting = false;
 
@@ -181,7 +212,8 @@ export class Appointments implements OnInit {
 
   showDeleteModal = false;
 
-  selectedAppointment: AppointmentRow | null = null;
+  selectedAppointment:
+    AppointmentRow | null = null;
 
 
   /* =======================================================
@@ -192,7 +224,14 @@ export class Appointments implements OnInit {
 
   popupMessage = '';
 
-  popupType: 'success' | 'error' = 'success';
+  popupType:
+    'success'
+    | 'error'
+    = 'success';
+
+  private popupTimer:
+    ReturnType<typeof setTimeout>
+    | null = null;
 
 
   /* =======================================================
@@ -224,9 +263,13 @@ export class Appointments implements OnInit {
      SORTING
      ======================================================= */
 
-  sortColumn = 'appointmentDate';
+  sortColumn =
+    'appointmentDate';
 
-  sortDirection: 'asc' | 'desc' = 'desc';
+  sortDirection:
+    'asc'
+    | 'desc'
+    = 'desc';
 
 
   /* =======================================================
@@ -257,17 +300,103 @@ export class Appointments implements OnInit {
 
 
   /* =======================================================
+     BACKUP DATA
+     ======================================================= */
+
+  private updatingAppointmentBackup:
+    AppointmentRow
+    | undefined;
+
+  private deletedAppointmentBackup:
+    AppointmentRow
+    | undefined;
+
+  private temporaryAppointment:
+    AppointmentRow
+    | undefined;
+
+
+  /* =======================================================
      INITIALIZE
      ======================================================= */
 
   ngOnInit(): void {
 
+    /*
+     * Load patients and doctors.
+     *
+     * These do not control the main appointment
+     * table loading indicator.
+     */
+
     this.loadPatients();
 
     this.loadDoctors();
 
-    this.loadAppointments();
 
+    /*
+     * Load appointments using cache-first approach.
+     */
+
+    this.initializeAppointments();
+  }
+
+
+  /* =======================================================
+     INITIALIZE APPOINTMENTS
+     ======================================================= */
+
+  private initializeAppointments(): void {
+
+    /*
+     * Read cached appointments first.
+     */
+
+    const cachedAppointments =
+      this.getCachedAppointments();
+
+
+    if (
+      cachedAppointments.length > 0
+    ) {
+
+      this.appointments =
+        cachedAppointments;
+
+
+      /*
+       * Show table immediately.
+       */
+
+      this.applyFilters();
+
+      this.fixCurrentPage();
+
+
+      /*
+       * Do NOT show loading.
+       */
+
+      this.loading = false;
+
+    } else {
+
+      /*
+       * No cache.
+       *
+       * Show loading only on first load.
+       */
+
+      this.loading = true;
+    }
+
+
+    /*
+     * Get latest data from backend
+     * in the background.
+     */
+
+    this.loadAppointments();
   }
 
 
@@ -277,32 +406,79 @@ export class Appointments implements OnInit {
 
   loadAppointments(): void {
 
-    this.loading = true;
+    /*
+     * Only show full loading when
+     * there is no existing data.
+     */
+
+    if (
+      this.appointments.length === 0
+    ) {
+
+      this.loading = true;
+    }
+
 
     this.appointmentService
       .getAppointments()
       .subscribe({
 
-        next: (data: any[]) => {
+        next: (
+          data: any[]
+        ) => {
 
           console.log(
             'Appointments loaded:',
             data
           );
 
+
+          /*
+           * Do not overwrite an optimistic
+           * Add / Update / Delete operation.
+           */
+
+          if (
+            this.saving ||
+            this.deleting
+          ) {
+
+            this.loading = false;
+
+            return;
+          }
+
+
           this.appointments =
-            data.map(
+            (data ?? []).map(
               appointment =>
                 this.mapAppointment(
                   appointment
                 )
             );
 
-          this.loading = false;
+
+          /*
+           * Save latest data to cache.
+           */
+
+          this.setCachedAppointments(
+            this.appointments
+          );
+
+
+          /*
+           * Update UI.
+           */
 
           this.applyFilters();
 
+          this.fixCurrentPage();
+
+
+          this.loading = false;
         },
+
 
         error: (
           error: HttpErrorResponse
@@ -313,7 +489,26 @@ export class Appointments implements OnInit {
             error
           );
 
+
           this.loading = false;
+
+
+          /*
+           * If cached data exists,
+           * keep displaying it.
+           */
+
+          if (
+            this.appointments.length > 0
+          ) {
+
+            this.applyFilters();
+
+            this.fixCurrentPage();
+
+            return;
+          }
+
 
           if (
             error.status === 401
@@ -336,13 +531,10 @@ export class Appointments implements OnInit {
             this.showError(
               'Failed to load appointments.'
             );
-
           }
-
         }
 
       });
-
   }
 
 
@@ -359,6 +551,7 @@ export class Appointments implements OnInit {
 
     const doctor =
       appointment.doctor;
+
 
     return {
 
@@ -419,10 +612,12 @@ export class Appointments implements OnInit {
 
       status:
         appointment.status ??
-        'SCHEDULED'
+        'SCHEDULED',
+
+      isSaving:
+        false
 
     };
-
   }
 
 
@@ -440,8 +635,8 @@ export class Appointments implements OnInit {
           data: Patient[]
         ) => {
 
-          this.patients = data;
-
+          this.patients =
+            data ?? [];
         },
 
         error: (
@@ -452,11 +647,9 @@ export class Appointments implements OnInit {
             'Error loading patients:',
             error
           );
-
         }
 
       });
-
   }
 
 
@@ -474,8 +667,8 @@ export class Appointments implements OnInit {
           data: Doctor[]
         ) => {
 
-          this.doctors = data;
-
+          this.doctors =
+            data ?? [];
         },
 
         error: (
@@ -486,11 +679,9 @@ export class Appointments implements OnInit {
             'Error loading doctors:',
             error
           );
-
         }
 
       });
-
   }
 
 
@@ -500,12 +691,18 @@ export class Appointments implements OnInit {
 
   refreshAppointments(): void {
 
+    /*
+     * Manual refresh.
+     *
+     * Existing table remains visible while
+     * latest data is fetched.
+     */
+
     this.loadPatients();
 
     this.loadDoctors();
 
     this.loadAppointments();
-
   }
 
 
@@ -518,7 +715,6 @@ export class Appointments implements OnInit {
     this.router.navigate(
       ['/admin']
     );
-
   }
 
 
@@ -531,7 +727,6 @@ export class Appointments implements OnInit {
     this.currentPage = 1;
 
     this.applyFilters();
-
   }
 
 
@@ -544,7 +739,6 @@ export class Appointments implements OnInit {
     this.currentPage = 1;
 
     this.applyFilters();
-
   }
 
 
@@ -559,7 +753,6 @@ export class Appointments implements OnInit {
     this.currentPage = 1;
 
     this.applyFilters();
-
   }
 
 
@@ -578,7 +771,6 @@ export class Appointments implements OnInit {
     this.statusFilter = 'ALL';
 
     this.clearColumnFilters();
-
   }
 
 
@@ -603,7 +795,6 @@ export class Appointments implements OnInit {
     this.currentPage = 1;
 
     this.applyFilters();
-
   }
 
 
@@ -618,30 +809,36 @@ export class Appointments implements OnInit {
         .trim()
         .toLowerCase();
 
+
     const patientColumn =
       this.patientColumnFilter
         .trim()
         .toLowerCase();
+
 
     const doctorColumn =
       this.doctorColumnFilter
         .trim()
         .toLowerCase();
 
+
     const dateColumn =
       this.dateColumnFilter
         .trim()
         .toLowerCase();
+
 
     const timeColumn =
       this.timeColumnFilter
         .trim()
         .toLowerCase();
 
+
     const reasonColumn =
       this.reasonColumnFilter
         .trim()
         .toLowerCase();
+
 
     const statusColumn =
       this.statusColumnFilter
@@ -697,9 +894,9 @@ export class Appointments implements OnInit {
             String(
               appointment.patientId
             ) ===
-              String(
-                this.patientFilter
-              );
+            String(
+              this.patientFilter
+            );
 
 
           const matchesDoctor =
@@ -707,15 +904,15 @@ export class Appointments implements OnInit {
             String(
               appointment.doctorId
             ) ===
-              String(
-                this.doctorFilter
-              );
+            String(
+              this.doctorFilter
+            );
 
 
           const matchesStatus =
             this.statusFilter === 'ALL' ||
             appointment.status ===
-              this.statusFilter;
+            this.statusFilter;
 
 
           const matchesPatientColumn =
@@ -815,7 +1012,6 @@ export class Appointments implements OnInit {
             matchesStatusColumn
 
           );
-
         }
       );
 
@@ -823,7 +1019,6 @@ export class Appointments implements OnInit {
     this.applySorting();
 
     this.fixCurrentPage();
-
   }
 
 
@@ -846,14 +1041,15 @@ export class Appointments implements OnInit {
 
     } else {
 
-      this.sortColumn = column;
+      this.sortColumn =
+        column;
 
-      this.sortDirection = 'asc';
-
+      this.sortDirection =
+        'asc';
     }
 
-    this.applySorting();
 
+    this.applySorting();
   }
 
 
@@ -863,6 +1059,15 @@ export class Appointments implements OnInit {
 
   applySorting(): void {
 
+    /*
+     * Create a new array so that the
+     * original appointment list remains stable.
+     */
+
+    this.filteredAppointments =
+      [...this.filteredAppointments];
+
+
     this.filteredAppointments.sort(
       (a, b) => {
 
@@ -871,6 +1076,7 @@ export class Appointments implements OnInit {
             a,
             this.sortColumn
           );
+
 
         const second =
           this.getSortValue(
@@ -886,7 +1092,6 @@ export class Appointments implements OnInit {
           return this.sortDirection === 'asc'
             ? -1
             : 1;
-
         }
 
 
@@ -897,15 +1102,12 @@ export class Appointments implements OnInit {
           return this.sortDirection === 'asc'
             ? 1
             : -1;
-
         }
 
 
         return 0;
-
       }
     );
-
   }
 
 
@@ -962,9 +1164,7 @@ export class Appointments implements OnInit {
       default:
 
         return '';
-
     }
-
   }
 
 
@@ -981,13 +1181,12 @@ export class Appointments implements OnInit {
     ) {
 
       return '↕';
-
     }
+
 
     return this.sortDirection === 'asc'
       ? '↑'
       : '↓';
-
   }
 
 
@@ -998,7 +1197,6 @@ export class Appointments implements OnInit {
   get totalRecords(): number {
 
     return this.filteredAppointments.length;
-
   }
 
 
@@ -1011,13 +1209,13 @@ export class Appointments implements OnInit {
         this.pageSize
       )
     );
-
   }
 
 
   get pages(): number[] {
 
     const result: number[] = [];
+
 
     for (
       let page = 1;
@@ -1026,11 +1224,10 @@ export class Appointments implements OnInit {
     ) {
 
       result.push(page);
-
     }
 
-    return result;
 
+    return result;
   }
 
 
@@ -1041,14 +1238,15 @@ export class Appointments implements OnInit {
       (this.currentPage - 1) *
       this.pageSize;
 
+
     const end =
       start + this.pageSize;
+
 
     return this.filteredAppointments.slice(
       start,
       end
     );
-
   }
 
 
@@ -1059,14 +1257,13 @@ export class Appointments implements OnInit {
     ) {
 
       return 0;
-
     }
+
 
     return (
       (this.currentPage - 1) *
       this.pageSize
     ) + 1;
-
   }
 
 
@@ -1074,10 +1271,10 @@ export class Appointments implements OnInit {
 
     return Math.min(
       this.currentPage *
-        this.pageSize,
+      this.pageSize,
+
       this.totalRecords
     );
-
   }
 
 
@@ -1088,9 +1285,7 @@ export class Appointments implements OnInit {
     ) {
 
       this.currentPage--;
-
     }
-
   }
 
 
@@ -1102,9 +1297,7 @@ export class Appointments implements OnInit {
     ) {
 
       this.currentPage++;
-
     }
-
   }
 
 
@@ -1117,19 +1310,52 @@ export class Appointments implements OnInit {
       page <= this.totalPages
     ) {
 
-      this.currentPage = page;
-
+      this.currentPage =
+        page;
     }
-
   }
 
 
-  onPageSizeChange(): void {
+  onPageSizeChange(
+    event?: Event
+  ): void {
+
+    /*
+     * Supports both:
+     *
+     * (change)="onPageSizeChange($event)"
+     *
+     * and:
+     *
+     * (change)="onPageSizeChange()"
+     */
+
+    if (event) {
+
+      const target =
+        event.target as HTMLSelectElement;
+
+
+      const newSize =
+        Number(
+          target.value
+        );
+
+
+      if (
+        Number.isFinite(newSize) &&
+        newSize > 0
+      ) {
+
+        this.pageSize =
+          newSize;
+      }
+    }
+
 
     this.currentPage = 1;
 
     this.fixCurrentPage();
-
   }
 
 
@@ -1142,9 +1368,15 @@ export class Appointments implements OnInit {
 
       this.currentPage =
         this.totalPages;
-
     }
 
+
+    if (
+      this.currentPage < 1
+    ) {
+
+      this.currentPage = 1;
+    }
   }
 
 
@@ -1154,12 +1386,17 @@ export class Appointments implements OnInit {
 
   openAddAppointmentModal(): void {
 
+    /*
+     * No API call.
+     *
+     * Modal opens immediately.
+     */
+
     this.clearForm();
 
     this.editingId = null;
 
     this.showAppointmentModal = true;
-
   }
 
 
@@ -1171,32 +1408,64 @@ export class Appointments implements OnInit {
     appointment: AppointmentRow
   ): void {
 
+    /*
+     * Do not edit while optimistic
+     * operation is running.
+     */
+
+    if (
+      appointment.isSaving
+    ) {
+
+      return;
+    }
+
+
+    if (
+      appointment.id === undefined
+    ) {
+
+      return;
+    }
+
+
     this.editingId =
-      appointment.id ?? null;
+      appointment.id;
+
 
     this.patientId =
       appointment.patientId;
 
+
     this.doctorId =
       appointment.doctorId;
 
+
     this.appointmentDate =
       appointment.appointmentDate;
+
 
     this.appointmentTime =
       this.formatTimeForInput(
         appointment.appointmentTime
       );
 
+
     this.reason =
       appointment.reason;
+
 
     this.status =
       appointment.status ||
       'SCHEDULED';
 
-    this.showAppointmentModal = true;
 
+    /*
+     * Modal opens immediately.
+     */
+
+    this.showAppointmentModal =
+      true;
   }
 
 
@@ -1206,18 +1475,15 @@ export class Appointments implements OnInit {
 
   closeAppointmentModal(): void {
 
-    if (
-      this.saving
-    ) {
+    /*
+     * Close immediately.
+     */
 
-      return;
+    this.showAppointmentModal =
+      false;
 
-    }
-
-    this.showAppointmentModal = false;
 
     this.clearForm();
-
   }
 
 
@@ -1226,6 +1492,18 @@ export class Appointments implements OnInit {
      ======================================================= */
 
   saveAppointment(): void {
+
+    if (
+      this.saving
+    ) {
+
+      return;
+    }
+
+
+    /* -----------------------------------------------------
+       VALIDATION
+       ----------------------------------------------------- */
 
     if (
       this.patientId === null ||
@@ -1237,7 +1515,6 @@ export class Appointments implements OnInit {
       );
 
       return;
-
     }
 
 
@@ -1251,7 +1528,6 @@ export class Appointments implements OnInit {
       );
 
       return;
-
     }
 
 
@@ -1264,7 +1540,6 @@ export class Appointments implements OnInit {
       );
 
       return;
-
     }
 
 
@@ -1277,7 +1552,6 @@ export class Appointments implements OnInit {
       );
 
       return;
-
     }
 
 
@@ -1290,7 +1564,6 @@ export class Appointments implements OnInit {
       );
 
       return;
-
     }
 
 
@@ -1303,9 +1576,12 @@ export class Appointments implements OnInit {
       );
 
       return;
-
     }
 
+
+    /* -----------------------------------------------------
+       REQUEST
+       ----------------------------------------------------- */
 
     const request:
       AppointmentRequest = {
@@ -1333,7 +1609,6 @@ export class Appointments implements OnInit {
 
       status:
         this.status
-
     };
 
 
@@ -1343,102 +1618,570 @@ export class Appointments implements OnInit {
     );
 
 
-    this.saving = true;
-
+    /* -----------------------------------------------------
+       CREATE
+       ----------------------------------------------------- */
 
     if (
       this.editingId === null
     ) {
 
-      this.appointmentService
-        .createAppointment(request)
-        .subscribe({
+      this.createAppointmentOptimistically(
+        request
+      );
 
-          next: () => {
-
-            this.saving = false;
-
-            this.showAppointmentModal =
-              false;
-
-            this.clearForm();
-
-            this.showSuccess(
-              'Appointment created successfully.'
-            );
-
-            this.loadAppointments();
-
-          },
-
-          error: (
-            error: HttpErrorResponse
-          ) => {
-
-            this.saving = false;
-
-            console.error(
-              'Create appointment error:',
-              error
-            );
-
-            this.handleAppointmentError(
-              error,
-              'Failed to create appointment.'
-            );
-
-          }
-
-        });
-
-    } else {
-
-      this.appointmentService
-        .updateAppointment(
-          this.editingId,
-          request
-        )
-        .subscribe({
-
-          next: () => {
-
-            this.saving = false;
-
-            this.showAppointmentModal =
-              false;
-
-            this.clearForm();
-
-            this.showSuccess(
-              'Appointment updated successfully.'
-            );
-
-            this.loadAppointments();
-
-          },
-
-          error: (
-            error: HttpErrorResponse
-          ) => {
-
-            this.saving = false;
-
-            console.error(
-              'Update appointment error:',
-              error
-            );
-
-            this.handleAppointmentError(
-              error,
-              'Failed to update appointment.'
-            );
-
-          }
-
-        });
-
+      return;
     }
 
+
+    /* -----------------------------------------------------
+       UPDATE
+       ----------------------------------------------------- */
+
+    this.updateAppointmentOptimistically(
+      this.editingId,
+      request
+    );
+  }
+
+
+  /* =======================================================
+     OPTIMISTIC CREATE
+     ======================================================= */
+
+  private createAppointmentOptimistically(
+    request: AppointmentRequest
+  ): void {
+
+    if (
+      this.saving
+    ) {
+
+      return;
+    }
+
+
+    this.saving = true;
+
+
+    /*
+     * Find patient information for
+     * immediate table display.
+     */
+
+    const patient =
+      this.patients.find(
+        item =>
+          item.id ===
+          request.patientId
+      );
+
+
+    /*
+     * Find doctor information for
+     * immediate table display.
+     */
+
+    const doctor =
+      this.doctors.find(
+        item =>
+          item.id ===
+          request.doctorId
+      );
+
+
+    /*
+     * IMPORTANT:
+     *
+     * Do NOT create a fake ID.
+     */
+
+    const temporaryAppointment:
+      AppointmentRow = {
+
+      patientId:
+        request.patientId,
+
+      patientName:
+        patient?.name ??
+        'Loading Patient...',
+
+      patientDisease:
+        patient?.disease ??
+        '',
+
+      patientAddress:
+        patient?.address ??
+        '',
+
+      doctorId:
+        request.doctorId,
+
+      doctorName:
+        doctor?.name ??
+        'Loading Doctor...',
+
+      doctorSpecialization:
+        doctor?.specialization ??
+        '',
+
+      appointmentDate:
+        request.appointmentDate,
+
+      appointmentTime:
+        this.formatTimeForInput(
+          request.appointmentTime
+        ),
+
+      reason:
+        request.reason,
+
+      status:
+        request.status,
+
+      isSaving:
+        true
+    };
+
+
+    this.temporaryAppointment =
+      temporaryAppointment;
+
+
+    /*
+     * Add immediately to table.
+     */
+
+    this.appointments = [
+      ...this.appointments,
+      temporaryAppointment
+    ];
+
+
+    /*
+     * Update UI immediately.
+     */
+
+    this.applyFilters();
+
+
+    /*
+     * Go to last page so the new
+     * appointment is visible.
+     */
+
+    this.currentPage =
+      this.totalPages;
+
+
+    this.fixCurrentPage();
+
+
+    /*
+     * Close modal immediately.
+     */
+
+    this.closeAppointmentModal();
+
+
+    /*
+     * Backend request runs in
+     * the background.
+     */
+
+    this.appointmentService
+      .createAppointment(request)
+      .subscribe({
+
+        next: (
+          createdAppointment: any
+        ) => {
+
+          /*
+           * Convert backend response.
+           */
+
+          const created =
+            this.mapAppointment(
+              createdAppointment
+            );
+
+
+          /*
+           * Replace temporary row
+           * with real backend row.
+           */
+
+          this.appointments =
+            this.appointments.map(
+              appointment =>
+                appointment ===
+                temporaryAppointment
+                  ? created
+                  : appointment
+            );
+
+
+          /*
+           * Save cache.
+           */
+
+          this.setCachedAppointments(
+            this.appointments
+          );
+
+
+          this.temporaryAppointment =
+            undefined;
+
+
+          this.saving =
+            false;
+
+
+          this.applyFilters();
+
+          this.fixCurrentPage();
+
+
+          this.showSuccess(
+            'Appointment created successfully.'
+          );
+        },
+
+
+        error: (
+          error: HttpErrorResponse
+        ) => {
+
+          console.error(
+            'Create appointment error:',
+            error
+          );
+
+
+          /*
+           * Remove optimistic row.
+           */
+
+          this.appointments =
+            this.appointments.filter(
+              appointment =>
+                appointment !==
+                temporaryAppointment
+            );
+
+
+          this.temporaryAppointment =
+            undefined;
+
+
+          /*
+           * Update cache.
+           */
+
+          this.setCachedAppointments(
+            this.appointments
+          );
+
+
+          this.saving =
+            false;
+
+
+          this.applyFilters();
+
+          this.fixCurrentPage();
+
+
+          this.handleAppointmentError(
+            error,
+            'Failed to create appointment.'
+          );
+        }
+
+      });
+  }
+
+
+  /* =======================================================
+     OPTIMISTIC UPDATE
+     ======================================================= */
+
+  private updateAppointmentOptimistically(
+    id: number,
+    request: AppointmentRequest
+  ): void {
+
+    if (
+      this.saving
+    ) {
+
+      return;
+    }
+
+
+    /*
+     * Find current appointment.
+     */
+
+    const existingAppointment =
+      this.appointments.find(
+        appointment =>
+          appointment.id === id
+      );
+
+
+    if (
+      !existingAppointment
+    ) {
+
+      this.showError(
+        'Appointment not found.'
+      );
+
+      return;
+    }
+
+
+    /*
+     * Backup old appointment.
+     */
+
+    this.updatingAppointmentBackup =
+      {
+        ...existingAppointment,
+        isSaving: false
+      };
+
+
+    /*
+     * Find latest patient information.
+     */
+
+    const patient =
+      this.patients.find(
+        item =>
+          item.id ===
+          request.patientId
+      );
+
+
+    /*
+     * Find latest doctor information.
+     */
+
+    const doctor =
+      this.doctors.find(
+        item =>
+          item.id ===
+          request.doctorId
+      );
+
+
+    /*
+     * Create optimistic updated row.
+     */
+
+    const updatedAppointment:
+      AppointmentRow = {
+
+      id:
+        id,
+
+      patientId:
+        request.patientId,
+
+      patientName:
+        patient?.name ??
+        existingAppointment.patientName,
+
+      patientDisease:
+        patient?.disease ??
+        existingAppointment.patientDisease,
+
+      patientAddress:
+        patient?.address ??
+        existingAppointment.patientAddress,
+
+      doctorId:
+        request.doctorId,
+
+      doctorName:
+        doctor?.name ??
+        existingAppointment.doctorName,
+
+      doctorSpecialization:
+        doctor?.specialization ??
+        existingAppointment.doctorSpecialization,
+
+      appointmentDate:
+        request.appointmentDate,
+
+      appointmentTime:
+        this.formatTimeForInput(
+          request.appointmentTime
+        ),
+
+      reason:
+        request.reason,
+
+      status:
+        request.status,
+
+      isSaving:
+        true
+    };
+
+
+    /*
+     * Update table immediately.
+     */
+
+    this.appointments =
+      this.appointments.map(
+        appointment =>
+          appointment.id === id
+            ? updatedAppointment
+            : appointment
+      );
+
+
+    this.applyFilters();
+
+    this.fixCurrentPage();
+
+
+    /*
+     * Close modal immediately.
+     */
+
+    this.closeAppointmentModal();
+
+
+    this.saving = true;
+
+
+    /*
+     * Backend PUT runs in background.
+     */
+
+    this.appointmentService
+      .updateAppointment(
+        id,
+        request
+      )
+      .subscribe({
+
+        next: (
+          responseAppointment: any
+        ) => {
+
+          /*
+           * Replace optimistic row
+           * with backend response.
+           */
+
+          const updated =
+            this.mapAppointment(
+              responseAppointment
+            );
+
+
+          this.appointments =
+            this.appointments.map(
+              appointment =>
+                appointment.id === id
+                  ? updated
+                  : appointment
+            );
+
+
+          /*
+           * Save cache.
+           */
+
+          this.setCachedAppointments(
+            this.appointments
+          );
+
+
+          this.updatingAppointmentBackup =
+            undefined;
+
+
+          this.saving =
+            false;
+
+
+          this.applyFilters();
+
+          this.fixCurrentPage();
+
+
+          this.showSuccess(
+            'Appointment updated successfully.'
+          );
+        },
+
+
+        error: (
+          error: HttpErrorResponse
+        ) => {
+
+          console.error(
+            'Update appointment error:',
+            error
+          );
+
+
+          /*
+           * Restore old appointment.
+           */
+
+          if (
+            this.updatingAppointmentBackup
+          ) {
+
+            this.appointments =
+              this.appointments.map(
+                appointment =>
+                  appointment.id === id
+                    ? this.updatingAppointmentBackup!
+                    : appointment
+              );
+          }
+
+
+          /*
+           * Update cache.
+           */
+
+          this.setCachedAppointments(
+            this.appointments
+          );
+
+
+          this.updatingAppointmentBackup =
+            undefined;
+
+
+          this.saving =
+            false;
+
+
+          this.applyFilters();
+
+          this.fixCurrentPage();
+
+
+          this.handleAppointmentError(
+            error,
+            'Failed to update appointment.'
+          );
+        }
+
+      });
   }
 
 
@@ -1450,11 +2193,36 @@ export class Appointments implements OnInit {
     appointment: AppointmentRow
   ): void {
 
+    /*
+     * Do not delete temporary/saving row.
+     */
+
+    if (
+      appointment.isSaving
+    ) {
+
+      return;
+    }
+
+
+    if (
+      appointment.id === undefined
+    ) {
+
+      return;
+    }
+
+
     this.selectedAppointment =
       appointment;
 
-    this.showDeleteModal = true;
 
+    /*
+     * Modal opens immediately.
+     */
+
+    this.showDeleteModal =
+      true;
   }
 
 
@@ -1464,84 +2232,194 @@ export class Appointments implements OnInit {
 
   closeDeleteModal(): void {
 
-    if (
-      this.deleting
-    ) {
+    /*
+     * Close immediately.
+     */
 
-      return;
+    this.showDeleteModal =
+      false;
 
-    }
-
-    this.showDeleteModal = false;
 
     this.selectedAppointment =
       null;
-
   }
 
 
   /* =======================================================
-     CONFIRM DELETE
+     DELETE APPOINTMENT
      ======================================================= */
 
   confirmDeleteAppointment(): void {
 
     if (
-      !this.selectedAppointment?.id
+      this.deleting
     ) {
 
       return;
-
     }
+
+
+    const appointment =
+      this.selectedAppointment;
+
+
+    if (
+      !appointment ||
+      appointment.id === undefined
+    ) {
+
+      this.showError(
+        'Appointment ID is missing.'
+      );
+
+      return;
+    }
+
+
+    const id =
+      appointment.id;
+
+
+    /*
+     * Backup appointment.
+     */
+
+    this.deletedAppointmentBackup =
+      {
+        ...appointment,
+        isSaving: false
+      };
+
+
+    /*
+     * Close confirmation immediately.
+     */
+
+    this.showDeleteModal =
+      false;
+
+
+    this.selectedAppointment =
+      null;
+
+
+    /*
+     * Remove appointment immediately.
+     */
+
+    this.appointments =
+      this.appointments.filter(
+        item =>
+          item.id !== id
+      );
+
+
+    /*
+     * Update UI immediately.
+     */
+
+    this.applyFilters();
+
+    this.fixCurrentPage();
+
+
+    /*
+     * Update cache immediately.
+     */
+
+    this.setCachedAppointments(
+      this.appointments
+    );
 
 
     this.deleting = true;
 
 
+    /*
+     * Backend DELETE runs in
+     * the background.
+     */
+
     this.appointmentService
-      .deleteAppointment(
-        this.selectedAppointment.id
-      )
+      .deleteAppointment(id)
       .subscribe({
 
         next: () => {
 
-          this.deleting = false;
+          this.deletedAppointmentBackup =
+            undefined;
 
-          this.showDeleteModal =
+
+          this.deleting =
             false;
+
+
+          /*
+           * IMPORTANT:
+           *
+           * No loadAppointments() here.
+           */
 
           this.showSuccess(
             'Appointment deleted successfully.'
           );
-
-          this.selectedAppointment =
-            null;
-
-          this.loadAppointments();
-
         },
+
 
         error: (
           error: HttpErrorResponse
         ) => {
-
-          this.deleting = false;
 
           console.error(
             'Delete appointment error:',
             error
           );
 
+
+          /*
+           * Rollback deleted appointment.
+           */
+
+          if (
+            this.deletedAppointmentBackup
+          ) {
+
+            this.appointments = [
+              ...this.appointments,
+              this.deletedAppointmentBackup
+            ];
+          }
+
+
+          /*
+           * Update cache.
+           */
+
+          this.setCachedAppointments(
+            this.appointments
+          );
+
+
+          this.deletedAppointmentBackup =
+            undefined;
+
+
+          this.deleting =
+            false;
+
+
+          this.applyFilters();
+
+          this.fixCurrentPage();
+
+
           this.handleAppointmentError(
             error,
             'Failed to delete appointment.'
           );
-
         }
 
       });
-
   }
 
 
@@ -1564,7 +2442,6 @@ export class Appointments implements OnInit {
     this.status = 'SCHEDULED';
 
     this.editingId = null;
-
   }
 
 
@@ -1581,7 +2458,6 @@ export class Appointments implements OnInit {
     ) {
 
       return '';
-
     }
 
 
@@ -1597,12 +2473,85 @@ export class Appointments implements OnInit {
         0,
         5
       );
-
     }
 
 
     return value;
+  }
 
+
+  /* =======================================================
+     CACHE - GET
+     ======================================================= */
+
+  private getCachedAppointments():
+    AppointmentRow[] {
+
+    const data =
+      localStorage.getItem(
+        this.cacheKey
+      );
+
+
+    if (
+      !data
+    ) {
+
+      return [];
+    }
+
+
+    try {
+
+      const appointments =
+        JSON.parse(data);
+
+
+      if (
+        Array.isArray(
+          appointments
+        )
+      ) {
+
+        return appointments;
+      }
+
+
+      return [];
+
+    } catch {
+
+      return [];
+    }
+  }
+
+
+  /* =======================================================
+     CACHE - SET
+     ======================================================= */
+
+  private setCachedAppointments(
+    appointments: AppointmentRow[]
+  ): void {
+
+    localStorage.setItem(
+      this.cacheKey,
+      JSON.stringify(
+        appointments
+      )
+    );
+  }
+
+
+  /* =======================================================
+     CLEAR CACHE
+     ======================================================= */
+
+  clearAppointmentCache(): void {
+
+    localStorage.removeItem(
+      this.cacheKey
+    );
   }
 
 
@@ -1649,26 +2598,26 @@ export class Appointments implements OnInit {
         error.error;
 
     } else if (
-      error.error?.message
+      error.error?.message &&
+      typeof error.error.message === 'string'
     ) {
 
       message =
         error.error.message;
 
     } else if (
-      error.error?.error
+      error.error?.error &&
+      typeof error.error.error === 'string'
     ) {
 
       message =
         error.error.error;
-
     }
 
 
     this.showError(
       message
     );
-
   }
 
 
@@ -1683,23 +2632,16 @@ export class Appointments implements OnInit {
     this.popupType =
       'success';
 
+
     this.popupMessage =
       message;
+
 
     this.showPopup =
       true;
 
 
-    setTimeout(
-      () => {
-
-        this.showPopup =
-          false;
-
-      },
-      3500
-    );
-
+    this.resetPopupTimer();
   }
 
 
@@ -1714,23 +2656,42 @@ export class Appointments implements OnInit {
     this.popupType =
       'error';
 
+
     this.popupMessage =
       message;
+
 
     this.showPopup =
       true;
 
 
-    setTimeout(
-      () => {
+    this.resetPopupTimer();
+  }
+
+
+  /* =======================================================
+     POPUP TIMER
+     ======================================================= */
+
+  private resetPopupTimer(): void {
+
+    if (
+      this.popupTimer
+    ) {
+
+      clearTimeout(
+        this.popupTimer
+      );
+    }
+
+
+    this.popupTimer =
+      setTimeout(() => {
 
         this.showPopup =
           false;
 
-      },
-      4500
-    );
-
+      }, 4000);
   }
 
 }

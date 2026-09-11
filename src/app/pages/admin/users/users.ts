@@ -1,24 +1,50 @@
-import { Component, OnInit, inject } from '@angular/core';
-import { FormsModule } from '@angular/forms';
-import { HttpErrorResponse } from '@angular/common/http';
+import {
+  Component,
+  OnInit,
+  inject
+} from '@angular/core';
 
-import { User, UserService } from '../../../services/user.service';
-import { Modal } from '../../../shared/modal/modal';
+import {
+  FormsModule
+} from '@angular/forms';
+
+import {
+  HttpErrorResponse
+} from '@angular/common/http';
+
+import {
+  User,
+  UserService
+} from '../../../services/user.service';
+
+import {
+  Modal
+} from '../../../shared/modal/modal';
 
 
 @Component({
   selector: 'app-users',
+
   standalone: true,
+
   imports: [
     FormsModule,
     Modal
   ],
+
   templateUrl: './users.html',
+
   styleUrl: './users.css'
 })
 export class Users implements OnInit {
 
-  private userService = inject(UserService);
+
+  // =====================================================
+  // SERVICE
+  // =====================================================
+
+  private userService =
+    inject(UserService);
 
 
   // =====================================================
@@ -36,9 +62,22 @@ export class Users implements OnInit {
   // LOADING STATES
   // =====================================================
 
+  /*
+   * loading is ONLY for the initial list
+   * when there is no cached data.
+   */
+
   loading = false;
 
+  /*
+   * saving is used for Add / Update.
+   */
+
   saving = false;
+
+  /*
+   * deleting is used for Delete.
+   */
 
   deleting = false;
 
@@ -97,9 +136,13 @@ export class Users implements OnInit {
     | 'id'
     | 'username'
     | 'email'
-    | 'role' = 'id';
+    | 'role'
+    = 'id';
 
-  sortDirection: 'asc' | 'desc' = 'asc';
+  sortDirection:
+    | 'asc'
+    | 'desc'
+    = 'asc';
 
 
   // =====================================================
@@ -110,7 +153,12 @@ export class Users implements OnInit {
 
   pageSize = 5;
 
-  pageSizeOptions = [5, 10, 20, 50];
+  pageSizeOptions = [
+    5,
+    10,
+    20,
+    50
+  ];
 
 
   // =====================================================
@@ -132,9 +180,38 @@ export class Users implements OnInit {
 
   popupMessage = '';
 
-  popupType: 'success' | 'error' = 'success';
+  popupType:
+    | 'success'
+    | 'error'
+    = 'success';
 
-  private popupTimer: ReturnType<typeof setTimeout> | null = null;
+  private popupTimer:
+    ReturnType<typeof setTimeout> | null =
+    null;
+
+
+  // =====================================================
+  // BACKUP FOR UPDATE
+  // =====================================================
+
+  private updatingUserBackup:
+    User | undefined;
+
+
+  // =====================================================
+  // BACKUP FOR DELETE
+  // =====================================================
+
+  private deletedUserBackup:
+    User | undefined;
+
+
+  // =====================================================
+  // TEMPORARY USER
+  // =====================================================
+
+  private temporaryUser:
+    User | undefined;
 
 
   // =====================================================
@@ -142,6 +219,35 @@ export class Users implements OnInit {
   // =====================================================
 
   ngOnInit(): void {
+
+    /*
+     * Try cached users first.
+     *
+     * This makes the page appear immediately.
+     */
+
+    const cachedUsers =
+      this.userService
+        .getCachedUsers();
+
+
+    this.users =
+      cachedUsers ?? [];
+
+
+    /*
+     * Only show full loading when
+     * there is no cached data.
+     */
+
+    this.loading =
+      this.users.length === 0;
+
+
+    /*
+     * Load latest users in background.
+     */
+
     this.loadUsers();
   }
 
@@ -152,35 +258,114 @@ export class Users implements OnInit {
 
   loadUsers(): void {
 
-    this.loading = true;
+    /*
+     * Only show loading when
+     * there are currently no users.
+     */
 
-    this.userService.getUsers().subscribe({
+    if (
+      this.users.length === 0
+    ) {
 
-      next: (data: User[]) => {
+      this.loading = true;
+    }
 
-        this.users = data ?? [];
 
-        this.applyFilters();
+    this.userService
+      .getUsers()
+      .subscribe({
 
-        this.loading = false;
+        next: (
+          data: User[]
+        ) => {
 
-      },
+          /*
+           * Do not overwrite an optimistic
+           * Add / Update / Delete operation.
+           */
 
-      error: (error: HttpErrorResponse) => {
+          if (
+            this.saving ||
+            this.deleting
+          ) {
 
-        console.error('Error loading users:', error);
+            this.loading = false;
 
-        this.loading = false;
+            return;
+          }
 
-        this.showToast(
-          this.getErrorMessage(error, 'Failed to load users.'),
-          'error'
-        );
 
-      }
+          this.users =
+            (data ?? []).map(
+              (user: User) => ({
+                ...user,
+                isSaving: false
+              })
+            );
 
-    });
 
+          /*
+           * Save latest users to cache.
+           */
+
+          this.userService
+            .setCachedUsers(
+              this.users
+            );
+
+
+          /*
+           * Recalculate UI.
+           */
+
+          this.applyFilters();
+
+
+          this.loading = false;
+
+
+          this.fixCurrentPage();
+        },
+
+
+        error: (
+          error: HttpErrorResponse
+        ) => {
+
+          console.error(
+            'Error loading users:',
+            error
+          );
+
+
+          this.loading = false;
+
+
+          /*
+           * If cached data exists,
+           * keep showing it.
+           */
+
+          if (
+            this.users.length > 0
+          ) {
+
+            this.applyFilters();
+
+            return;
+          }
+
+
+          this.showToast(
+            this.getErrorMessage(
+              error,
+              'Failed to load users.'
+            ),
+            'error'
+          );
+        }
+
+      });
   }
 
 
@@ -190,8 +375,12 @@ export class Users implements OnInit {
 
   refreshUsers(): void {
 
-    this.loadUsers();
+    /*
+     * Manual refresh is allowed to
+     * contact the backend.
+     */
 
+    this.loadUsers();
   }
 
 
@@ -204,7 +393,6 @@ export class Users implements OnInit {
     this.currentPage = 1;
 
     this.applyFilters();
-
   }
 
 
@@ -215,7 +403,6 @@ export class Users implements OnInit {
     this.currentPage = 1;
 
     this.applyFilters();
-
   }
 
 
@@ -228,7 +415,18 @@ export class Users implements OnInit {
     this.currentPage = 1;
 
     this.applyFilters();
+  }
 
+
+  // =====================================================
+  // COLUMN FILTER CHANGE
+  // =====================================================
+
+  onColumnFilterChange(): void {
+
+    this.currentPage = 1;
+
+    this.applyFilters();
   }
 
 
@@ -239,76 +437,105 @@ export class Users implements OnInit {
   applyFilters(): void {
 
     const search =
-      this.searchTerm.trim().toLowerCase();
+      this.searchTerm
+        .trim()
+        .toLowerCase();
+
 
     const username =
-      this.usernameFilter.trim().toLowerCase();
+      this.usernameFilter
+        .trim()
+        .toLowerCase();
+
 
     const email =
-      this.emailFilter.trim().toLowerCase();
+      this.emailFilter
+        .trim()
+        .toLowerCase();
+
 
     const roleColumn =
-      this.roleColumnFilter.trim().toLowerCase();
+      this.roleColumnFilter
+        .trim()
+        .toLowerCase();
 
 
-    this.filteredUsers = this.users.filter(
-      (user: User) => {
+    /*
+     * Create a new array instead of modifying
+     * the original users array.
+     */
 
-        const matchesSearch =
-          !search ||
-          user.username
-            .toLowerCase()
-            .includes(search) ||
-          user.email
-            .toLowerCase()
-            .includes(search) ||
-          user.role
-            .toLowerCase()
-            .includes(search);
+    this.filteredUsers =
+      this.users.filter(
+        (user: User) => {
 
+          const matchesSearch =
+            !search ||
 
-        const matchesRole =
-          this.roleFilter === 'ALL' ||
-          user.role === this.roleFilter;
+            String(
+              user.id ?? ''
+            )
+              .toLowerCase()
+              .includes(search) ||
 
+            user.username
+              .toLowerCase()
+              .includes(search) ||
 
-        const matchesUsername =
-          !username ||
-          user.username
-            .toLowerCase()
-            .includes(username);
+            user.email
+              .toLowerCase()
+              .includes(search) ||
 
-
-        const matchesEmail =
-          !email ||
-          user.email
-            .toLowerCase()
-            .includes(email);
+            user.role
+              .toLowerCase()
+              .includes(search);
 
 
-        const matchesRoleColumn =
-          !roleColumn ||
-          user.role
-            .toLowerCase()
-            .includes(roleColumn);
+          const matchesRole =
+            this.roleFilter === 'ALL' ||
+
+            user.role ===
+            this.roleFilter;
 
 
-        return (
-          matchesSearch &&
-          matchesRole &&
-          matchesUsername &&
-          matchesEmail &&
-          matchesRoleColumn
-        );
+          const matchesUsername =
+            !username ||
 
-      }
-    );
+            user.username
+              .toLowerCase()
+              .includes(username);
+
+
+          const matchesEmail =
+            !email ||
+
+            user.email
+              .toLowerCase()
+              .includes(email);
+
+
+          const matchesRoleColumn =
+            !roleColumn ||
+
+            user.role
+              .toLowerCase()
+              .includes(roleColumn);
+
+
+          return (
+            matchesSearch &&
+            matchesRole &&
+            matchesUsername &&
+            matchesEmail &&
+            matchesRoleColumn
+          );
+        }
+      );
 
 
     this.applySorting();
 
     this.updatePagination();
-
   }
 
 
@@ -317,10 +544,16 @@ export class Users implements OnInit {
   // =====================================================
 
   sortBy(
-    column: 'id' | 'username' | 'email' | 'role'
+    column:
+      | 'id'
+      | 'username'
+      | 'email'
+      | 'role'
   ): void {
 
-    if (this.sortColumn === column) {
+    if (
+      this.sortColumn === column
+    ) {
 
       this.sortDirection =
         this.sortDirection === 'asc'
@@ -329,19 +562,23 @@ export class Users implements OnInit {
 
     } else {
 
-      this.sortColumn = column;
+      this.sortColumn =
+        column;
 
-      this.sortDirection = 'asc';
-
+      this.sortDirection =
+        'asc';
     }
 
 
     this.applySorting();
 
     this.updatePagination();
-
   }
 
+
+  // =====================================================
+  // APPLY SORTING
+  // =====================================================
 
   applySorting(): void {
 
@@ -351,90 +588,128 @@ export class Users implements OnInit {
         : -1;
 
 
+    this.filteredUsers =
+      [...this.filteredUsers];
+
+
     this.filteredUsers.sort(
-      (a: User, b: User) => {
+      (
+        a: User,
+        b: User
+      ) => {
 
-        let valueA: string | number;
+        let valueA:
+          string | number;
 
-        let valueB: string | number;
+        let valueB:
+          string | number;
 
 
-        switch (this.sortColumn) {
+        switch (
+          this.sortColumn
+        ) {
 
           case 'id':
 
-            valueA = a.id ?? 0;
+            valueA =
+              a.id ?? 0;
 
-            valueB = b.id ?? 0;
+            valueB =
+              b.id ?? 0;
 
             break;
 
 
           case 'username':
 
-            valueA = a.username.toLowerCase();
+            valueA =
+              a.username
+                .toLowerCase();
 
-            valueB = b.username.toLowerCase();
+            valueB =
+              b.username
+                .toLowerCase();
 
             break;
 
 
           case 'email':
 
-            valueA = a.email.toLowerCase();
+            valueA =
+              a.email
+                .toLowerCase();
 
-            valueB = b.email.toLowerCase();
+            valueB =
+              b.email
+                .toLowerCase();
 
             break;
 
 
           case 'role':
 
-            valueA = a.role.toLowerCase();
+            valueA =
+              a.role
+                .toLowerCase();
 
-            valueB = b.role.toLowerCase();
+            valueB =
+              b.role
+                .toLowerCase();
 
             break;
-
         }
 
 
-        if (valueA < valueB) {
+        if (
+          valueA < valueB
+        ) {
+
           return -1 * direction;
         }
 
-        if (valueA > valueB) {
+
+        if (
+          valueA > valueB
+        ) {
+
           return 1 * direction;
         }
 
-        return 0;
 
+        return 0;
       }
     );
-
   }
 
 
+  // =====================================================
+  // SORT ICON
+  // =====================================================
+
   getSortIcon(
-    column: 'id' | 'username' | 'email' | 'role'
+    column:
+      | 'id'
+      | 'username'
+      | 'email'
+      | 'role'
   ): string {
 
-    if (this.sortColumn !== column) {
+    if (
+      this.sortColumn !== column
+    ) {
 
       return '↕';
-
     }
 
 
     return this.sortDirection === 'asc'
       ? '↑'
       : '↓';
-
   }
 
 
   // =====================================================
-  // CLEAR FILTERS
+  // CLEAR ALL FILTERS
   // =====================================================
 
   clearAllFilters(): void {
@@ -452,9 +727,12 @@ export class Users implements OnInit {
     this.currentPage = 1;
 
     this.applyFilters();
-
   }
 
+
+  // =====================================================
+  // CLEAR COLUMN FILTERS
+  // =====================================================
 
   clearColumnFilters(): void {
 
@@ -467,7 +745,6 @@ export class Users implements OnInit {
     this.currentPage = 1;
 
     this.applyFilters();
-
   }
 
 
@@ -477,12 +754,17 @@ export class Users implements OnInit {
 
   openAddUserModal(): void {
 
+    /*
+     * No API call.
+     *
+     * Modal opens immediately.
+     */
+
     this.clearForm();
 
     this.editingId = null;
 
     this.showUserModal = true;
-
   }
 
 
@@ -490,20 +772,64 @@ export class Users implements OnInit {
   // EDIT USER
   // =====================================================
 
-  openEditUserModal(user: User): void {
+  openEditUserModal(
+    user: User
+  ): void {
 
-    this.editingId = user.id ?? null;
+    /*
+     * Do not allow editing while
+     * optimistic operation is running.
+     */
 
-    this.username = user.username;
+    if (
+      user.isSaving
+    ) {
 
-    this.email = user.email;
+      return;
+    }
 
-    this.role = user.role;
+
+    if (
+      user.id === undefined
+    ) {
+
+      return;
+    }
+
+
+    /*
+     * Copy current user into form.
+     */
+
+    this.editingId =
+      user.id;
+
+
+    this.username =
+      user.username;
+
+
+    this.email =
+      user.email;
+
+
+    this.role =
+      user.role;
+
+
+    /*
+     * Empty password means
+     * keep existing password.
+     */
 
     this.password = '';
 
-    this.showUserModal = true;
 
+    /*
+     * Modal opens immediately.
+     */
+
+    this.showUserModal = true;
   }
 
 
@@ -513,14 +839,13 @@ export class Users implements OnInit {
 
   closeUserModal(): void {
 
-    if (this.saving) {
-      return;
-    }
+    /*
+     * Allow the modal to close.
+     */
 
     this.showUserModal = false;
 
     this.clearForm();
-
   }
 
 
@@ -530,14 +855,33 @@ export class Users implements OnInit {
 
   saveUser(): void {
 
+    /*
+     * Prevent duplicate clicks.
+     */
+
+    if (
+      this.saving
+    ) {
+
+      return;
+    }
+
+
+    // -----------------------------------------------------
+    // VALIDATION
+    // -----------------------------------------------------
+
     const trimmedUsername =
       this.username.trim();
+
 
     const trimmedEmail =
       this.email.trim();
 
 
-    if (!trimmedUsername) {
+    if (
+      !trimmedUsername
+    ) {
 
       this.showToast(
         'Username is required.',
@@ -545,11 +889,12 @@ export class Users implements OnInit {
       );
 
       return;
-
     }
 
 
-    if (!trimmedEmail) {
+    if (
+      !trimmedEmail
+    ) {
 
       this.showToast(
         'Email is required.',
@@ -557,7 +902,6 @@ export class Users implements OnInit {
       );
 
       return;
-
     }
 
 
@@ -565,7 +909,11 @@ export class Users implements OnInit {
       /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 
-    if (!emailPattern.test(trimmedEmail)) {
+    if (
+      !emailPattern.test(
+        trimmedEmail
+      )
+    ) {
 
       this.showToast(
         'Please enter a valid email address.',
@@ -573,11 +921,17 @@ export class Users implements OnInit {
       );
 
       return;
-
     }
 
 
-    if (this.editingId === null && !this.password) {
+    /*
+     * Password required only during Add.
+     */
+
+    if (
+      this.editingId === null &&
+      !this.password.trim()
+    ) {
 
       this.showToast(
         'Password is required.',
@@ -585,12 +939,17 @@ export class Users implements OnInit {
       );
 
       return;
-
     }
 
 
-    if (this.password &&
-        this.password.length < 6) {
+    /*
+     * Password validation.
+     */
+
+    if (
+      this.password.trim() &&
+      this.password.trim().length < 6
+    ) {
 
       this.showToast(
         'Password must contain at least 6 characters.',
@@ -598,121 +957,517 @@ export class Users implements OnInit {
       );
 
       return;
+    }
 
+
+    // -----------------------------------------------------
+    // REQUEST
+    // -----------------------------------------------------
+
+    const request: any = {
+
+      username:
+        trimmedUsername,
+
+      email:
+        trimmedEmail,
+
+      role:
+        this.role
+    };
+
+
+    /*
+     * Password is sent only when
+     * user entered one.
+     */
+
+    if (
+      this.password.trim()
+    ) {
+
+      request.password =
+        this.password.trim();
+    }
+
+
+    // -----------------------------------------------------
+    // CREATE
+    // -----------------------------------------------------
+
+    if (
+      this.editingId === null
+    ) {
+
+      this.createUserOptimistically(
+        request
+      );
+
+      return;
+    }
+
+
+    // -----------------------------------------------------
+    // UPDATE
+    // -----------------------------------------------------
+
+    this.updateUserOptimistically(
+      this.editingId,
+      request
+    );
+  }
+
+
+  // =====================================================
+  // OPTIMISTIC CREATE
+  // =====================================================
+
+  private createUserOptimistically(
+    request: any
+  ): void {
+
+    if (
+      this.saving
+    ) {
+
+      return;
     }
 
 
     this.saving = true;
 
 
-    const request: any = {
+    /*
+     * Temporary user has NO fake ID.
+     */
 
-      username: trimmedUsername,
+    const temporaryUser: User = {
 
-      email: trimmedEmail,
+      username:
+        request.username,
 
-      role: this.role
+      email:
+        request.email,
 
+      role:
+        request.role,
+
+      isSaving:
+        true
     };
 
 
-    if (this.password.trim()) {
-
-      request.password =
-        this.password.trim();
-
-    }
+    this.temporaryUser =
+      temporaryUser;
 
 
-    // =================================================
-    // CREATE
-    // =================================================
+    /*
+     * Add row immediately.
+     */
 
-    if (this.editingId === null) {
+    this.users = [
+      ...this.users,
+      temporaryUser
+    ];
 
-      this.userService
-        .createUser(request)
-        .subscribe({
 
-          next: () => {
+    /*
+     * Recalculate immediately.
+     */
 
-            this.saving = false;
+    this.applyFilters();
 
-            this.showUserModal = false;
 
-            this.clearForm();
+    /*
+     * Go to last page.
+     */
 
-            this.loadUsers();
+    this.currentPage =
+      this.totalPages;
 
-            this.showToast(
-              'User created successfully.',
-              'success'
+
+    this.updatePagination();
+
+
+    /*
+     * Close modal immediately.
+     */
+
+    this.closeUserModal();
+
+
+    /*
+     * Backend request runs
+     * in the background.
+     */
+
+    this.userService
+      .createUser(request)
+      .subscribe({
+
+        next: (
+          createdUser: User
+        ) => {
+
+          /*
+           * Replace temporary user
+           * with actual backend user.
+           */
+
+          this.users =
+            this.users.map(
+              (user: User) => {
+
+                if (
+                  user ===
+                  temporaryUser
+                ) {
+
+                  return {
+
+                    ...createdUser,
+
+                    isSaving:
+                      false
+                  };
+                }
+
+
+                return user;
+              }
             );
 
-          },
 
-          error: (error: HttpErrorResponse) => {
+          /*
+           * Update cache.
+           */
 
-            console.error(
-              'Error creating user:',
-              error
+          this.userService
+            .setCachedUsers(
+              this.users
             );
 
-            this.saving = false;
 
-            this.showToast(
-              this.getErrorMessage(
-                error,
-                'Failed to create user.'
-              ),
-              'error'
+          this.temporaryUser =
+            undefined;
+
+
+          this.saving =
+            false;
+
+
+          this.applyFilters();
+
+
+          this.fixCurrentPage();
+
+
+          this.showToast(
+            'User created successfully.',
+            'success'
+          );
+        },
+
+
+        error: (
+          error: HttpErrorResponse
+        ) => {
+
+          console.error(
+            'Error creating user:',
+            error
+          );
+
+
+          /*
+           * Remove temporary user.
+           */
+
+          this.users =
+            this.users.filter(
+              (user: User) =>
+                user !==
+                temporaryUser
             );
 
-          }
 
-        });
+          /*
+           * Update cache.
+           */
+
+          this.userService
+            .setCachedUsers(
+              this.users
+            );
+
+
+          this.temporaryUser =
+            undefined;
+
+
+          this.saving =
+            false;
+
+
+          this.applyFilters();
+
+
+          this.fixCurrentPage();
+
+
+          this.showToast(
+            this.getErrorMessage(
+              error,
+              'Failed to create user.'
+            ),
+            'error'
+          );
+        }
+
+      });
+  }
+
+
+  // =====================================================
+  // OPTIMISTIC UPDATE
+  // =====================================================
+
+  private updateUserOptimistically(
+    id: number,
+    request: any
+  ): void {
+
+    if (
+      this.saving
+    ) {
 
       return;
-
     }
 
 
-    // =================================================
-    // UPDATE
-    // =================================================
+    /*
+     * Find existing user.
+     */
+
+    const existingUser =
+      this.users.find(
+        (user: User) =>
+          user.id === id
+      );
+
+
+    if (
+      !existingUser
+    ) {
+
+      this.showToast(
+        'User not found.',
+        'error'
+      );
+
+      return;
+    }
+
+
+    /*
+     * Backup original user.
+     */
+
+    this.updatingUserBackup = {
+
+      id:
+        existingUser.id,
+
+      username:
+        existingUser.username,
+
+      email:
+        existingUser.email,
+
+      role:
+        existingUser.role,
+
+      isSaving:
+        false
+    };
+
+
+    /*
+     * Create optimistic version.
+     */
+
+    const updatedUser: User = {
+
+      id:
+
+        existingUser.id,
+
+      username:
+        request.username,
+
+      email:
+        request.email,
+
+      role:
+        request.role,
+
+      isSaving:
+        true
+    };
+
+
+    /*
+     * Update UI immediately.
+     */
+
+    this.users =
+      this.users.map(
+        (user: User) =>
+          user.id === id
+            ? updatedUser
+            : user
+      );
+
+
+    this.applyFilters();
+
+
+    /*
+     * Close modal immediately.
+     */
+
+    this.closeUserModal();
+
+
+    this.saving = true;
+
+
+    /*
+     * Backend update runs
+     * in the background.
+     */
 
     this.userService
       .updateUser(
-        this.editingId,
+        id,
         request
       )
       .subscribe({
 
-        next: () => {
+        next: (
+          responseUser: User
+        ) => {
 
-          this.saving = false;
+          /*
+           * Replace optimistic user
+           * with backend response.
+           */
 
-          this.showUserModal = false;
+          this.users =
+            this.users.map(
+              (user: User) => {
 
-          this.clearForm();
+                if (
+                  user.id === id
+                ) {
 
-          this.loadUsers();
+                  return {
+
+                    ...responseUser,
+
+                    isSaving:
+                      false
+                  };
+                }
+
+
+                return user;
+              }
+            );
+
+
+          /*
+           * Update cache.
+           */
+
+          this.userService
+            .setCachedUsers(
+              this.users
+            );
+
+
+          this.updatingUserBackup =
+            undefined;
+
+
+          this.saving =
+            false;
+
+
+          this.applyFilters();
+
+
+          this.fixCurrentPage();
+
 
           this.showToast(
             'User updated successfully.',
             'success'
           );
-
         },
 
-        error: (error: HttpErrorResponse) => {
+
+        error: (
+          error: HttpErrorResponse
+        ) => {
 
           console.error(
             'Error updating user:',
             error
           );
 
-          this.saving = false;
+
+          /*
+           * Rollback old user.
+           */
+
+          if (
+            this.updatingUserBackup
+          ) {
+
+            this.users =
+              this.users.map(
+                (user: User) =>
+                  user.id === id
+                    ? this.updatingUserBackup!
+                    : user
+              );
+          }
+
+
+          /*
+           * Update cache.
+           */
+
+          this.userService
+            .setCachedUsers(
+              this.users
+            );
+
+
+          this.updatingUserBackup =
+            undefined;
+
+
+          this.saving =
+            false;
+
+
+          this.applyFilters();
+
+
+          this.fixCurrentPage();
+
 
           this.showToast(
             this.getErrorMessage(
@@ -721,11 +1476,9 @@ export class Users implements OnInit {
             ),
             'error'
           );
-
         }
 
       });
-
   }
 
 
@@ -733,35 +1486,85 @@ export class Users implements OnInit {
   // DELETE MODAL
   // =====================================================
 
-  openDeleteModal(user: User): void {
+  openDeleteModal(
+    user: User
+  ): void {
 
-    this.selectedUser = user;
+    /*
+     * Do not delete a temporary
+     * or currently saving user.
+     */
 
-    this.showDeleteModal = true;
+    if (
+      user.isSaving
+    ) {
 
-  }
-
-
-  closeDeleteModal(): void {
-
-    if (this.deleting) {
       return;
     }
 
-    this.showDeleteModal = false;
 
-    this.selectedUser = null;
+    if (
+      user.id === undefined
+    ) {
 
+      return;
+    }
+
+
+    this.selectedUser =
+      user;
+
+
+    /*
+     * Modal opens immediately.
+     */
+
+    this.showDeleteModal =
+      true;
   }
 
 
   // =====================================================
-  // DELETE USER
+  // CLOSE DELETE MODAL
+  // =====================================================
+
+  closeDeleteModal(): void {
+
+    /*
+     * Close immediately.
+     */
+
+    this.showDeleteModal =
+      false;
+
+
+    this.selectedUser =
+      null;
+  }
+
+
+  // =====================================================
+  // CONFIRM DELETE
   // =====================================================
 
   confirmDeleteUser(): void {
 
-    if (!this.selectedUser?.id) {
+    if (
+      this.deleting
+    ) {
+
+      return;
+    }
+
+
+    const user =
+      this.selectedUser;
+
+
+    if (
+      !user ||
+      user.id === undefined
+    ) {
 
       this.showToast(
         'User ID is missing.',
@@ -769,42 +1572,163 @@ export class Users implements OnInit {
       );
 
       return;
-
     }
+
+
+    const id =
+      user.id;
+
+
+    /*
+     * Backup user before
+     * optimistic deletion.
+     */
+
+    this.deletedUserBackup = {
+
+      id:
+        user.id,
+
+      username:
+        user.username,
+
+      email:
+        user.email,
+
+      role:
+        user.role,
+
+      isSaving:
+        false
+    };
+
+
+    /*
+     * Close modal immediately.
+     */
+
+    this.showDeleteModal =
+      false;
+
+
+    this.selectedUser =
+      null;
+
+
+    /*
+     * Remove user immediately.
+     */
+
+    this.users =
+      this.users.filter(
+        (item: User) =>
+          item.id !== id
+      );
+
+
+    /*
+     * Update UI immediately.
+     */
+
+    this.applyFilters();
+
+
+    this.fixCurrentPage();
+
+
+    /*
+     * Update cache immediately.
+     */
+
+    this.userService
+      .setCachedUsers(
+        this.users
+      );
 
 
     this.deleting = true;
 
 
+    /*
+     * Backend DELETE runs
+     * in the background.
+     */
+
     this.userService
-      .deleteUser(this.selectedUser.id)
+      .deleteUser(id)
       .subscribe({
 
         next: () => {
 
-          this.deleting = false;
+          this.deletedUserBackup =
+            undefined;
 
-          this.showDeleteModal = false;
 
-          this.selectedUser = null;
+          this.deleting =
+            false;
 
-          this.loadUsers();
+
+          /*
+           * IMPORTANT:
+           *
+           * Do NOT call loadUsers().
+           */
 
           this.showToast(
             'User deleted successfully.',
             'success'
           );
-
         },
 
-        error: (error: HttpErrorResponse) => {
+
+        error: (
+          error: HttpErrorResponse
+        ) => {
 
           console.error(
             'Error deleting user:',
             error
           );
 
-          this.deleting = false;
+
+          /*
+           * Rollback deleted user.
+           */
+
+          if (
+            this.deletedUserBackup
+          ) {
+
+            this.users = [
+              ...this.users,
+              this.deletedUserBackup
+            ];
+          }
+
+
+          /*
+           * Update cache.
+           */
+
+          this.userService
+            .setCachedUsers(
+              this.users
+            );
+
+
+          this.deletedUserBackup =
+            undefined;
+
+
+          this.deleting =
+            false;
+
+
+          this.applyFilters();
+
+
+          this.fixCurrentPage();
+
 
           this.showToast(
             this.getErrorMessage(
@@ -813,11 +1737,9 @@ export class Users implements OnInit {
             ),
             'error'
           );
-
         }
 
       });
-
   }
 
 
@@ -835,6 +1757,7 @@ export class Users implements OnInit {
 
     this.role = 'PATIENT';
 
+    this.editingId = null;
   }
 
 
@@ -849,12 +1772,20 @@ export class Users implements OnInit {
 
 
     if (
-      this.currentPage > totalPages &&
-      totalPages > 0
+      this.currentPage >
+      totalPages
     ) {
 
-      this.currentPage = totalPages;
+      this.currentPage =
+        totalPages;
+    }
 
+
+    if (
+      this.currentPage < 1
+    ) {
+
+      this.currentPage = 1;
     }
 
 
@@ -872,31 +1803,82 @@ export class Users implements OnInit {
         start,
         end
       );
-
   }
 
 
-  onPageSizeChange(): void {
+  // =====================================================
+  // PAGE SIZE CHANGE
+  // =====================================================
+
+  onPageSizeChange(
+    event?: Event
+  ): void {
+
+    /*
+     * Supports:
+     *
+     * (change)="onPageSizeChange($event)"
+     *
+     * and:
+     *
+     * (change)="onPageSizeChange()"
+     */
+
+    if (event) {
+
+      const target =
+        event.target as HTMLSelectElement;
+
+
+      const newSize =
+        Number(
+          target.value
+        );
+
+
+      if (
+        Number.isFinite(newSize) &&
+        newSize > 0
+      ) {
+
+        this.pageSize =
+          newSize;
+      }
+    }
+
+
+    /*
+     * Start from page 1
+     * after changing page size.
+     */
 
     this.currentPage = 1;
 
-    this.updatePagination();
 
+    this.updatePagination();
   }
 
 
+  // =====================================================
+  // PREVIOUS PAGE
+  // =====================================================
+
   previousPage(): void {
 
-    if (this.currentPage > 1) {
+    if (
+      this.currentPage > 1
+    ) {
 
       this.currentPage--;
 
       this.updatePagination();
-
     }
-
   }
 
+
+  // =====================================================
+  // NEXT PAGE
+  // =====================================================
 
   nextPage(): void {
 
@@ -908,34 +1890,44 @@ export class Users implements OnInit {
       this.currentPage++;
 
       this.updatePagination();
-
     }
-
   }
 
 
-  goToPage(page: number): void {
+  // =====================================================
+  // GO TO PAGE
+  // =====================================================
+
+  goToPage(
+    page: number
+  ): void {
 
     if (
       page >= 1 &&
       page <= this.totalPages
     ) {
 
-      this.currentPage = page;
+      this.currentPage =
+        page;
 
       this.updatePagination();
-
     }
-
   }
 
+
+  // =====================================================
+  // TOTAL RECORDS
+  // =====================================================
 
   get totalRecords(): number {
 
     return this.filteredUsers.length;
-
   }
 
+
+  // =====================================================
+  // TOTAL PAGES
+  // =====================================================
 
   get totalPages(): number {
 
@@ -946,25 +1938,39 @@ export class Users implements OnInit {
         this.pageSize
       )
     );
-
   }
 
+
+  // =====================================================
+  // PAGE NUMBERS
+  // =====================================================
 
   get pages(): number[] {
 
     return Array.from(
       {
-        length: this.totalPages
+        length:
+          this.totalPages
       },
-      (_, index) => index + 1
+      (
+        _,
+        index
+      ) =>
+        index + 1
     );
-
   }
 
 
+  // =====================================================
+  // START RECORD
+  // =====================================================
+
   get startRecord(): number {
 
-    if (this.totalRecords === 0) {
+    if (
+      this.totalRecords === 0
+    ) {
+
       return 0;
     }
 
@@ -973,18 +1979,49 @@ export class Users implements OnInit {
       (this.currentPage - 1) *
       this.pageSize
     ) + 1;
-
   }
 
+
+  // =====================================================
+  // END RECORD
+  // =====================================================
 
   get endRecord(): number {
 
     return Math.min(
       this.currentPage *
-      this.pageSize,
+        this.pageSize,
+
       this.totalRecords
     );
+  }
 
+
+  // =====================================================
+  // FIX CURRENT PAGE
+  // =====================================================
+
+  private fixCurrentPage(): void {
+
+    if (
+      this.currentPage >
+      this.totalPages
+    ) {
+
+      this.currentPage =
+        this.totalPages;
+    }
+
+
+    if (
+      this.currentPage < 1
+    ) {
+
+      this.currentPage = 1;
+    }
+
+
+    this.updatePagination();
   }
 
 
@@ -994,32 +2031,44 @@ export class Users implements OnInit {
 
   showToast(
     message: string,
-    type: 'success' | 'error'
+    type:
+      | 'success'
+      | 'error'
   ): void {
 
-    this.popupMessage = message;
-
-    this.popupType = type;
-
-    this.showPopup = true;
+    this.popupMessage =
+      message;
 
 
-    if (this.popupTimer) {
+    this.popupType =
+      type;
+
+
+    this.showPopup =
+      true;
+
+
+    /*
+     * Clear previous timer.
+     */
+
+    if (
+      this.popupTimer
+    ) {
 
       clearTimeout(
         this.popupTimer
       );
-
     }
 
 
     this.popupTimer =
       setTimeout(() => {
 
-        this.showPopup = false;
+        this.showPopup =
+          false;
 
       }, 4000);
-
   }
 
 
@@ -1032,35 +2081,55 @@ export class Users implements OnInit {
     fallback: string
   ): string {
 
+    /*
+     * Backend returned a plain string.
+     */
+
     if (
-      typeof error.error === 'string' &&
+      typeof error.error ===
+      'string' &&
       error.error.trim()
     ) {
 
       return error.error;
-
     }
 
+
+    /*
+     * Backend returned:
+     *
+     * { message: "..." }
+     */
 
     if (
       error.error?.message &&
-      typeof error.error.message === 'string'
+      typeof error.error.message ===
+      'string'
     ) {
 
       return error.error.message;
-
     }
 
+
+    /*
+     * Backend returned:
+     *
+     * { error: "..." }
+     */
 
     if (
       error.error?.error &&
-      typeof error.error.error === 'string'
+      typeof error.error.error ===
+      'string'
     ) {
 
       return error.error.error;
-
     }
 
+
+    /*
+     * Angular HTTP error.
+     */
 
     if (
       error.message &&
@@ -1068,12 +2137,10 @@ export class Users implements OnInit {
     ) {
 
       return error.message;
-
     }
 
 
     return fallback;
-
   }
 
 }

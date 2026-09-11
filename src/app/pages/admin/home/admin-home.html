@@ -1,938 +1,478 @@
-<div class="dashboard-page">
+<div class="admin-home">
+
+  <!-- ==========================================
+       WELCOME HEADER
+  =========================================== -->
+
+  <section class="welcome-card">
+
+    <div class="welcome-content">
+
+      <span class="admin-label">
+        ADMINISTRATOR
+      </span>
+
+      <h1>
+        Admin
+      </h1>
+
+      <p>
+        Here's what's happening across your patient management system.
+      </p>
+
+      <span class="dashboard-date">
+        {{ currentDate }}
+      </span>
+
+    </div>
 
 
-  <!-- =====================================================
-       DASHBOARD HEADER
-       ===================================================== -->
+    <button
+      type="button"
+      class="refresh-btn"
+      (click)="refreshDashboard()">
 
-  <section class="dashboard-hero">
+      <span class="refresh-symbol">
+        ↻
+      </span>
 
-    <div class="hero-content">
+      Refresh Dashboard
 
-      <div class="hero-text">
+    </button>
 
-        <span class="hero-label">
-          ADMINISTRATOR
+  </section>
+
+
+  <!-- ==========================================
+       MANAGEMENT CARDS
+  =========================================== -->
+
+  <section class="management-section">
+
+    <div class="section-header">
+
+      <div>
+        <span class="section-label">
+          MANAGEMENT
         </span>
 
-        <h1>
-          {{ greeting }}, Admin
-        </h1>
-
-        <p>
-          Here's what's happening across your
-          patient management system.
-        </p>
-
-        <span class="hero-date">
-          {{ formattedDate }}
-        </span>
-
+        <h2>
+          System Overview
+        </h2>
       </div>
 
+      <p>
+        Quickly access and manage your application modules.
+      </p>
 
-      <div class="hero-actions">
+    </div>
 
-        <button
-          type="button"
-          class="refresh-dashboard-button"
-          (click)="refreshDashboard()"
-          [disabled]="loading">
 
-          <span>
-            ↻
+    <div class="cards-grid">
+
+
+      <!-- ======================================
+           PATIENT CARD
+      ======================================= -->
+
+      <a
+        routerLink="/admin/patients"
+        class="management-card patient-card">
+
+        <div class="card-header">
+
+          <div class="card-icon">
+            👥
+          </div>
+
+          <span class="card-arrow">
+            ↗
           </span>
 
-          Refresh Dashboard
+        </div>
 
-        </button>
 
-      </div>
+        <div class="card-body">
+
+          <span class="card-number">
+            01
+          </span>
+
+          <h3>
+            Patients
+          </h3>
+
+          <p>
+            Manage patient information, contact details,
+            diseases and records.
+          </p>
+
+        </div>
+
+
+        <div class="card-bottom">
+
+          <span>
+            Manage Patients
+          </span>
+
+          <strong>
+            →
+          </strong>
+
+        </div>
+
+      </a>
+
+
+      <!-- ======================================
+           DOCTOR CARD
+      ======================================= -->
+
+      <a
+        routerLink="/admin/doctors"
+        class="management-card doctor-card">
+
+        <div class="card-header">
+
+          <div class="card-icon">
+            👨‍⚕️
+          </div>
+
+          <span class="card-arrow">
+            ↗
+          </span>
+
+        </div>
+
+
+        <div class="card-body">
+
+          <span class="card-number">
+            02
+          </span>
+
+          <h3>
+            Doctors
+          </h3>
+
+          <p>
+            Manage doctors, specializations and
+            doctor information.
+          </p>
+
+        </div>
+
+
+        <div class="card-bottom">
+
+          <span>
+            Manage Doctors
+          </span>
+
+          <strong>
+            →
+          </strong>
+
+        </div>
+
+      </a>
+
+
+      <!-- ======================================
+           APPOINTMENT CARD
+      ======================================= -->
+
+      <a
+        routerLink="/admin/appointments"
+        class="management-card appointment-card">
+
+        <div class="card-header">
+
+          <div class="card-icon">
+            📅
+          </div>
+
+          <span class="card-arrow">
+            ↗
+          </span>
+
+        </div>
+
+
+        <div class="card-body">
+
+          <span class="card-number">
+            03
+          </span>
+
+          <h3>
+            Appointments
+          </h3>
+
+          <p>
+            Schedule, update and manage patient
+            appointments.
+          </p>
+
+        </div>
+
+
+        <div class="card-bottom">
+
+          <span>
+            Manage Appointments
+          </span>
+
+          <strong>
+            →
+          </strong>
+
+        </div>
+
+      </a>
+
+
+      <!-- ======================================
+           USER CARD
+      ======================================= -->
+
+      <a
+        routerLink="/admin/users"
+        class="management-card user-card">
+
+        <div class="card-header">
+
+          <div class="card-icon">
+            👤
+          </div>
+
+          <span class="card-arrow">
+            ↗
+          </span>
+
+        </div>
+
+
+        <div class="card-body">
+
+          <span class="card-number">
+            04
+          </span>
+
+          <h3>
+            Users
+          </h3>
+
+          <p>
+            Manage application users and their
+            assigned roles.
+          </p>
+
+        </div>
+
+
+        <div class="card-bottom">
+
+          <span>
+            Manage Users
+          </span>
+
+          <strong>
+            →
+          </strong>
+
+        </div>
+
+      </a>
 
     </div>
 
   </section>
 
 
-  <!-- =====================================================
-       LOADING
-       ===================================================== -->
+  <!-- ==========================================
+       MANAGEMENT CENTER
+  =========================================== -->
 
-  @if (loading) {
+  <section class="management-center">
 
-    <div class="dashboard-loading">
+    <div class="center-header">
 
-      <div class="dashboard-spinner"></div>
+      <span class="section-label">
+        MANAGEMENT CENTER
+      </span>
+
+      <h2>
+        Quick Access
+      </h2>
 
       <p>
-        Loading dashboard...
+        Choose an area to continue working with the
+        Patient Management System.
       </p>
 
     </div>
 
-  }
+
+    <div class="quick-list">
 
 
-  @else {
+      <!-- PATIENT -->
 
+      <a
+        routerLink="/admin/patients"
+        class="quick-item">
 
-    <!-- ===================================================
-         STATISTICS
-         =================================================== -->
-
-    <section class="stats-grid">
-
-
-      <!-- PATIENTS -->
-
-      <article
-        class="stat-card patients-card"
-        (click)="goToPatients()">
-
-        <div class="stat-card-top">
-
-          <div class="stat-icon">
-            P
-          </div>
-
-          <span class="stat-arrow">
-            →
-          </span>
-
+        <div class="quick-icon">
+          👥
         </div>
 
-
-        <div class="stat-content">
-
-          <span class="stat-label">
-            TOTAL PATIENTS
-          </span>
-
-          <strong class="stat-number">
-            {{ totalPatients }}
-          </strong>
-
-          <span class="stat-description">
-            Registered patients
-          </span>
-
-        </div>
-
-      </article>
-
-
-      <!-- DOCTORS -->
-
-      <article
-        class="stat-card doctors-card"
-        (click)="goToDoctors()">
-
-        <div class="stat-card-top">
-
-          <div class="stat-icon">
-            D
-          </div>
-
-          <span class="stat-arrow">
-            →
-          </span>
-
-        </div>
-
-
-        <div class="stat-content">
-
-          <span class="stat-label">
-            TOTAL DOCTORS
-          </span>
-
-          <strong class="stat-number">
-            {{ totalDoctors }}
-          </strong>
-
-          <span class="stat-description">
-            Active doctors
-          </span>
-
-        </div>
-
-      </article>
-
-
-      <!-- APPOINTMENTS -->
-
-      <article
-        class="stat-card appointments-card"
-        (click)="goToAppointments()">
-
-        <div class="stat-card-top">
-
-          <div class="stat-icon">
-            A
-          </div>
-
-          <span class="stat-arrow">
-            →
-          </span>
-
-        </div>
-
-
-        <div class="stat-content">
-
-          <span class="stat-label">
-            APPOINTMENTS
-          </span>
-
-          <strong class="stat-number">
-            {{ totalAppointments }}
-          </strong>
-
-          <span class="stat-description">
-            Total appointments
-          </span>
-
-        </div>
-
-      </article>
-
-
-      <!-- USERS -->
-
-      <article
-        class="stat-card users-card"
-        (click)="goToUsers()">
-
-        <div class="stat-card-top">
-
-          <div class="stat-icon">
-            U
-          </div>
-
-          <span class="stat-arrow">
-            →
-          </span>
-
-        </div>
-
-
-        <div class="stat-content">
-
-          <span class="stat-label">
-            SYSTEM USERS
-          </span>
-
-          <strong class="stat-number">
-            {{ totalUsers }}
-          </strong>
-
-          <span class="stat-description">
-            Registered users
-          </span>
-
-        </div>
-
-      </article>
-
-    </section>
-
-
-    <!-- ===================================================
-         MAIN DASHBOARD GRID
-         =================================================== -->
-
-    <section class="dashboard-grid">
-
-
-      <!-- =================================================
-           APPOINTMENT OVERVIEW
-           ================================================= -->
-
-      <article class="dashboard-card appointment-overview">
-
-        <div class="card-header">
-
-          <div>
-
-            <span class="card-label">
-              APPOINTMENT ANALYTICS
-            </span>
-
-            <h2>
-              Appointment Overview
-            </h2>
-
-          </div>
-
-          <button
-            type="button"
-            class="view-all-button"
-            (click)="goToAppointments()">
-
-            View all →
-
-          </button>
-
-        </div>
-
-
-        <div class="status-overview">
-
-
-          <!-- SCHEDULED -->
-
-          <div class="status-item">
-
-            <div class="status-item-header">
-
-              <div class="status-name">
-
-                <span class="status-dot scheduled-dot"></span>
-
-                Scheduled
-
-              </div>
-
-              <strong>
-                {{ scheduledAppointments }}
-              </strong>
-
-            </div>
-
-
-            <div class="progress-track">
-
-              <div
-                class="progress-fill scheduled-fill"
-                [style.width.%]="
-                  getStatusPercentage(
-                    scheduledAppointments
-                  )
-                ">
-              </div>
-
-            </div>
-
-
-            <span class="percentage">
-              {{ getStatusPercentage(
-                scheduledAppointments
-              ) }}%
-            </span>
-
-          </div>
-
-
-          <!-- CONFIRMED -->
-
-          <div class="status-item">
-
-            <div class="status-item-header">
-
-              <div class="status-name">
-
-                <span class="status-dot confirmed-dot"></span>
-
-                Confirmed
-
-              </div>
-
-              <strong>
-                {{ confirmedAppointments }}
-              </strong>
-
-            </div>
-
-
-            <div class="progress-track">
-
-              <div
-                class="progress-fill confirmed-fill"
-                [style.width.%]="
-                  getStatusPercentage(
-                    confirmedAppointments
-                  )
-                ">
-              </div>
-
-            </div>
-
-
-            <span class="percentage">
-              {{ getStatusPercentage(
-                confirmedAppointments
-              ) }}%
-            </span>
-
-          </div>
-
-
-          <!-- COMPLETED -->
-
-          <div class="status-item">
-
-            <div class="status-item-header">
-
-              <div class="status-name">
-
-                <span class="status-dot completed-dot"></span>
-
-                Completed
-
-              </div>
-
-              <strong>
-                {{ completedAppointments }}
-              </strong>
-
-            </div>
-
-
-            <div class="progress-track">
-
-              <div
-                class="progress-fill completed-fill"
-                [style.width.%]="
-                  getStatusPercentage(
-                    completedAppointments
-                  )
-                ">
-              </div>
-
-            </div>
-
-
-            <span class="percentage">
-              {{ getStatusPercentage(
-                completedAppointments
-              ) }}%
-            </span>
-
-          </div>
-
-
-          <!-- CANCELLED -->
-
-          <div class="status-item">
-
-            <div class="status-item-header">
-
-              <div class="status-name">
-
-                <span class="status-dot cancelled-dot"></span>
-
-                Cancelled
-
-              </div>
-
-              <strong>
-                {{ cancelledAppointments }}
-              </strong>
-
-            </div>
-
-
-            <div class="progress-track">
-
-              <div
-                class="progress-fill cancelled-fill"
-                [style.width.%]="
-                  getStatusPercentage(
-                    cancelledAppointments
-                  )
-                ">
-              </div>
-
-            </div>
-
-
-            <span class="percentage">
-              {{ getStatusPercentage(
-                cancelledAppointments
-              ) }}%
-            </span>
-
-          </div>
-
-        </div>
-
-      </article>
-
-
-      <!-- =================================================
-           QUICK ACTIONS
-           ================================================= -->
-
-      <article class="dashboard-card quick-actions-card">
-
-        <div class="card-header">
-
-          <div>
-
-            <span class="card-label">
-              SHORTCUTS
-            </span>
-
-            <h2>
-              Quick Actions
-            </h2>
-
-          </div>
-
-        </div>
-
-
-        <div class="quick-actions">
-
-
-          <button
-            type="button"
-            class="quick-action"
-            (click)="goToPatients()">
-
-            <span class="quick-icon">
-              P
-            </span>
-
-            <span class="quick-text">
-
-              <strong>
-                Manage Patients
-              </strong>
-
-              <small>
-                View and manage patients
-              </small>
-
-            </span>
-
-            <span class="quick-arrow">
-              →
-            </span>
-
-          </button>
-
-
-          <button
-            type="button"
-            class="quick-action"
-            (click)="goToDoctors()">
-
-            <span class="quick-icon">
-              D
-            </span>
-
-            <span class="quick-text">
-
-              <strong>
-                Manage Doctors
-              </strong>
-
-              <small>
-                View and manage doctors
-              </small>
-
-            </span>
-
-            <span class="quick-arrow">
-              →
-            </span>
-
-          </button>
-
-
-          <button
-            type="button"
-            class="quick-action"
-            (click)="goToAppointments()">
-
-            <span class="quick-icon">
-              A
-            </span>
-
-            <span class="quick-text">
-
-              <strong>
-                Manage Appointments
-              </strong>
-
-              <small>
-                Schedule and update appointments
-              </small>
-
-            </span>
-
-            <span class="quick-arrow">
-              →
-            </span>
-
-          </button>
-
-
-          <button
-            type="button"
-            class="quick-action"
-            (click)="goToUsers()">
-
-            <span class="quick-icon">
-              U
-            </span>
-
-            <span class="quick-text">
-
-              <strong>
-                Manage Users
-              </strong>
-
-              <small>
-                Manage system users
-              </small>
-
-            </span>
-
-            <span class="quick-arrow">
-              →
-            </span>
-
-          </button>
-
-        </div>
-
-      </article>
-
-    </section>
-
-
-    <!-- ===================================================
-         RECENT APPOINTMENTS
-         =================================================== -->
-
-    <section class="dashboard-card recent-card">
-
-      <div class="card-header">
-
-        <div>
-
-          <span class="card-label">
-            LATEST ACTIVITY
-          </span>
-
-          <h2>
-            Recent Appointments
-          </h2>
-
-        </div>
-
-
-        <button
-          type="button"
-          class="view-all-button"
-          (click)="goToAppointments()">
-
-          View all →
-
-        </button>
-
-      </div>
-
-
-      @if (
-        recentAppointments.length === 0
-      ) {
-
-        <div class="no-data">
-
-          <div class="no-data-icon">
-            A
-          </div>
+        <div class="quick-info">
 
           <h3>
-            No appointments yet
+            Patient Management
           </h3>
 
           <p>
-            Appointment activity will appear here.
+            Add, edit, search, filter and manage patients.
           </p>
 
-          <button
-            type="button"
-            class="create-first-button"
-            (click)="goToAppointments()">
+        </div>
 
-            Manage Appointments
+        <span class="quick-arrow">
+          →
+        </span>
 
-          </button>
+      </a>
+
+
+      <!-- DOCTOR -->
+
+      <a
+        routerLink="/admin/doctors"
+        class="quick-item">
+
+        <div class="quick-icon">
+          👨‍⚕️
+        </div>
+
+        <div class="quick-info">
+
+          <h3>
+            Doctor Management
+          </h3>
+
+          <p>
+            Manage doctors and their specializations.
+          </p>
 
         </div>
 
-      }
+        <span class="quick-arrow">
+          →
+        </span>
+
+      </a>
 
 
-      @else {
+      <!-- APPOINTMENT -->
 
-        <div class="recent-table-wrapper">
+      <a
+        routerLink="/admin/appointments"
+        class="quick-item">
 
-          <table class="recent-table">
+        <div class="quick-icon">
+          📅
+        </div>
 
-            <thead>
+        <div class="quick-info">
 
-              <tr>
+          <h3>
+            Appointment Management
+          </h3>
 
-                <th>
-                  ID
-                </th>
-
-                <th>
-                  Patient
-                </th>
-
-                <th>
-                  Doctor
-                </th>
-
-                <th>
-                  Date
-                </th>
-
-                <th>
-                  Time
-                </th>
-
-                <th>
-                  Status
-                </th>
-
-              </tr>
-
-            </thead>
-
-
-            <tbody>
-
-              @for (
-                appointment of recentAppointments;
-                track appointment.id
-              ) {
-
-                <tr>
-
-                  <td>
-
-                    <span class="appointment-number">
-                      #{{ appointment.id }}
-                    </span>
-
-                  </td>
-
-
-                  <td>
-
-                    <div class="dashboard-person">
-
-                      <div class="dashboard-avatar patient-avatar">
-                        {{
-                          appointment.patientName
-                            .charAt(0)
-                            .toUpperCase()
-                        }}
-                      </div>
-
-                      <div>
-
-                        <strong>
-                          {{ appointment.patientName }}
-                        </strong>
-
-                        <small>
-                          Patient
-                        </small>
-
-                      </div>
-
-                    </div>
-
-                  </td>
-
-
-                  <td>
-
-                    <div class="dashboard-person">
-
-                      <div class="dashboard-avatar doctor-avatar">
-                        {{
-                          appointment.doctorName
-                            .charAt(0)
-                            .toUpperCase()
-                        }}
-                      </div>
-
-                      <div>
-
-                        <strong>
-                          {{ appointment.doctorName }}
-                        </strong>
-
-                        <small>
-                          Doctor
-                        </small>
-
-                      </div>
-
-                    </div>
-
-                  </td>
-
-
-                  <td>
-
-                    <span class="date-value">
-                      {{ appointment.appointmentDate }}
-                    </span>
-
-                  </td>
-
-
-                  <td>
-
-                    <span class="time-value">
-                      {{ appointment.appointmentTime }}
-                    </span>
-
-                  </td>
-
-
-                  <td>
-
-                    <span
-                      class="dashboard-status"
-                      [class.scheduled]="
-                        appointment.status === 'SCHEDULED'
-                      "
-                      [class.confirmed]="
-                        appointment.status === 'CONFIRMED'
-                      "
-                      [class.completed]="
-                        appointment.status === 'COMPLETED'
-                      "
-                      [class.cancelled]="
-                        appointment.status === 'CANCELLED'
-                      ">
-
-                      <span class="status-dot"></span>
-
-                      {{ appointment.status }}
-
-                    </span>
-
-                  </td>
-
-                </tr>
-
-              }
-
-            </tbody>
-
-          </table>
+          <p>
+            Create and manage patient appointments.
+          </p>
 
         </div>
 
-      }
+        <span class="quick-arrow">
+          →
+        </span>
 
-    </section>
-
-
-    <!-- ===================================================
-         SYSTEM SUMMARY
-         =================================================== -->
-
-    <section class="summary-grid">
+      </a>
 
 
-      <div class="summary-card">
+      <!-- USER -->
 
-        <div class="summary-icon">
-          P
+      <a
+        routerLink="/admin/users"
+        class="quick-item">
+
+        <div class="quick-icon">
+          👤
         </div>
 
-        <div>
+        <div class="quick-info">
 
-          <span>
-            Patients
-          </span>
+          <h3>
+            User Management
+          </h3>
 
-          <strong>
-            {{ totalPatients }}
-          </strong>
+          <p>
+            Manage users and application roles.
+          </p>
 
         </div>
 
+        <span class="quick-arrow">
+          →
+        </span>
+
+      </a>
+
+    </div>
+
+  </section>
+
+
+  <!-- ==========================================
+       FOOTER STATUS
+  =========================================== -->
+
+  <section class="system-status">
+
+    <div class="status-left">
+
+      <span class="status-dot"></span>
+
+      <div>
+        <strong>
+          System Ready
+        </strong>
+
+        <small>
+          All management modules are available
+        </small>
       </div>
 
-
-      <div class="summary-card">
-
-        <div class="summary-icon">
-          D
-        </div>
-
-        <div>
-
-          <span>
-            Doctors
-          </span>
-
-          <strong>
-            {{ totalDoctors }}
-          </strong>
-
-        </div>
-
-      </div>
+    </div>
 
 
-      <div class="summary-card">
+    <div class="status-right">
 
-        <div class="summary-icon">
-          A
-        </div>
+      <span>
+        Secure Administration
+      </span>
 
-        <div>
+      <span class="status-lock">
+        🔐
+      </span>
 
-          <span>
-            Appointments
-          </span>
+    </div>
 
-          <strong>
-            {{ totalAppointments }}
-          </strong>
-
-        </div>
-
-      </div>
-
-
-      <div class="summary-card">
-
-        <div class="summary-icon">
-          U
-        </div>
-
-        <div>
-
-          <span>
-            Users
-          </span>
-
-          <strong>
-            {{ totalUsers }}
-          </strong>
-
-        </div>
-
-      </div>
-
-    </section>
-
-  }
+  </section>
 
 </div>

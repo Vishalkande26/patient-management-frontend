@@ -1,27 +1,34 @@
-import {
-  Injectable,
-  inject
-} from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 
 import {
   HttpClient,
   HttpHeaders
 } from '@angular/common/http';
 
-import {
-  Observable,
-  tap
-} from 'rxjs';
+import { Observable } from 'rxjs';
+
 
 export interface Patient {
+
   id?: number;
+
   name: string;
+
   age: number;
+
   gender: string;
+
   phone: string;
+
   disease: string;
+
   address: string;
+
+  deleted?: boolean;
+
+  isSaving?: boolean;
 }
+
 
 @Injectable({
   providedIn: 'root'
@@ -30,82 +37,119 @@ export class PatientService {
 
   private http = inject(HttpClient);
 
+
   private apiUrl =
     'http://localhost:8080/api/patients';
 
+
   private cacheKey =
-    'patients_cache';
+    'patients';
 
-
-  
 
   private getHeaders(): HttpHeaders {
 
     const token =
       localStorage.getItem('token');
 
+
     return new HttpHeaders({
-      Authorization:
+
+      'Content-Type':
+        'application/json',
+
+      'Authorization':
         `Bearer ${token}`
+
     });
   }
 
 
-  
   getPatients(): Observable<Patient[]> {
 
-    return this.http
-      .get<Patient[]>(
-        this.apiUrl,
-        {
-          headers: this.getHeaders()
-        }
-      )
-      .pipe(
+    console.log(
+      'GET patients:',
+      this.apiUrl
+    );
 
-        tap((patients: Patient[]) => {
 
-          localStorage.setItem(
-            this.cacheKey,
-            JSON.stringify(patients)
-          );
-
-        })
-
-      );
+    return this.http.get<Patient[]>(
+      this.apiUrl,
+      {
+        headers:
+          this.getHeaders()
+      }
+    );
   }
 
 
-  
+  createPatient(
+    patient: Patient
+  ): Observable<Patient> {
+
+    return this.http.post<Patient>(
+      this.apiUrl,
+      patient,
+      {
+        headers:
+          this.getHeaders()
+      }
+    );
+  }
+
+
+  updatePatient(
+    id: number,
+    patient: Patient
+  ): Observable<Patient> {
+
+    return this.http.put<Patient>(
+      `${this.apiUrl}/${id}`,
+      patient,
+      {
+        headers:
+          this.getHeaders()
+      }
+    );
+  }
+
+
+  deletePatient(
+    id: number
+  ): Observable<void> {
+
+    return this.http.delete<void>(
+      `${this.apiUrl}/${id}`,
+      {
+        headers:
+          this.getHeaders()
+      }
+    );
+  }
+
+
   getCachedPatients(): Patient[] {
 
-    const cachedData =
+    const data =
       localStorage.getItem(
         this.cacheKey
       );
 
-    if (!cachedData) {
+
+    if (!data) {
+
       return [];
     }
 
+
     try {
 
-      return JSON.parse(
-        cachedData
-      ) as Patient[];
+      return JSON.parse(data);
 
-    } catch (error) {
-
-      console.error(
-        'Error reading patient cache:',
-        error
-      );
+    } catch {
 
       return [];
     }
   }
-
-
 
 
   setCachedPatients(
@@ -119,7 +163,6 @@ export class PatientService {
   }
 
 
-  
   clearCache(): void {
 
     localStorage.removeItem(
@@ -127,64 +170,4 @@ export class PatientService {
     );
   }
 
-
-  
-
-  getPatientById(
-    id: number
-  ): Observable<Patient> {
-
-    return this.http.get<Patient>(
-      `${this.apiUrl}/${id}`,
-      {
-        headers: this.getHeaders()
-      }
-    );
-  }
-
-
- 
-  createPatient(
-    patient: Patient
-  ): Observable<Patient> {
-
-    return this.http.post<Patient>(
-      this.apiUrl,
-      patient,
-      {
-        headers: this.getHeaders()
-      }
-    );
-  }
-
-
- 
-  updatePatient(
-    id: number,
-    patient: Patient
-  ): Observable<Patient> {
-
-    return this.http.put<Patient>(
-      `${this.apiUrl}/${id}`,
-      patient,
-      {
-        headers: this.getHeaders()
-      }
-    );
-  }
-
-
-  
-
-  deletePatient(
-    id: number
-  ): Observable<string> {
-
-    return this.http.delete<string>(
-      `${this.apiUrl}/${id}`,
-      {
-        headers: this.getHeaders()
-      }
-    );
-  }
 }
