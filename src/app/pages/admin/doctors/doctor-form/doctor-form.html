@@ -1,0 +1,191 @@
+<form
+  #doctorForm="ngForm"
+  (ngSubmit)="submitForm(doctorForm)"
+  class="doctor-modal-form"
+>
+
+  <div class="form-intro">
+
+    <div class="form-intro-icon">
+      {{ editingId !== null ? '✎' : '+' }}
+    </div>
+
+    <div>
+
+      <strong>
+
+        @if (editingId !== null) {
+
+          Update Doctor Details
+
+        } @else {
+
+          Doctor Information
+
+        }
+
+      </strong>
+
+      <span>
+        Please enter the required information below.
+      </span>
+
+    </div>
+
+  </div>
+
+
+  <div class="form-grid">
+
+    <div class="form-group">
+
+      <label>
+        Doctor Name
+        <span>*</span>
+      </label>
+
+      <input
+        type="text"
+        name="name"
+        [(ngModel)]="formDoctor.name"
+        placeholder="Enter doctor name"
+        required
+        autocomplete="off"
+      />
+
+    </div>
+
+
+    <div class="form-group">
+
+      <label>
+        Specialization
+        <span>*</span>
+      </label>
+
+      <input
+        type="text"
+        name="specialization"
+        [(ngModel)]="formDoctor.specialization"
+        placeholder="e.g. Cardiologist"
+        required
+        autocomplete="off"
+      />
+
+    </div>
+
+
+    <div class="form-group">
+
+      <label>
+        Phone
+        <span>*</span>
+      </label>
+
+      <input
+        type="tel"
+        name="phone"
+        [(ngModel)]="formDoctor.phone"
+        placeholder="Enter 10 digit phone number"
+        maxlength="10"
+        required
+        autocomplete="off"
+      />
+
+    </div>
+
+
+    <div class="form-group">
+
+      <label>
+        Email
+        <span>*</span>
+      </label>
+
+      <input
+        type="email"
+        name="email"
+        [(ngModel)]="formDoctor.email"
+        placeholder="doctor@example.com"
+        required
+        autocomplete="off"
+      />
+
+    </div>
+
+
+    <div class="form-group full-width">
+
+      <label>
+        Experience
+        <span>*</span>
+      </label>
+
+      <div class="input-with-suffix">
+
+        <input
+          type="number"
+          name="experience"
+          [(ngModel)]="formDoctor.experience"
+          min="0"
+          placeholder="Enter experience"
+          required
+        />
+
+        <span>
+          Years
+        </span>
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <div class="modal-form-actions">
+
+    <button
+      type="button"
+      class="modal-cancel-button"
+      (click)="cancel()"
+      [disabled]="saving"
+    >
+      Cancel
+    </button>
+
+
+    <button
+      type="submit"
+      class="modal-submit-button"
+      [disabled]="
+        saving ||
+        !doctorForm.form.valid
+      "
+    >
+
+      @if (saving) {
+
+        <span class="button-spinner"></span>
+
+        Saving...
+
+      } @else {
+
+        <span>
+
+          {{
+            editingId !== null
+              ? 'Save Changes'
+              : 'Add Doctor'
+          }}
+
+        </span>
+
+      }
+
+    </button>
+
+  </div>
+
+</form>

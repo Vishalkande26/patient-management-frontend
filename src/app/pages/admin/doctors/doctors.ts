@@ -1,7 +1,8 @@
 import {
   Component,
   OnInit,
-  inject
+  inject,
+  ViewEncapsulation
 } from '@angular/core';
 
 import {
@@ -25,18 +26,28 @@ import {
   Modal
 } from '../../../shared/modal/modal';
 
+import {
+  DoctorForm
+} from './doctor-form/doctor-form';
+
 
 @Component({
   selector: 'app-doctors',
 
+  standalone: true,
+
   imports: [
     FormsModule,
-    Modal
+    Modal,
+    DoctorForm
   ],
 
   templateUrl: './doctors.html',
 
-  styleUrl: './doctors.css'
+  styleUrl: './doctors.css',
+
+  encapsulation:
+    ViewEncapsulation.None
 })
 export class Doctors implements OnInit {
 
@@ -47,52 +58,31 @@ export class Doctors implements OnInit {
     inject(Router);
 
 
-  // =====================================================
-  // DOCTOR FORM
-  // =====================================================
-
   doctor: Doctor = {
+
     name: '',
+
     specialization: '',
+
     phone: '',
+
     email: '',
+
     experience: 0
+
   };
 
 
-  editingId: number | null = null;
+  editingId:
+    number | null = null;
 
 
-  // =====================================================
-  // LOADING STATES
-  // =====================================================
-
-  /*
-   * Full-page loading is disabled.
-   *
-   * We don't want the complete doctor table
-   * to disappear during CRUD operations.
-   */
   loading = false;
 
-
-  /*
-   * Used while Save / Update API request
-   * is running.
-   */
   saving = false;
 
-
-  /*
-   * Used while Delete API request
-   * is running in the background.
-   */
   deleting = false;
 
-
-  // =====================================================
-  // MODALS
-  // =====================================================
 
   showDoctorModal = false;
 
@@ -105,19 +95,9 @@ export class Doctors implements OnInit {
   deleteDoctorName = '';
 
 
-  /*
-   * Backup used for optimistic delete.
-   *
-   * If DELETE fails, the doctor is restored
-   * without calling GET doctors again.
-   */
   private deletedDoctorBackup:
     Doctor | undefined = undefined;
 
-
-  // =====================================================
-  // MESSAGE
-  // =====================================================
 
   message = '';
 
@@ -125,30 +105,13 @@ export class Doctors implements OnInit {
     'success' | 'error' = 'success';
 
 
-  // =====================================================
-  // DOCTORS
-  // =====================================================
-
   doctors: Doctor[] = [];
 
 
-  // =====================================================
-  // GLOBAL SEARCH
-  // =====================================================
-
   searchTerm = '';
-
-
-  // =====================================================
-  // SPECIALIZATION FILTER
-  // =====================================================
 
   specializationFilter = 'ALL';
 
-
-  // =====================================================
-  // COLUMN FILTERS
-  // =====================================================
 
   columnIdFilter = '';
 
@@ -163,32 +126,21 @@ export class Doctors implements OnInit {
   columnExperienceFilter = '';
 
 
-  // =====================================================
-  // SORTING
-  // =====================================================
-
   sortField:
     | 'id'
     | 'name'
     | 'specialization'
     | 'experience' = 'id';
 
+
   sortDirection:
     'asc' | 'desc' = 'asc';
 
-
-  // =====================================================
-  // PAGINATION
-  // =====================================================
 
   currentPage = 1;
 
   pageSize = 5;
 
-
-  // =====================================================
-  // INITIALIZATION
-  // =====================================================
 
   ngOnInit(): void {
 
@@ -196,10 +148,6 @@ export class Doctors implements OnInit {
 
   }
 
-
-  // =====================================================
-  // BACK TO DASHBOARD
-  // =====================================================
 
   backToDashboard(): void {
 
@@ -210,19 +158,9 @@ export class Doctors implements OnInit {
   }
 
 
-  // =====================================================
-  // LOAD DOCTORS
-  // =====================================================
-
   loadDoctors(): void {
 
-    /*
-     * IMPORTANT:
-     *
-     * We don't set loading = true.
-     *
-     * This keeps the table visible.
-     */
+    this.loading = true;
 
     this.doctorService
       .getDoctors()
@@ -235,18 +173,19 @@ export class Doctors implements OnInit {
           this.doctors =
             data.filter(
               (
-                doctor: Doctor & {
-                  deleted?: boolean
-                }
+                doctor:
+                  Doctor & {
+                    deleted?: boolean
+                  }
               ) =>
                 doctor.deleted !== true
             );
 
+          this.loading = false;
 
           this.fixCurrentPage();
 
         },
-
 
         error: (
           error: HttpErrorResponse
@@ -257,6 +196,7 @@ export class Doctors implements OnInit {
             error
           );
 
+          this.loading = false;
 
           if (
             error.status === 401
@@ -268,7 +208,6 @@ export class Doctors implements OnInit {
             );
 
           }
-
           else if (
             error.status === 403
           ) {
@@ -279,7 +218,6 @@ export class Doctors implements OnInit {
             );
 
           }
-
           else {
 
             this.showMessage(
@@ -296,40 +234,28 @@ export class Doctors implements OnInit {
   }
 
 
-  // =====================================================
-  // SPECIALIZATIONS
-  // =====================================================
-
   get specializations(): string[] {
 
     return [
       ...new Set(
-
         this.doctors
-
           .map(
             (
               doctor: Doctor
             ) =>
               doctor.specialization
           )
-
           .filter(
             (
               value: string
             ) =>
               !!value
           )
-
       )
     ].sort();
 
   }
 
-
-  // =====================================================
-  // FILTERED DOCTORS
-  // =====================================================
 
   get filteredDoctors(): Doctor[] {
 
@@ -381,10 +307,6 @@ export class Doctors implements OnInit {
           doctor: Doctor
         ) => {
 
-          // ---------------------------------------------
-          // GLOBAL SEARCH
-          // ---------------------------------------------
-
           const matchesSearch =
             !search ||
 
@@ -417,20 +339,13 @@ export class Doctors implements OnInit {
               .includes(search);
 
 
-          // ---------------------------------------------
-          // SPECIALIZATION FILTER
-          // ---------------------------------------------
-
           const matchesSpecialization =
-            this.specializationFilter === 'ALL' ||
+            this.specializationFilter ===
+              'ALL' ||
 
             doctor.specialization ===
               this.specializationFilter;
 
-
-          // ---------------------------------------------
-          // ID FILTER
-          // ---------------------------------------------
 
           const matchesId =
             !idFilter ||
@@ -442,10 +357,6 @@ export class Doctors implements OnInit {
               .includes(idFilter);
 
 
-          // ---------------------------------------------
-          // NAME FILTER
-          // ---------------------------------------------
-
           const matchesName =
             !nameFilter ||
 
@@ -454,12 +365,11 @@ export class Doctors implements OnInit {
               .includes(nameFilter);
 
 
-          // ---------------------------------------------
-          // SPECIALIZATION COLUMN FILTER
-          // ---------------------------------------------
-
           const matchesSpecializationColumn =
             !specializationColumnFilter ||
+
+            specializationColumnFilter ===
+              'all' ||
 
             doctor.specialization
               .toLowerCase()
@@ -467,10 +377,6 @@ export class Doctors implements OnInit {
                 specializationColumnFilter
               );
 
-
-          // ---------------------------------------------
-          // PHONE FILTER
-          // ---------------------------------------------
 
           const matchesPhone =
             !phoneFilter ||
@@ -480,10 +386,6 @@ export class Doctors implements OnInit {
               .includes(phoneFilter);
 
 
-          // ---------------------------------------------
-          // EMAIL FILTER
-          // ---------------------------------------------
-
           const matchesEmail =
             !emailFilter ||
 
@@ -492,10 +394,6 @@ export class Doctors implements OnInit {
               .includes(emailFilter);
 
 
-          // ---------------------------------------------
-          // EXPERIENCE FILTER
-          // ---------------------------------------------
-
           const matchesExperience =
             !experienceFilter ||
 
@@ -503,7 +401,9 @@ export class Doctors implements OnInit {
               doctor.experience
             )
               .toLowerCase()
-              .includes(experienceFilter);
+              .includes(
+                experienceFilter
+              );
 
 
           return (
@@ -529,10 +429,6 @@ export class Doctors implements OnInit {
         }
       );
 
-
-    // ===================================================
-    // SORTING
-    // ===================================================
 
     return [
       ...filtered
@@ -578,12 +474,10 @@ export class Doctors implements OnInit {
           case 'specialization':
 
             valueA =
-              a.specialization
-                .toLowerCase();
+              a.specialization.toLowerCase();
 
             valueB =
-              b.specialization
-                .toLowerCase();
+              b.specialization.toLowerCase();
 
             break;
 
@@ -611,7 +505,6 @@ export class Doctors implements OnInit {
           result = -1;
 
         }
-
         else if (
           valueA > valueB
         ) {
@@ -621,8 +514,11 @@ export class Doctors implements OnInit {
         }
 
 
-        return this.sortDirection === 'asc'
+        return this.sortDirection ===
+          'asc'
+
           ? result
+
           : -result;
 
       }
@@ -631,19 +527,19 @@ export class Doctors implements OnInit {
   }
 
 
-  // =====================================================
-  // PAGINATION
-  // =====================================================
-
   get totalPages(): number {
 
     return Math.max(
+
       1,
 
       Math.ceil(
+
         this.filteredDoctors.length /
         this.pageSize
+
       )
+
     );
 
   }
@@ -663,10 +559,11 @@ export class Doctors implements OnInit {
       this.pageSize;
 
 
-    return this.filteredDoctors.slice(
-      start,
-      end
-    );
+    return this.filteredDoctors
+      .slice(
+        start,
+        end
+      );
 
   }
 
@@ -683,10 +580,12 @@ export class Doctors implements OnInit {
 
 
     return (
+
       (
         this.currentPage - 1
       ) *
       this.pageSize
+
     ) + 1;
 
   }
@@ -731,8 +630,11 @@ export class Doctors implements OnInit {
   ): void {
 
     if (
+
       page < 1 ||
+
       page > this.totalPages
+
     ) {
 
       return;
@@ -766,8 +668,7 @@ export class Doctors implements OnInit {
 
   onPageSizeChange(): void {
 
-    this.currentPage =
-      1;
+    this.currentPage = 1;
 
     this.fixCurrentPage();
 
@@ -791,90 +692,63 @@ export class Doctors implements OnInit {
       this.currentPage < 1
     ) {
 
-      this.currentPage =
-        1;
+      this.currentPage = 1;
 
     }
 
   }
 
 
-  // =====================================================
-  // SEARCH
-  // =====================================================
-
   onSearchChange(): void {
 
-    this.currentPage =
-      1;
+    this.currentPage = 1;
 
   }
 
 
   clearSearch(): void {
 
-    this.searchTerm =
-      '';
+    this.searchTerm = '';
 
-    this.currentPage =
-      1;
+    this.currentPage = 1;
 
   }
 
-
-  // =====================================================
-  // FILTER
-  // =====================================================
 
   onFilterChange(): void {
 
-    this.currentPage =
-      1;
+    this.currentPage = 1;
 
   }
 
 
-  // =====================================================
-  // COLUMN FILTER
-  // =====================================================
-
   onColumnFilterChange(): void {
 
-    this.currentPage =
-      1;
+    this.currentPage = 1;
 
   }
 
 
   clearColumnFilters(): void {
 
-    this.columnIdFilter =
-      '';
+    this.columnIdFilter = '';
 
-    this.columnNameFilter =
-      '';
+    this.columnNameFilter = '';
 
     this.columnSpecializationFilter =
       '';
 
-    this.columnPhoneFilter =
-      '';
+    this.columnPhoneFilter = '';
 
-    this.columnEmailFilter =
-      '';
+    this.columnEmailFilter = '';
 
     this.columnExperienceFilter =
       '';
 
-    this.currentPage =
-      1;
+    this.currentPage = 1;
 
   }
 
-
-  // =====================================================
-  // SORT
-  // =====================================================
 
   sortBy(
     field:
@@ -894,7 +768,6 @@ export class Doctors implements OnInit {
           : 'asc';
 
     }
-
     else {
 
       this.sortField =
@@ -906,8 +779,7 @@ export class Doctors implements OnInit {
     }
 
 
-    this.currentPage =
-      1;
+    this.currentPage = 1;
 
   }
 
@@ -929,85 +801,56 @@ export class Doctors implements OnInit {
     }
 
 
-    return this.sortDirection === 'asc'
+    return this.sortDirection ===
+      'asc'
+
       ? '↑'
+
       : '↓';
 
   }
 
 
-  // =====================================================
-  // CLEAR ALL FILTERS
-  // =====================================================
-
   clearFilters(): void {
 
-    this.searchTerm =
-      '';
+    this.searchTerm = '';
 
     this.specializationFilter =
       'ALL';
 
-    this.columnIdFilter =
-      '';
+    this.columnIdFilter = '';
 
-    this.columnNameFilter =
-      '';
+    this.columnNameFilter = '';
 
     this.columnSpecializationFilter =
       '';
 
-    this.columnPhoneFilter =
-      '';
+    this.columnPhoneFilter = '';
 
-    this.columnEmailFilter =
-      '';
+    this.columnEmailFilter = '';
 
     this.columnExperienceFilter =
       '';
 
-    this.currentPage =
-      1;
+    this.currentPage = 1;
 
   }
 
-
-  // =====================================================
-  // ADD DOCTOR
-  // =====================================================
 
   openAddDoctorModal(): void {
 
-    /*
-     * No backend request.
-     *
-     * Modal opens immediately.
-     */
-
     this.resetForm();
 
-    this.editingId =
-      null;
+    this.editingId = null;
 
-    this.showDoctorModal =
-      true;
+    this.showDoctorModal = true;
 
   }
 
-
-  // =====================================================
-  // EDIT DOCTOR
-  // =====================================================
 
   editDoctor(
     doctor: Doctor
   ): void {
-
-    /*
-     * No backend request.
-     *
-     * Edit modal opens immediately.
-     */
 
     this.editingId =
       doctor.id ?? null;
@@ -1042,16 +885,7 @@ export class Doctors implements OnInit {
   }
 
 
-  // =====================================================
-  // CLOSE DOCTOR MODAL
-  // =====================================================
-
   closeDoctorModal(): void {
-
-    /*
-     * Don't close while Save / Update
-     * is being processed.
-     */
 
     if (
       this.saving
@@ -1068,11 +902,9 @@ export class Doctors implements OnInit {
   }
 
 
-  // =====================================================
-  // SUBMIT DOCTOR
-  // =====================================================
-
-  submitDoctor(): void {
+  submitDoctor(
+    doctorData: Doctor
+  ): void {
 
     if (
       this.saving
@@ -1083,9 +915,10 @@ export class Doctors implements OnInit {
     }
 
 
-    // ===================================================
-    // REQUIRED FIELDS
-    // ===================================================
+    this.doctor = {
+      ...doctorData
+    };
+
 
     if (
 
@@ -1109,10 +942,6 @@ export class Doctors implements OnInit {
     }
 
 
-    // ===================================================
-    // PHONE VALIDATION
-    // ===================================================
-
     if (
       !/^[0-9]{10}$/.test(
         this.doctor.phone.trim()
@@ -1128,10 +957,6 @@ export class Doctors implements OnInit {
 
     }
 
-
-    // ===================================================
-    // EMAIL VALIDATION
-    // ===================================================
 
     const emailPattern =
       /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -1152,10 +977,6 @@ export class Doctors implements OnInit {
 
     }
 
-
-    // ===================================================
-    // EXPERIENCE VALIDATION
-    // ===================================================
 
     if (
 
@@ -1179,31 +1000,28 @@ export class Doctors implements OnInit {
     }
 
 
-    const doctorRequest: Doctor = {
+    const doctorRequest:
+      Doctor = {
 
-      name:
-        this.doctor.name.trim(),
+        name:
+          this.doctor.name.trim(),
 
-      specialization:
-        this.doctor.specialization.trim(),
+        specialization:
+          this.doctor.specialization.trim(),
 
-      phone:
-        this.doctor.phone.trim(),
+        phone:
+          this.doctor.phone.trim(),
 
-      email:
-        this.doctor.email.trim(),
+        email:
+          this.doctor.email.trim(),
 
-      experience:
-        Number(
-          this.doctor.experience
-        )
+        experience:
+          Number(
+            this.doctor.experience
+          )
 
-    };
+      };
 
-
-    // ===================================================
-    // UPDATE
-    // ===================================================
 
     if (
       this.editingId !== null
@@ -1218,20 +1036,12 @@ export class Doctors implements OnInit {
     }
 
 
-    // ===================================================
-    // CREATE
-    // ===================================================
-
     this.createDoctor(
       doctorRequest
     );
 
   }
 
-
-  // =====================================================
-  // CREATE DOCTOR - OPTIMISTIC UI
-  // =====================================================
 
   private createDoctor(
     doctor: Doctor
@@ -1246,63 +1056,34 @@ export class Doctors implements OnInit {
     }
 
 
-    /*
-     * Start the small Save loading state.
-     */
-    this.saving =
-      true;
+    this.saving = true;
 
 
-    // ===================================================
-    // TEMPORARY ID
-    // ===================================================
+    const temporaryDoctor:
+      Doctor = {
 
-    /*
-     * Backend generates the real ID.
-     *
-     * We use a negative temporary ID so it
-     * cannot conflict with a normal database ID.
-     */
-    const temporaryId =
-      -Date.now();
+        id: undefined,
 
+        name:
+          doctor.name,
 
-    // ===================================================
-    // TEMPORARY DOCTOR
-    // ===================================================
+        specialization:
+          doctor.specialization,
 
-    const temporaryDoctor: Doctor = {
+        phone:
+          doctor.phone,
 
-      id:
-        temporaryId,
+        email:
+          doctor.email,
 
-      name:
-        doctor.name,
+        experience:
+          doctor.experience,
 
-      specialization:
-        doctor.specialization,
+        isSaving: true
 
-      phone:
-        doctor.phone,
-
-      email:
-        doctor.email,
-
-      experience:
-        doctor.experience
-
-    };
+      };
 
 
-    // ===================================================
-    // UPDATE TABLE IMMEDIATELY
-    // ===================================================
-
-    /*
-     * Doctor appears immediately in the UI.
-     *
-     * No GET request.
-     */
     this.doctors = [
 
       ...this.doctors,
@@ -1312,33 +1093,16 @@ export class Doctors implements OnInit {
     ];
 
 
-    /*
-     * Go to the page containing the new doctor.
-     */
     this.currentPage =
       this.totalPages;
 
 
-    // ===================================================
-    // CLOSE MODAL IMMEDIATELY
-    // ===================================================
-
-    /*
-     * This happens BEFORE the HTTP request.
-     */
     this.showDoctorModal =
       false;
 
 
-    /*
-     * Reset the form but DON'T change saving.
-     */
     this.resetForm();
 
-
-    // ===================================================
-    // BACKGROUND POST REQUEST
-    // ===================================================
 
     this.doctorService
       .createDoctor(
@@ -1350,35 +1114,33 @@ export class Doctors implements OnInit {
           createdDoctor: Doctor
         ) => {
 
-          // ---------------------------------------------
-          // REPLACE TEMPORARY DOCTOR
-          // ---------------------------------------------
-
           this.doctors =
             this.doctors.map(
-
               (
                 item: Doctor
               ) => {
 
                 if (
-                  item.id === temporaryId
+                  item ===
+                  temporaryDoctor
                 ) {
 
-                  return createdDoctor;
+                  return {
+
+                    ...createdDoctor,
+
+                    isSaving: false
+
+                  };
 
                 }
+
 
                 return item;
 
               }
-
             );
 
-
-          // ---------------------------------------------
-          // FINISH SAVING
-          // ---------------------------------------------
 
           this.saving =
             false;
@@ -1405,39 +1167,22 @@ export class Doctors implements OnInit {
           );
 
 
-          // ---------------------------------------------
-          // REMOVE TEMPORARY DOCTOR
-          // ---------------------------------------------
-
-          /*
-           * The database did not save the doctor,
-           * therefore remove the temporary UI record.
-           */
           this.doctors =
             this.doctors.filter(
-
               (
                 item: Doctor
               ) =>
-                item.id !== temporaryId
-
+                item !==
+                temporaryDoctor
             );
 
 
           this.fixCurrentPage();
 
 
-          // ---------------------------------------------
-          // FINISH SAVING
-          // ---------------------------------------------
-
           this.saving =
             false;
 
-
-          // ---------------------------------------------
-          // ERROR MESSAGE
-          // ---------------------------------------------
 
           if (
             error.status === 401
@@ -1449,7 +1194,6 @@ export class Doctors implements OnInit {
             );
 
           }
-
           else if (
             error.status === 403
           ) {
@@ -1460,7 +1204,6 @@ export class Doctors implements OnInit {
             );
 
           }
-
           else if (
             error.status === 400
           ) {
@@ -1471,7 +1214,6 @@ export class Doctors implements OnInit {
             );
 
           }
-
           else {
 
             this.showMessage(
@@ -1487,10 +1229,6 @@ export class Doctors implements OnInit {
 
   }
 
-
-  // =====================================================
-  // UPDATE DOCTOR
-  // =====================================================
 
   private updateDoctor(
     doctor: Doctor
@@ -1514,8 +1252,7 @@ export class Doctors implements OnInit {
     }
 
 
-    this.saving =
-      true;
+    this.saving = true;
 
 
     const id =
@@ -1533,45 +1270,23 @@ export class Doctors implements OnInit {
           updatedDoctor: Doctor
         ) => {
 
-          /*
-           * Update only this doctor locally.
-           *
-           * No GET request.
-           */
           this.doctors =
             this.doctors.map(
-
               (
                 item: Doctor
               ) =>
-
                 item.id === id
-
                   ? updatedDoctor
-
                   : item
-
             );
 
-
-          // ---------------------------------------------
-          // CLOSE MODAL
-          // ---------------------------------------------
 
           this.showDoctorModal =
             false;
 
 
-          // ---------------------------------------------
-          // RESET FORM
-          // ---------------------------------------------
-
           this.resetForm();
 
-
-          // ---------------------------------------------
-          // FINISH SAVING
-          // ---------------------------------------------
 
           this.saving =
             false;
@@ -1612,7 +1327,6 @@ export class Doctors implements OnInit {
             );
 
           }
-
           else if (
             error.status === 403
           ) {
@@ -1623,7 +1337,6 @@ export class Doctors implements OnInit {
             );
 
           }
-
           else if (
             error.status === 404
           ) {
@@ -1634,7 +1347,6 @@ export class Doctors implements OnInit {
             );
 
           }
-
           else if (
             error.status === 400
           ) {
@@ -1645,7 +1357,6 @@ export class Doctors implements OnInit {
             );
 
           }
-
           else {
 
             this.showMessage(
@@ -1662,10 +1373,6 @@ export class Doctors implements OnInit {
   }
 
 
-  // =====================================================
-  // OPEN DELETE MODAL
-  // =====================================================
-
   openDeleteModal(
     doctor: Doctor
   ): void {
@@ -1679,11 +1386,6 @@ export class Doctors implements OnInit {
     }
 
 
-    /*
-     * No API call.
-     *
-     * Confirmation opens immediately.
-     */
     this.deleteDoctorId =
       doctor.id;
 
@@ -1698,16 +1400,8 @@ export class Doctors implements OnInit {
   }
 
 
-  // =====================================================
-  // CLOSE DELETE MODAL
-  // =====================================================
-
   closeDeleteModal(): void {
 
-    /*
-     * Always allow the confirmation modal
-     * to close.
-     */
     this.showDeleteModal =
       false;
 
@@ -1721,10 +1415,6 @@ export class Doctors implements OnInit {
 
   }
 
-
-  // =====================================================
-  // CONFIRM DELETE - OPTIMISTIC UI
-  // =====================================================
 
   confirmDeleteDoctor(): void {
 
@@ -1750,10 +1440,6 @@ export class Doctors implements OnInit {
       this.deleteDoctorId;
 
 
-    // ===================================================
-    // FIND DOCTOR
-    // ===================================================
-
     const doctorToDelete =
       this.doctors.find(
         (
@@ -1774,13 +1460,6 @@ export class Doctors implements OnInit {
     }
 
 
-    // ===================================================
-    // BACKUP
-    // ===================================================
-
-    /*
-     * Keep a copy in case backend DELETE fails.
-     */
     this.deletedDoctorBackup = {
 
       ...doctorToDelete
@@ -1788,15 +1467,6 @@ export class Doctors implements OnInit {
     };
 
 
-    // ===================================================
-    // CLOSE MODAL IMMEDIATELY
-    // ===================================================
-
-    /*
-     * VERY IMPORTANT:
-     *
-     * Close popup BEFORE HTTP request.
-     */
     this.showDeleteModal =
       false;
 
@@ -1808,10 +1478,6 @@ export class Doctors implements OnInit {
     this.deleteDoctorName =
       '';
 
-
-    // ===================================================
-    // REMOVE FROM TABLE IMMEDIATELY
-    // ===================================================
 
     this.doctors =
       this.doctors.filter(
@@ -1825,26 +1491,15 @@ export class Doctors implements OnInit {
     this.fixCurrentPage();
 
 
-    // ===================================================
-    // BACKGROUND DELETE
-    // ===================================================
-
-    this.deleting =
-      true;
+    this.deleting = true;
 
 
     this.doctorService
-      .deleteDoctor(
-        id
-      )
+      .deleteDoctor(id)
       .subscribe({
 
         next: () => {
 
-          /*
-           * Backend successfully performed
-           * the soft delete.
-           */
           this.deleting =
             false;
 
@@ -1870,10 +1525,6 @@ export class Doctors implements OnInit {
             error
           );
 
-
-          // ---------------------------------------------
-          // RESTORE DOCTOR
-          // ---------------------------------------------
 
           if (
             this.deletedDoctorBackup
@@ -1901,10 +1552,6 @@ export class Doctors implements OnInit {
             false;
 
 
-          // ---------------------------------------------
-          // ERROR MESSAGE
-          // ---------------------------------------------
-
           if (
             error.status === 401
           ) {
@@ -1915,7 +1562,6 @@ export class Doctors implements OnInit {
             );
 
           }
-
           else if (
             error.status === 403
           ) {
@@ -1926,7 +1572,6 @@ export class Doctors implements OnInit {
             );
 
           }
-
           else if (
             error.status === 404
           ) {
@@ -1937,7 +1582,6 @@ export class Doctors implements OnInit {
             );
 
           }
-
           else {
 
             this.showMessage(
@@ -1953,10 +1597,6 @@ export class Doctors implements OnInit {
 
   }
 
-
-  // =====================================================
-  // RESET FORM
-  // =====================================================
 
   resetForm(): void {
 
@@ -1981,33 +1621,17 @@ export class Doctors implements OnInit {
   }
 
 
-  // =====================================================
-  // REFRESH DOCTORS
-  // =====================================================
-
   refreshDoctors(): void {
 
-    /*
-     * Manual refresh only.
-     *
-     * No full-page loading indicator.
-     */
     this.loadDoctors();
 
   }
 
 
-  // =====================================================
-  // MESSAGE
-  // =====================================================
-
   private showMessage(
-
     message: string,
-
     type:
       'success' | 'error' = 'success'
-
   ): void {
 
     this.message =
@@ -2018,12 +1642,14 @@ export class Doctors implements OnInit {
       type;
 
 
-    setTimeout(() => {
+    setTimeout(
+      () => {
 
-      this.message =
-        '';
+        this.message = '';
 
-    }, 3000);
+      },
+      3000
+    );
 
   }
 
