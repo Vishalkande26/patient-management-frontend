@@ -7,6 +7,8 @@ import {
   RouterOutlet
 } from '@angular/router';
 
+import { ButtonModule } from 'primeng/button';
+
 import { AuthService } from '../../services/auth.service';
 
 
@@ -16,7 +18,10 @@ import { AuthService } from '../../services/auth.service';
   imports: [
     RouterLink,
     RouterLinkActive,
-    RouterOutlet
+    RouterOutlet,
+
+    // PrimeNG
+    ButtonModule
   ],
 
   templateUrl: './admin.html',
@@ -64,36 +69,28 @@ export class Admin {
     const url = this.router.url;
 
 
-    if (
-      url.includes('/doctors')
-    ) {
+    if (url.includes('/doctors')) {
 
       return 'Manage Doctors';
 
     }
 
 
-    if (
-      url.includes('/patients')
-    ) {
+    if (url.includes('/patients')) {
 
       return 'Manage Patients';
 
     }
 
 
-    if (
-      url.includes('/users')
-    ) {
+    if (url.includes('/users')) {
 
       return 'Manage Users';
 
     }
 
 
-    if (
-      url.includes('/appointments')
-    ) {
+    if (url.includes('/appointments')) {
 
       return 'Manage Appointments';
 

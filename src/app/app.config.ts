@@ -12,12 +12,19 @@ import {
 } from '@angular/common/http';
 
 import {
+  providePrimeNG
+} from 'primeng/config';
+
+import Aura from '@primeuix/themes/aura';
+
+import {
   routes
 } from './app.routes';
 
 import {
   authInterceptor
 } from './interceptors/auth.interceptor';
+
 
 export const appConfig: ApplicationConfig = {
 
@@ -28,13 +35,32 @@ export const appConfig: ApplicationConfig = {
      */
     provideRouter(routes),
 
+
     /*
-     * HttpClient + JWT interceptor
+     * HttpClient + existing JWT interceptor
+     *
+     * DO NOT REMOVE authInterceptor.
      */
     provideHttpClient(
       withInterceptors([
         authInterceptor
       ])
-    )
+    ),
+
+
+    /*
+     * PrimeNG theme configuration
+     */
+    providePrimeNG({
+
+      theme: {
+
+        preset: Aura
+
+      }
+
+    })
+
   ]
+
 };

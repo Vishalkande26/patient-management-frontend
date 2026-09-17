@@ -7,7 +7,9 @@
   <header class="top-navigation">
 
 
-    <!-- BRAND -->
+    <!-- ==========================================
+         BRAND
+         ========================================== -->
 
     <div class="brand-section">
 
@@ -31,7 +33,7 @@
 
 
     <!-- ==========================================
-         NAVIGATION
+         MAIN NAVIGATION
          ========================================== -->
 
     <nav class="main-navigation">
@@ -48,7 +50,7 @@
         class="nav-item">
 
         <span class="nav-icon">
-          ⌂
+          <i class="pi pi-home"></i>
         </span>
 
         <span>
@@ -66,7 +68,7 @@
         class="nav-item">
 
         <span class="nav-icon">
-          D
+          <i class="pi pi-user"></i>
         </span>
 
         <span>
@@ -84,7 +86,7 @@
         class="nav-item">
 
         <span class="nav-icon">
-          P
+          <i class="pi pi-users"></i>
         </span>
 
         <span>
@@ -102,7 +104,7 @@
         class="nav-item">
 
         <span class="nav-icon">
-          U
+          <i class="pi pi-user-plus"></i>
         </span>
 
         <span>
@@ -120,7 +122,7 @@
         class="nav-item">
 
         <span class="nav-icon">
-          A
+          <i class="pi pi-calendar"></i>
         </span>
 
         <span>
@@ -164,14 +166,15 @@
       </div>
 
 
-      <button
-        type="button"
-        class="logout-button"
-        (click)="logout()">
+      <!-- PRIME NG LOGOUT BUTTON -->
 
-        Logout
-
-      </button>
+      <p-button
+        label="Logout"
+        icon="pi pi-sign-out"
+        severity="danger"
+        [outlined]="true"
+        (onClick)="logout()">
+      </p-button>
 
     </div>
 
@@ -206,7 +209,10 @@
 
       <div class="welcome-message">
 
+        <i class="pi pi-user"></i>
+
         Welcome,
+
         <strong>
           {{ username }}
         </strong>
@@ -231,6 +237,10 @@
 
         <div class="admin-dashboard">
 
+
+          <!-- ======================================
+               DASHBOARD INTRO
+               ====================================== -->
 
           <div class="dashboard-intro">
 
@@ -257,18 +267,26 @@
           <div class="dashboard-cards">
 
 
-            <!-- PATIENTS -->
+            <!-- ====================================
+                 PATIENTS
+                 ==================================== -->
 
             <button
               type="button"
               class="dashboard-card"
               (click)="goToPatients()">
 
-              <div class="card-icon">
-                P
+              <div class="card-icon patients-icon">
+
+                <i class="pi pi-users"></i>
+
               </div>
 
               <div class="card-content">
+
+                <span class="card-label">
+                  MANAGEMENT
+                </span>
 
                 <h3>
                   Patients
@@ -281,24 +299,34 @@
               </div>
 
               <span class="card-arrow">
-                →
+
+                <i class="pi pi-arrow-right"></i>
+
               </span>
 
             </button>
 
 
-            <!-- DOCTORS -->
+            <!-- ====================================
+                 DOCTORS
+                 ==================================== -->
 
             <button
               type="button"
               class="dashboard-card"
               (click)="goToDoctors()">
 
-              <div class="card-icon">
-                D
+              <div class="card-icon doctors-icon">
+
+                <i class="pi pi-user"></i>
+
               </div>
 
               <div class="card-content">
+
+                <span class="card-label">
+                  MANAGEMENT
+                </span>
 
                 <h3>
                   Doctors
@@ -311,24 +339,34 @@
               </div>
 
               <span class="card-arrow">
-                →
+
+                <i class="pi pi-arrow-right"></i>
+
               </span>
 
             </button>
 
 
-            <!-- USERS -->
+            <!-- ====================================
+                 USERS
+                 ==================================== -->
 
             <button
               type="button"
               class="dashboard-card"
               (click)="goToUsers()">
 
-              <div class="card-icon">
-                U
+              <div class="card-icon users-icon">
+
+                <i class="pi pi-user-plus"></i>
+
               </div>
 
               <div class="card-content">
+
+                <span class="card-label">
+                  MANAGEMENT
+                </span>
 
                 <h3>
                   Users
@@ -341,24 +379,34 @@
               </div>
 
               <span class="card-arrow">
-                →
+
+                <i class="pi pi-arrow-right"></i>
+
               </span>
 
             </button>
 
 
-            <!-- APPOINTMENTS -->
+            <!-- ====================================
+                 APPOINTMENTS
+                 ==================================== -->
 
             <button
               type="button"
               class="dashboard-card"
               (click)="goToAppointments()">
 
-              <div class="card-icon">
-                A
+              <div class="card-icon appointments-icon">
+
+                <i class="pi pi-calendar"></i>
+
               </div>
 
               <div class="card-content">
+
+                <span class="card-label">
+                  MANAGEMENT
+                </span>
 
                 <h3>
                   Appointments
@@ -371,10 +419,73 @@
               </div>
 
               <span class="card-arrow">
-                →
+
+                <i class="pi pi-arrow-right"></i>
+
               </span>
 
             </button>
+
+          </div>
+
+
+          <!-- ======================================
+               QUICK ACTIONS
+               ====================================== -->
+
+          <div class="quick-actions">
+
+            <div class="section-heading">
+
+              <div>
+
+                <span>
+                  ADMINISTRATION
+                </span>
+
+                <h3>
+                  Quick Actions
+                </h3>
+
+              </div>
+
+            </div>
+
+
+            <div class="quick-action-buttons">
+
+              <p-button
+                label="Manage Patients"
+                icon="pi pi-users"
+                [outlined]="true"
+                (onClick)="goToPatients()">
+              </p-button>
+
+
+              <p-button
+                label="Manage Doctors"
+                icon="pi pi-user"
+                [outlined]="true"
+                (onClick)="goToDoctors()">
+              </p-button>
+
+
+              <p-button
+                label="Manage Users"
+                icon="pi pi-user-plus"
+                [outlined]="true"
+                (onClick)="goToUsers()">
+              </p-button>
+
+
+              <p-button
+                label="Manage Appointments"
+                icon="pi pi-calendar"
+                [outlined]="true"
+                (onClick)="goToAppointments()">
+              </p-button>
+
+            </div>
 
           </div>
 

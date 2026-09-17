@@ -1,11 +1,15 @@
 /* =========================================================
    DOCTOR DASHBOARD
-   DARK / BLACK GLASSMORPHISM UI
+   DARK / BLACK GLASS UI + PRIME NG
    ========================================================= */
 
 :host {
   display: block;
+  width: 100%;
   min-height: 100vh;
+
+  margin: 0;
+  padding: 0;
 
   font-family:
     Inter,
@@ -14,9 +18,13 @@
     sans-serif;
 
   color: #e8edf7;
+
+  box-sizing: border-box;
 }
 
-* {
+:host *,
+:host *::before,
+:host *::after {
   box-sizing: border-box;
 }
 
@@ -26,7 +34,13 @@
    ========================================================= */
 
 .doctor-page {
+  width: 100%;
   min-height: 100vh;
+
+  margin: 0;
+  padding: 0;
+
+  overflow-x: hidden;
 
   background:
     radial-gradient(
@@ -55,6 +69,7 @@
    ========================================================= */
 
 .doctor-header {
+  width: 100%;
   min-height: 74px;
 
   display: flex;
@@ -63,12 +78,10 @@
 
   gap: 20px;
 
-  padding:
-    12px
-    max(24px, calc((100% - 1240px) / 2));
+  padding: 12px 32px;
 
   background:
-    rgba(8, 11, 17, 0.86);
+    rgba(8, 11, 17, 0.92);
 
   border-bottom:
     1px solid rgba(255, 255, 255, 0.07);
@@ -84,28 +97,27 @@
 }
 
 
-/* BRAND */
+/* =========================================================
+   BRAND
+   ========================================================= */
 
 .brand {
-  display: grid;
-
-  grid-template-columns:
-    42px
-    auto;
-
-  column-gap: 11px;
-
+  display: flex;
   align-items: center;
+
+  gap: 12px;
+
+  min-width: 0;
 }
 
 .brand-mark {
-  grid-row: span 2;
-
   width: 42px;
   height: 42px;
 
   display: grid;
   place-items: center;
+
+  flex-shrink: 0;
 
   border-radius: 12px;
 
@@ -125,11 +137,19 @@
     0 8px 22px rgba(94, 76, 160, 0.28);
 }
 
+.brand-text {
+  display: flex;
+  flex-direction: column;
+
+  gap: 2px;
+}
+
 .brand strong {
   color: #f2f5fb;
 
   font-size: 17px;
   font-weight: 750;
+
   letter-spacing: -0.2px;
 }
 
@@ -143,21 +163,25 @@
 }
 
 
-/* ACCOUNT */
+/* =========================================================
+   ACCOUNT
+   ========================================================= */
 
 .doctor-account {
   display: flex;
   align-items: center;
 
   gap: 10px;
+
+  flex-shrink: 0;
 }
 
-.doctor-account > span:nth-child(2) {
+.account-info {
   min-width: 100px;
 }
 
-.doctor-account > span:nth-child(2) strong,
-.doctor-account > span:nth-child(2) small {
+.doctor-account strong,
+.doctor-account small {
   display: block;
 }
 
@@ -179,12 +203,19 @@
   letter-spacing: 1.1px;
 }
 
+
+/* =========================================================
+   AVATAR
+   ========================================================= */
+
 .avatar {
   width: 37px;
   height: 37px;
 
   display: grid;
   place-items: center;
+
+  flex-shrink: 0;
 
   border-radius: 50%;
 
@@ -208,43 +239,27 @@
 }
 
 
-/* SIGN OUT */
+/* =========================================================
+   PRIME NG HEADER BUTTON
+   ========================================================= */
 
-.doctor-account button {
+.doctor-account ::ng-deep .p-button {
   margin-left: 7px;
 
-  padding: 8px 13px;
-
-  border:
-    1px solid rgba(218, 81, 104, 0.18);
-
-  border-radius: 8px;
-
-  background:
-    rgba(210, 64, 88, 0.07);
-
-  color: #d98796;
-
-  cursor: pointer;
-
-  font-family: inherit;
-
   font-size: 10px;
-  font-weight: 750;
 
-  transition:
-    all 0.18s ease;
+  font-weight: 750;
 }
 
-.doctor-account button:hover {
+.doctor-account ::ng-deep .p-button.p-button-text {
+  color: #d98796;
+}
+
+.doctor-account ::ng-deep .p-button.p-button-text:hover {
   background:
-    rgba(216, 67, 91, 0.14);
+    rgba(216, 67, 91, 0.10);
 
-  border-color:
-    rgba(224, 84, 105, 0.35);
-
-  transform:
-    translateY(-1px);
+  color: #ef9baa;
 }
 
 
@@ -253,14 +268,15 @@
    ========================================================= */
 
 .doctor-content {
-  width:
-    min(1200px, 100%);
+  width: min(
+    1200px,
+    calc(100% - 52px)
+  );
 
-  margin:
-    0 auto;
+  margin: 0 auto;
 
   padding:
-    36px 26px 60px;
+    36px 0 60px;
 }
 
 
@@ -279,12 +295,16 @@
   margin-bottom: 25px;
 }
 
+.intro-text {
+  min-width: 0;
+}
+
 .eyebrow {
   display: block;
 
   margin-bottom: 8px;
 
-  color: #756b9d;
+  color: #8f82d6;
 
   font-size: 9px;
   font-weight: 850;
@@ -302,69 +322,44 @@
   font-weight: 720;
 
   letter-spacing: -0.9px;
+
+  line-height: 1.2;
 }
 
 .page-intro p {
   margin: 0;
 
-  color: #66758b;
+  color: #8793a6;
 
   font-size: 12px;
-}
 
-
-/* REFRESH */
-
-.refresh-button {
-  padding:
-    10px 15px;
-
-  border:
-    1px solid rgba(141, 122, 213, 0.18);
-
-  border-radius: 9px;
-
-  background:
-    rgba(100, 83, 157, 0.08);
-
-  color: #9b8dd5;
-
-  cursor: pointer;
-
-  font-family: inherit;
-
-  font-size: 10px;
-  font-weight: 800;
-
-  transition:
-    all 0.18s ease;
-}
-
-.refresh-button:hover:not(:disabled) {
-  background:
-    rgba(112, 93, 176, 0.15);
-
-  border-color:
-    rgba(151, 132, 224, 0.32);
-
-  transform:
-    translateY(-2px);
-}
-
-.refresh-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+  line-height: 1.5;
 }
 
 
 /* =========================================================
-   ALERTS
+   PRIME NG REFRESH BUTTON
    ========================================================= */
 
-.alert,
-.loading-card,
-.profile-banner,
-.data-card {
+.page-intro ::ng-deep .p-button {
+  flex-shrink: 0;
+
+  border-radius: 9px;
+
+  font-size: 10px;
+  font-weight: 800;
+}
+
+
+/* =========================================================
+   ALERT
+   ========================================================= */
+
+.alert {
+  margin-bottom: 18px;
+
+  padding: 13px 15px;
+
   border:
     1px solid rgba(255, 255, 255, 0.065);
 
@@ -372,18 +367,6 @@
 
   background:
     rgba(15, 18, 27, 0.72);
-
-  box-shadow:
-    0 15px 45px rgba(0, 0, 0, 0.16);
-
-  backdrop-filter: blur(15px);
-  -webkit-backdrop-filter: blur(15px);
-}
-
-.alert {
-  margin-bottom: 18px;
-
-  padding: 13px 15px;
 
   font-size: 11px;
 }
@@ -403,9 +386,8 @@
    LOADING
    ========================================================= */
 
-.loading-card {
-  min-height: 170px;
-
+.loading-card,
+.inline-loading {
   display: flex;
 
   align-items: center;
@@ -418,24 +400,27 @@
   font-size: 11px;
 }
 
-.inline-loading {
+.loading-card {
   min-height: 170px;
 
-  display: flex;
+  border:
+    1px solid rgba(255, 255, 255, 0.065);
 
-  align-items: center;
-  justify-content: center;
+  border-radius: 14px;
 
-  gap: 10px;
+  background:
+    rgba(15, 18, 27, 0.72);
+}
 
-  color: #758399;
-
-  font-size: 11px;
+.inline-loading {
+  min-height: 170px;
 }
 
 .spinner {
   width: 19px;
   height: 19px;
+
+  flex-shrink: 0;
 
   border:
     2px solid rgba(140, 124, 205, 0.15);
@@ -461,6 +446,8 @@
    ========================================================= */
 
 .profile-banner {
+  width: 100%;
+
   display: flex;
 
   align-items: center;
@@ -470,7 +457,12 @@
   margin-bottom: 19px;
 
   padding:
-    19px 21px;
+    22px 24px;
+
+  border:
+    1px solid rgba(255, 255, 255, 0.065);
+
+  border-radius: 14px;
 
   background:
     linear-gradient(
@@ -478,6 +470,12 @@
       rgba(29, 25, 48, 0.75),
       rgba(15, 19, 28, 0.72)
     );
+
+  box-shadow:
+    0 15px 45px rgba(0, 0, 0, 0.16);
+
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
 }
 
 .profile-icon {
@@ -500,6 +498,10 @@
   font-size: 24px;
 }
 
+.profile-details {
+  min-width: 0;
+}
+
 .profile-banner h2 {
   margin:
     0 0 5px;
@@ -513,28 +515,23 @@
 .profile-banner p {
   margin: 0;
 
-  color: #6e7d92;
+  color: #8a96a9;
 
   font-size: 11px;
 }
 
-.profile-status {
+
+/* PRIME NG PROFILE TAG */
+
+.profile-banner ::ng-deep .p-tag {
   margin-left: auto;
 
-  padding:
-    6px 10px;
+  flex-shrink: 0;
 
   border-radius: 17px;
 
-  background:
-    rgba(55, 183, 117, 0.08);
-
-  border:
-    1px solid rgba(65, 193, 127, 0.12);
-
-  color: #69ce97;
-
   font-size: 9px;
+
   font-weight: 800;
 }
 
@@ -544,6 +541,8 @@
    ========================================================= */
 
 .workspace-tabs {
+  width: 100%;
+
   display: flex;
 
   gap: 6px;
@@ -566,6 +565,15 @@
 
 .workspace-tabs button {
   flex: 1;
+
+  min-width: 0;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  gap: 8px;
 
   padding:
     10px 12px;
@@ -590,6 +598,10 @@
     all 0.18s ease;
 }
 
+.workspace-tabs button i {
+  font-size: 12px;
+}
+
 .workspace-tabs button:hover {
   color: #a6b1c4;
 
@@ -608,20 +620,14 @@
     rgba(138, 119, 207, 0.08);
 }
 
-.workspace-tabs span {
-  margin-left: 5px;
 
-  padding:
-    2px 6px;
+/* PRIME NG BADGE */
 
-  border-radius: 10px;
+.workspace-tabs ::ng-deep .p-badge {
+  min-width: 20px;
+  height: 20px;
 
-  background:
-    rgba(135, 118, 200, 0.10);
-
-  color: #9689ca;
-
-  font-size: 8px;
+  font-size: 9px;
 }
 
 
@@ -633,15 +639,15 @@
   display: grid;
 
   grid-template-columns:
-    repeat(
-      2,
-      minmax(0, 1fr)
-    );
+    repeat(2, minmax(0, 1fr));
 
   gap: 17px;
+
+  width: 100%;
 }
 
 .overview-card {
+  width: 100%;
   min-height: 205px;
 
   padding: 22px;
@@ -758,6 +764,7 @@
   color: #9081c9;
 
   font-size: 9px;
+
   font-style: normal;
   font-weight: 800;
 }
@@ -768,7 +775,23 @@
    ========================================================= */
 
 .data-card {
+  width: 100%;
+
   overflow: hidden;
+
+  border:
+    1px solid rgba(255, 255, 255, 0.065);
+
+  border-radius: 14px;
+
+  background:
+    rgba(15, 18, 27, 0.72);
+
+  box-shadow:
+    0 15px 45px rgba(0, 0, 0, 0.16);
+
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
 }
 
 .card-heading {
@@ -776,6 +799,8 @@
 
   align-items: center;
   justify-content: space-between;
+
+  gap: 15px;
 
   padding:
     19px 21px;
@@ -793,22 +818,20 @@
   font-weight: 700;
 }
 
-.card-heading > span {
+
+/* PRIME NG COUNT */
+
+.card-heading ::ng-deep .p-badge {
+  flex-shrink: 0;
+
+  min-width: auto;
+
   padding:
-    6px 9px;
+    5px 9px;
 
   border-radius: 15px;
 
-  background:
-    rgba(118, 100, 182, 0.09);
-
-  border:
-    1px solid rgba(139, 120, 207, 0.09);
-
-  color: #8d80bf;
-
   font-size: 9px;
-  font-weight: 800;
 }
 
 
@@ -829,6 +852,8 @@
 
   margin-bottom: 9px;
 
+  color: #9588d1;
+
   font-size: 32px;
 }
 
@@ -842,11 +867,15 @@
 }
 
 .empty-state p {
-  margin: 0;
+  max-width: 520px;
+
+  margin: 0 auto;
 
   color: #68778b;
 
   font-size: 10px;
+
+  line-height: 1.55;
 }
 
 
@@ -855,6 +884,8 @@
    ========================================================= */
 
 .table-wrap {
+  width: 100%;
+
   overflow-x: auto;
 }
 
@@ -898,6 +929,8 @@
   color: #8190a5;
 
   font-size: 10px;
+
+  vertical-align: middle;
 }
 
 .table-wrap tbody tr {
@@ -931,71 +964,15 @@
 
 
 /* =========================================================
-   STATUS
+   PRIME NG STATUS TAG
    ========================================================= */
 
-.status {
-  display: inline-flex;
+.table-wrap ::ng-deep .p-tag {
+  font-size: 8px;
 
-  align-items: center;
-
-  padding:
-    5px 9px;
+  font-weight: 850;
 
   border-radius: 13px;
-
-  font-size: 8px;
-  font-weight: 850;
-}
-
-.status.pending {
-  background:
-    rgba(207, 158, 57, 0.09);
-
-  border:
-    1px solid rgba(213, 169, 71, 0.10);
-
-  color: #d3ad62;
-}
-
-.status.approved {
-  background:
-    rgba(50, 183, 116, 0.08);
-
-  border:
-    1px solid rgba(67, 197, 130, 0.10);
-
-  color: #64cc95;
-}
-
-.status.rejected {
-  background:
-    rgba(216, 68, 91, 0.08);
-
-  border:
-    1px solid rgba(226, 86, 107, 0.10);
-
-  color: #db7c8c;
-}
-
-.status.completed {
-  background:
-    rgba(65, 135, 194, 0.08);
-
-  border:
-    1px solid rgba(81, 148, 205, 0.10);
-
-  color: #72a8d0;
-}
-
-.status.cancelled {
-  background:
-    rgba(216, 68, 91, 0.08);
-
-  border:
-    1px solid rgba(226, 86, 107, 0.10);
-
-  color: #db7c8c;
 }
 
 
@@ -1013,106 +990,18 @@
   white-space: nowrap;
 }
 
-.appointment-action {
-  display: inline-flex;
-
-  align-items: center;
-  justify-content: center;
-
-  gap: 5px;
-
-  min-width: 72px;
-
+.appointment-actions ::ng-deep .p-button {
   margin-right: 5px;
 
-  padding:
-    7px 9px;
-
-  border-radius: 7px;
-
-  font-family: inherit;
-
   font-size: 8px;
+
   font-weight: 850;
-
-  cursor: pointer;
-
-  transition:
-    transform 0.18s ease,
-    background 0.18s ease,
-    border-color 0.18s ease,
-    box-shadow 0.18s ease,
-    opacity 0.18s ease;
-}
-
-.appointment-action:hover:not(:disabled) {
-  transform:
-    translateY(-2px);
-}
-
-.appointment-action:active:not(:disabled) {
-  transform:
-    translateY(0);
-}
-
-.appointment-action:disabled {
-  opacity: 0.45;
-
-  cursor: not-allowed;
 }
 
 
-/* ACCEPT */
-
-.accept-action {
-  background:
-    rgba(46, 183, 117, 0.08);
-
-  border:
-    1px solid rgba(63, 201, 132, 0.16);
-
-  color: #63d398;
-}
-
-.accept-action:hover:not(:disabled) {
-  background:
-    rgba(47, 192, 120, 0.16);
-
-  border-color:
-    rgba(72, 211, 142, 0.32);
-
-  box-shadow:
-    0 7px 20px
-    rgba(45, 190, 119, 0.10);
-}
-
-
-/* REJECT */
-
-.reject-action {
-  background:
-    rgba(213, 68, 91, 0.07);
-
-  border:
-    1px solid rgba(226, 86, 107, 0.15);
-
-  color: #df7f8f;
-}
-
-.reject-action:hover:not(:disabled) {
-  background:
-    rgba(220, 70, 94, 0.15);
-
-  border-color:
-    rgba(231, 93, 113, 0.32);
-
-  box-shadow:
-    0 7px 20px
-    rgba(220, 68, 91, 0.10);
-}
-
-
-/* PROCESSED */
+/* =========================================================
+   PROCESSED ACTION
+   ========================================================= */
 
 .action-completed {
   display: inline-flex;
@@ -1156,31 +1045,6 @@
     rgba(225, 84, 105, 0.11);
 
   color: #db7c8b;
-}
-
-
-/* BUTTON SPINNER */
-
-.button-spinner {
-  width: 9px;
-  height: 9px;
-
-  border:
-    2px solid rgba(100, 214, 154, 0.18);
-
-  border-top-color:
-    #64d69a;
-
-  border-radius: 50%;
-
-  animation:
-    buttonSpin 0.7s linear infinite;
-}
-
-@keyframes buttonSpin {
-  to {
-    transform: rotate(360deg);
-  }
 }
 
 
@@ -1265,16 +1129,20 @@
 
   .doctor-header {
     padding:
-      12px 18px;
+      12px 20px;
   }
 
   .doctor-content {
+    width:
+      calc(100% - 34px);
+
     padding:
-      28px 17px 45px;
+      28px 0 45px;
   }
 
   .overview-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns:
+      1fr;
   }
 
 }
@@ -1295,8 +1163,11 @@
   }
 
   .doctor-content {
+    width:
+      calc(100% - 28px);
+
     padding:
-      25px 14px 38px;
+      25px 0 38px;
   }
 
   .page-intro {
@@ -1305,7 +1176,11 @@
     flex-direction: column;
   }
 
-  .refresh-button {
+  .page-intro h1 {
+    font-size: 26px;
+  }
+
+  .page-intro ::ng-deep .p-button {
     width: 100%;
   }
 
@@ -1315,8 +1190,8 @@
     flex-wrap: wrap;
   }
 
-  .profile-status {
-    margin-left: 66px;
+  .profile-banner ::ng-deep .p-tag {
+    margin-left: 0;
   }
 
   .workspace-tabs {
@@ -1324,11 +1199,46 @@
   }
 
   .workspace-tabs button {
-    min-width: 115px;
+    min-width: 120px;
+    flex: 0 0 auto;
   }
 
-  .page-intro h1 {
-    font-size: 26px;
+}
+
+
+@media (max-width: 480px) {
+
+  .doctor-header {
+    padding:
+      12px 14px;
+  }
+
+  .doctor-account {
+    align-items: center;
+  }
+
+  .account-info {
+    min-width: 0;
+  }
+
+  .doctor-account strong {
+    font-size: 10px;
+  }
+
+  .doctor-content {
+    width:
+      calc(100% - 20px);
+  }
+
+  .profile-banner {
+    padding:
+      18px;
+  }
+
+  .card-heading {
+    align-items: flex-start;
+
+    flex-direction: column;
   }
 
 }

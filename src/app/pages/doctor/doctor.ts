@@ -1,15 +1,22 @@
 import { CommonModule } from '@angular/common';
+
 import {
   ChangeDetectorRef,
   Component,
   OnInit,
   inject
 } from '@angular/core';
+
 import { Router } from '@angular/router';
 
-import { catchError, forkJoin, of } from 'rxjs';
+import {
+  catchError,
+  forkJoin,
+  of
+} from 'rxjs';
 
 import { AuthService } from '../../services/auth.service';
+
 import {
   Doctor as DoctorProfile,
   DoctorService
@@ -31,6 +38,13 @@ import {
   AppointmentService
 } from '../../services/appointment.service';
 
+/*
+ * PrimeNG
+ */
+import { ButtonModule } from 'primeng/button';
+import { TagModule } from 'primeng/tag';
+import { BadgeModule } from 'primeng/badge';
+
 
 type DoctorView =
   | 'dashboard'
@@ -42,7 +56,14 @@ type DoctorView =
   selector: 'app-doctor',
 
   imports: [
-    CommonModule
+    CommonModule,
+
+    /*
+     * PrimeNG
+     */
+    ButtonModule,
+    TagModule,
+    BadgeModule
   ],
 
   templateUrl: './doctor.html',
@@ -51,7 +72,8 @@ type DoctorView =
 })
 export class Doctor implements OnInit {
 
-  private router = inject(Router);
+  private router =
+    inject(Router);
 
   private authService =
     inject(AuthService);
@@ -72,33 +94,49 @@ export class Doctor implements OnInit {
     inject(ChangeDetectorRef);
 
 
+  /*
+   * Current page
+   */
   activeView: DoctorView =
     'dashboard';
 
 
+  /*
+   * Doctor profile
+   */
   doctor: DoctorProfile | null =
     null;
 
 
+  /*
+   * Patients
+   */
   patients: Patient[] = [];
 
 
+  /*
+   * Appointments
+   */
   appointments: Appointment[] =
     [];
 
 
+  /*
+   * Loading
+   */
   isProfileLoading =
     true;
 
-
   isPatientsLoading =
     false;
-
 
   isAppointmentsLoading =
     false;
 
 
+  /*
+   * General error
+   */
   errorMessage =
     '';
 
@@ -109,17 +147,15 @@ export class Doctor implements OnInit {
   updatingAppointmentId:
     number | null = null;
 
-
   appointmentActionMessage =
     '';
-
 
   appointmentActionError =
     '';
 
 
   /*
-   * Username
+   * USERNAME
    */
   get username(): string {
 
@@ -129,7 +165,13 @@ export class Doctor implements OnInit {
 
 
   /*
-   * Doctor display name
+   * DOCTOR DISPLAY NAME
+   *
+   * If username is:
+   * Dr Rohit Sharma
+   *
+   * returns:
+   * Rohit Sharma
    */
   get doctorDisplayName(): string {
 
@@ -150,7 +192,7 @@ export class Doctor implements OnInit {
 
 
   /*
-   * Appointment count
+   * APPOINTMENT COUNT
    */
   get appointmentCount(): number {
 
@@ -338,7 +380,6 @@ export class Doctor implements OnInit {
     this.errorMessage =
       '';
 
-
     this.cdr.detectChanges();
 
 
@@ -519,6 +560,9 @@ export class Doctor implements OnInit {
         appointments
       }) => {
 
+        /*
+         * Doctor appointments
+         */
         const docAppts =
           (
             appointments ?? []
@@ -534,6 +578,9 @@ export class Doctor implements OnInit {
           docAppts;
 
 
+        /*
+         * Patient map
+         */
         const patientMap =
           new Map<
             number,
@@ -551,7 +598,7 @@ export class Doctor implements OnInit {
 
           if (
             patient &&
-            patient.id
+            patient.id != null
           ) {
 
             patientMap.set(
@@ -714,6 +761,9 @@ export class Doctor implements OnInit {
         }
 
 
+        /*
+         * FINAL PATIENT LIST
+         */
         this.patients =
           Array.from(
             patientMap.values()
@@ -872,6 +922,9 @@ export class Doctor implements OnInit {
     this.cdr.detectChanges();
 
 
+    /*
+     * Keep existing appointment update logic
+     */
     const request:
       AppointmentRequest = {
 
@@ -1019,6 +1072,43 @@ export class Doctor implements OnInit {
             status.slice(1)
               .toLowerCase()
           : 'Unknown';
+    }
+  }
+
+
+  /*
+   * PRIME NG STATUS
+   */
+  getStatusSeverity(
+    status: string
+  ):
+    'success' |
+    'info' |
+    'warn' |
+    'danger' |
+    'secondary' {
+
+    switch (
+      status?.toUpperCase()
+    ) {
+
+      case 'APPROVED':
+        return 'success';
+
+      case 'REJECTED':
+        return 'danger';
+
+      case 'PENDING':
+        return 'warn';
+
+      case 'COMPLETED':
+        return 'info';
+
+      case 'CANCELLED':
+        return 'danger';
+
+      default:
+        return 'secondary';
     }
   }
 

@@ -10,6 +10,10 @@ import {
 } from '@angular/router';
 
 import {
+  ButtonModule
+} from 'primeng/button';
+
+import {
   AuthService
 } from '../../../services/auth.service';
 
@@ -21,7 +25,8 @@ import {
   selector: 'app-dashboard',
 
   imports: [
-    RouterLink
+    RouterLink,
+    ButtonModule
   ],
 
   templateUrl: './dashboard.html',

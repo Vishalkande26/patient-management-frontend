@@ -1,18 +1,29 @@
 <div class="doctor-page">
 
-  <!-- HEADER -->
+  <!-- =====================================================
+       HEADER
+       ===================================================== -->
+
   <header class="doctor-header">
 
     <div class="brand">
-      <span class="brand-mark">&#10010;</span>
 
-      <strong>
-        CarePortal
-      </strong>
+      <span class="brand-mark">
+        &#10010;
+      </span>
 
-      <small>
-        Doctor workspace
-      </small>
+      <div class="brand-text">
+
+        <strong>
+          CarePortal
+        </strong>
+
+        <small>
+          Doctor workspace
+        </small>
+
+      </div>
+
     </div>
 
 
@@ -22,7 +33,8 @@
         {{ username.charAt(0).toUpperCase() }}
       </span>
 
-      <span>
+      <span class="account-info">
+
         <strong>
           {{ username }}
         </strong>
@@ -30,31 +42,46 @@
         <small>
           DOCTOR
         </small>
+
       </span>
 
-      <button
-        type="button"
-        (click)="logout()"
-      >
-        Sign out
-      </button>
+
+      <!-- PrimeNG Sign Out -->
+      <p-button
+        label="Sign out"
+        icon="pi pi-sign-out"
+        severity="danger"
+        [text]="true"
+        (onClick)="logout()"
+      ></p-button>
 
     </div>
 
   </header>
 
 
-  <!-- CONTENT -->
+  <!-- =====================================================
+       MAIN CONTENT
+       ===================================================== -->
+
   <main class="doctor-content">
 
-    <!-- INTRO -->
+
+    <!-- ===================================================
+         INTRO
+         =================================================== -->
+
     <div class="page-intro">
 
-      <div>
+      <div class="intro-text">
 
         <span class="eyebrow">
           CLINICAL WORKSPACE
         </span>
+
+        <!-- IMPORTANT:
+             doctorDisplayName already removes Dr.
+        -->
 
         <h1>
           Good day,
@@ -73,30 +100,28 @@
       </div>
 
 
-      <button
-        type="button"
-        class="refresh-button"
-        (click)="refreshActiveView()"
-        [disabled]="
+      <!-- PrimeNG Refresh Button -->
+
+      <p-button
+        label="Refresh"
+        icon="pi pi-refresh"
+        severity="secondary"
+        [outlined]="true"
+        [loading]="
           isProfileLoading ||
           isPatientsLoading ||
           isAppointmentsLoading
         "
-      >
-
-        {{
-          isPatientsLoading ||
-          isAppointmentsLoading
-            ? 'Refreshing...'
-            : '↻ Refresh'
-        }}
-
-      </button>
+        (onClick)="refreshActiveView()"
+      ></p-button>
 
     </div>
 
 
-    <!-- ERROR -->
+    <!-- ===================================================
+         ERROR
+         =================================================== -->
+
     <div
       *ngIf="errorMessage"
       class="alert error"
@@ -105,7 +130,10 @@
     </div>
 
 
-    <!-- PROFILE LOADING -->
+    <!-- ===================================================
+         PROFILE LOADING
+         =================================================== -->
+
     <div
       *ngIf="isProfileLoading"
       class="loading-card"
@@ -113,12 +141,17 @@
 
       <span class="spinner"></span>
 
-      Setting up your workspace...
+      <span>
+        Setting up your workspace...
+      </span>
 
     </div>
 
 
-    <!-- DOCTOR WORKSPACE -->
+    <!-- ===================================================
+         DOCTOR WORKSPACE
+         =================================================== -->
+
     <ng-container
       *ngIf="
         !isProfileLoading &&
@@ -126,14 +159,19 @@
       "
     >
 
-      <!-- PROFILE -->
+
+      <!-- =================================================
+           PROFILE
+           ================================================= -->
+
       <section class="profile-banner">
 
-        <span class="profile-icon">
+        <div class="profile-icon">
           &#129489;&#8205;&#9877;&#65039;
-        </span>
+        </div>
 
-        <div>
+
+        <div class="profile-details">
 
           <span class="eyebrow">
             YOUR PROFILE
@@ -151,7 +189,9 @@
               *ngIf="doctor.experience"
             >
               &middot;
+
               {{ doctor.experience }}
+
               years experience
             </span>
 
@@ -159,18 +199,29 @@
 
         </div>
 
-        <span class="profile-status">
-          Active profile
-        </span>
+
+        <!-- PrimeNG Active Badge -->
+
+        <p-tag
+          value="Active profile"
+          severity="success"
+          icon="pi pi-check-circle"
+        ></p-tag>
 
       </section>
 
 
-      <!-- TABS -->
+      <!-- =================================================
+           WORKSPACE TABS
+           ================================================= -->
+
       <nav
         class="workspace-tabs"
         aria-label="Doctor workspace"
       >
+
+
+        <!-- OVERVIEW -->
 
         <button
           type="button"
@@ -181,9 +232,17 @@
             selectView('dashboard')
           "
         >
-          Overview
+
+          <i class="pi pi-home"></i>
+
+          <span>
+            Overview
+          </span>
+
         </button>
 
+
+        <!-- PATIENTS -->
 
         <button
           type="button"
@@ -195,14 +254,21 @@
           "
         >
 
-          My Patients
+          <i class="pi pi-users"></i>
 
           <span>
-            {{ patients.length }}
+            My Patients
           </span>
+
+          <p-badge
+            [value]="patients.length"
+            severity="info"
+          ></p-badge>
 
         </button>
 
+
+        <!-- APPOINTMENTS -->
 
         <button
           type="button"
@@ -214,24 +280,35 @@
           "
         >
 
-          Appointments
+          <i class="pi pi-calendar"></i>
 
           <span>
-            {{ appointmentCount }}
+            Appointments
           </span>
+
+          <p-badge
+            [value]="appointmentCount"
+            severity="info"
+          ></p-badge>
 
         </button>
 
       </nav>
 
 
-      <!-- DASHBOARD -->
+      <!-- =================================================
+           OVERVIEW
+           ================================================= -->
+
       <section
         *ngIf="
           activeView === 'dashboard'
         "
         class="overview-grid"
       >
+
+
+        <!-- PATIENT CARD -->
 
         <button
           type="button"
@@ -242,28 +319,37 @@
         >
 
           <span class="overview-icon">
-            &#128101;
+
+            <i class="pi pi-users"></i>
+
           </span>
+
 
           <strong>
             My Patients
           </strong>
 
+
           <b>
             {{ patients.length }}
           </b>
+
 
           <p>
             View health details for patients
             assigned to you.
           </p>
 
+
           <em>
-            View patients &rarr;
+            View patients
+            &rarr;
           </em>
 
         </button>
 
+
+        <!-- APPOINTMENT CARD -->
 
         <button
           type="button"
@@ -274,24 +360,31 @@
         >
 
           <span class="overview-icon">
-            &#128197;
+
+            <i class="pi pi-calendar"></i>
+
           </span>
+
 
           <strong>
             Appointments
           </strong>
 
+
           <b>
             {{ appointmentCount }}
           </b>
+
 
           <p>
             Review your upcoming visits
             and appointment requests.
           </p>
 
+
           <em>
-            View appointments &rarr;
+            View appointments
+            &rarr;
           </em>
 
         </button>
@@ -299,7 +392,14 @@
       </section>
 
 
-      <!-- PATIENTS -->
+      <!-- =================================================
+           PATIENT LIST
+           
+           IMPORTANT:
+           We are intentionally keeping the native table.
+           This preserves your working patient rendering.
+           ================================================= -->
+
       <section
         *ngIf="
           activeView === 'patients'
@@ -321,12 +421,18 @@
 
           </div>
 
-          <span>
-            {{ patients.length }} total
-          </span>
+
+          <p-badge
+            [value]="
+              patients.length + ' total'
+            "
+            severity="info"
+          ></p-badge>
 
         </div>
 
+
+        <!-- LOADING -->
 
         <div
           *ngIf="isPatientsLoading"
@@ -335,10 +441,14 @@
 
           <span class="spinner"></span>
 
-          Loading your patients...
+          <span>
+            Loading your patients...
+          </span>
 
         </div>
 
+
+        <!-- EMPTY -->
 
         <div
           *ngIf="
@@ -349,7 +459,7 @@
         >
 
           <span>
-            &#128101;
+            <i class="pi pi-users"></i>
           </span>
 
           <h3>
@@ -364,6 +474,8 @@
 
         </div>
 
+
+        <!-- PATIENT TABLE -->
 
         <div
           *ngIf="
@@ -455,7 +567,7 @@
 
                 <td>
 
-                  {{
+                  {{ 
                     patient.disease ||
                     'Not recorded'
                   }}
@@ -473,7 +585,10 @@
       </section>
 
 
-      <!-- APPOINTMENTS -->
+      <!-- =================================================
+           APPOINTMENTS
+           ================================================= -->
+
       <section
         *ngIf="
           activeView === 'appointments'
@@ -495,14 +610,19 @@
 
           </div>
 
-          <span>
-            {{ appointmentCount }} total
-          </span>
+
+          <p-badge
+            [value]="
+              appointmentCount + ' total'
+            "
+            severity="info"
+          ></p-badge>
 
         </div>
 
 
-        <!-- SUCCESS MESSAGE -->
+        <!-- SUCCESS -->
+
         <div
           *ngIf="
             appointmentActionMessage
@@ -519,7 +639,8 @@
         </div>
 
 
-        <!-- ERROR MESSAGE -->
+        <!-- ERROR -->
+
         <div
           *ngIf="
             appointmentActionError
@@ -537,6 +658,7 @@
 
 
         <!-- LOADING -->
+
         <div
           *ngIf="
             isAppointmentsLoading
@@ -546,12 +668,15 @@
 
           <span class="spinner"></span>
 
-          Loading appointments...
+          <span>
+            Loading appointments...
+          </span>
 
         </div>
 
 
         <!-- EMPTY -->
+
         <div
           *ngIf="
             !isAppointmentsLoading &&
@@ -561,7 +686,7 @@
         >
 
           <span>
-            &#128197;
+            <i class="pi pi-calendar"></i>
           </span>
 
           <h3>
@@ -576,7 +701,8 @@
         </div>
 
 
-        <!-- TABLE -->
+        <!-- APPOINTMENT TABLE -->
+
         <div
           *ngIf="
             !isAppointmentsLoading &&
@@ -629,6 +755,7 @@
               >
 
                 <!-- PATIENT -->
+
                 <td>
 
                   <strong>
@@ -647,6 +774,7 @@
 
 
                 <!-- DATE -->
+
                 <td>
 
                   {{
@@ -657,6 +785,7 @@
 
 
                 <!-- TIME -->
+
                 <td>
 
                   {{
@@ -667,62 +796,46 @@
 
 
                 <!-- REASON -->
+
                 <td>
 
                   {{
-                    appointment.reason
+                    appointment.reason ||
+                    '-'
                   }}
 
                 </td>
 
 
                 <!-- STATUS -->
+
                 <td>
 
-                  <span
-                    class="status"
-
-                    [class.pending]="
-                      appointment.status ===
-                      'PENDING'
+                  <p-tag
+                    [value]="
+                      formatStatus(
+                        appointment.status
+                      )
                     "
-
-                    [class.approved]="
-                      appointment.status ===
-                      'APPROVED'
+                    [severity]="
+                      getStatusSeverity(
+                        appointment.status
+                      )
                     "
-
-                    [class.rejected]="
-                      appointment.status ===
-                      'REJECTED'
-                    "
-
-                    [class.completed]="
-                      appointment.status ===
-                      'COMPLETED'
-                    "
-
-                    [class.cancelled]="
-                      appointment.status ===
-                      'CANCELLED'
-                    "
-                  >
-
-                    {{ formatStatus(
-                      appointment.status
-                    ) }}
-
-                  </span>
+                  ></p-tag>
 
                 </td>
 
 
                 <!-- ACTION -->
+
                 <td
                   class="appointment-actions"
                 >
 
+
                   <!-- PENDING -->
+
                   <ng-container
                     *ngIf="
                       appointment.status ===
@@ -731,91 +844,56 @@
                     "
                   >
 
+
                     <!-- ACCEPT -->
-                    <button
-                      type="button"
 
-                      class="
-                        appointment-action
-                        accept-action
+                    <p-button
+                      label="Accept"
+                      icon="pi pi-check"
+                      severity="success"
+                      size="small"
+                      [loading]="
+                        updatingAppointmentId ===
+                        appointment.id
                       "
-
-                      (click)="
+                      [disabled]="
+                        updatingAppointmentId !==
+                        null
+                      "
+                      (onClick)="
                         updateAppointmentStatus(
                           appointment,
                           'APPROVED'
                         )
                       "
+                    ></p-button>
 
+
+                    <!-- REJECT -->
+
+                    <p-button
+                      label="Reject"
+                      icon="pi pi-times"
+                      severity="danger"
+                      size="small"
+                      [text]="true"
                       [disabled]="
                         updatingAppointmentId !==
                         null
                       "
-                    >
-
-                      <span
-                        *ngIf="
-                          updatingAppointmentId ===
-                          appointment.id
-                        "
-                        class="button-spinner"
-                      ></span>
-
-
-                      <span
-                        *ngIf="
-                          updatingAppointmentId !==
-                          appointment.id
-                        "
-                      >
-                        ✓
-                      </span>
-
-
-                      {{
-                        updatingAppointmentId ===
-                        appointment.id
-                          ? 'Updating...'
-                          : 'Accept'
-                      }}
-
-                    </button>
-
-
-                    <!-- REJECT -->
-                    <button
-                      type="button"
-
-                      class="
-                        appointment-action
-                        reject-action
-                      "
-
-                      (click)="
+                      (onClick)="
                         updateAppointmentStatus(
                           appointment,
                           'REJECTED'
                         )
                       "
-
-                      [disabled]="
-                        updatingAppointmentId !==
-                        null
-                      "
-                    >
-
-                      <span>
-                        ✕
-                      </span>
-
-                      Reject
-
-                    </button>
+                    ></p-button>
 
                   </ng-container>
 
 
-                  <!-- ALREADY PROCESSED -->
+                  <!-- PROCESSED -->
+
                   <ng-template
                     #processedAppointment
                   >
@@ -834,13 +912,16 @@
                       "
                     >
 
+
                       <span
                         *ngIf="
                           appointment.status ===
                           'APPROVED'
                         "
                       >
+
                         ✓ Confirmed
+
                       </span>
 
 
@@ -850,7 +931,9 @@
                           'REJECTED'
                         "
                       >
+
                         ✕ Rejected
+
                       </span>
 
 
@@ -862,7 +945,9 @@
                           'REJECTED'
                         "
                       >
+
                         —
+
                       </span>
 
                     </span>

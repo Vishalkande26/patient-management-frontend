@@ -18,4 +18,5 @@ import {
   styleUrl: './patient.css'
 })
 export class Patient {
+
 }

@@ -46,14 +46,14 @@
       </div>
 
 
-      <button
+      <!-- PrimeNG Sign Out Button -->
+      <p-button
         type="button"
-        class="logout-button"
-        (click)="logout()"
-      >
-        <span class="logout-icon">↪</span>
-        Sign out
-      </button>
+        label="Sign out"
+        icon="pi pi-sign-out"
+        styleClass="logout-button"
+        (onClick)="logout()"
+      ></p-button>
 
     </div>
 
@@ -79,7 +79,10 @@
 
         <h1>
           Welcome back, {{ username }}
-          <span class="welcome-wave" aria-hidden="true">
+          <span
+            class="welcome-wave"
+            aria-hidden="true"
+          >
             👋
           </span>
         </h1>
