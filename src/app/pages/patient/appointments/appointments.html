@@ -1,8 +1,7 @@
 <div class="appointments-page">
 
-  <!-- ===================================== -->
+
   <!-- HEADER -->
-  <!-- ===================================== -->
 
   <div class="page-header">
 
@@ -25,7 +24,10 @@
         type="button"
         class="refresh-button"
         (click)="refreshAppointments()"
-        [disabled]="isLoading || isRefreshing"
+        [disabled]="
+          isLoading ||
+          isRefreshing
+        "
       >
         ↻ Refresh
       </button>
@@ -44,9 +46,7 @@
   </div>
 
 
-  <!-- ===================================== -->
   <!-- SEARCH -->
-  <!-- ===================================== -->
 
   <div class="search-section">
 
@@ -60,9 +60,7 @@
   </div>
 
 
-  <!-- ===================================== -->
   <!-- LOADING -->
-  <!-- ===================================== -->
 
   @if (isLoading) {
 
@@ -75,9 +73,7 @@
   }
 
 
-  <!-- ===================================== -->
   <!-- MESSAGE -->
-  <!-- ===================================== -->
 
   @if (
     !isLoading &&
@@ -94,9 +90,7 @@
   }
 
 
-  <!-- ===================================== -->
   <!-- APPOINTMENT TABLE -->
-  <!-- ===================================== -->
 
   @if (
     !isLoading &&
@@ -111,19 +105,33 @@
 
           <tr>
 
-            <th>ID</th>
+            <th>
+              ID
+            </th>
 
-            <th>Doctor</th>
+            <th>
+              Doctor
+            </th>
 
-            <th>Specialization</th>
+            <th>
+              Specialization
+            </th>
 
-            <th>Date</th>
+            <th>
+              Date
+            </th>
 
-            <th>Time</th>
+            <th>
+              Time
+            </th>
 
-            <th>Reason</th>
+            <th>
+              Reason
+            </th>
 
-            <th>Status</th>
+            <th>
+              Status
+            </th>
 
           </tr>
 
@@ -146,14 +154,16 @@
 
               <td>
                 {{
-                  appointment.doctorName || 'N/A'
+                  appointment.doctorName ||
+                  'N/A'
                 }}
               </td>
 
 
               <td>
                 {{
-                  appointment.doctorSpecialization || 'N/A'
+                  appointment.doctorSpecialization ||
+                  'N/A'
                 }}
               </td>
 
@@ -183,22 +193,74 @@
 
                 <span
                   class="status"
+
                   [class.pending]="
                     appointment.status === 'PENDING'
                   "
+
                   [class.approved]="
                     appointment.status === 'APPROVED'
                   "
+
+                  [class.rejected]="
+                    appointment.status === 'REJECTED'
+                  "
+
                   [class.completed]="
                     appointment.status === 'COMPLETED'
                   "
+
                   [class.cancelled]="
                     appointment.status === 'CANCELLED'
                   "
                 >
-                  {{
-                    appointment.status
-                  }}
+
+                  @if (
+                    appointment.status === 'APPROVED'
+                  ) {
+
+                    Confirmed
+
+                  }
+
+                  @else if (
+                    appointment.status === 'REJECTED'
+                  ) {
+
+                    Rejected
+
+                  }
+
+                  @else if (
+                    appointment.status === 'PENDING'
+                  ) {
+
+                    Pending
+
+                  }
+
+                  @else if (
+                    appointment.status === 'COMPLETED'
+                  ) {
+
+                    Completed
+
+                  }
+
+                  @else if (
+                    appointment.status === 'CANCELLED'
+                  ) {
+
+                    Cancelled
+
+                  }
+
+                  @else {
+
+                    {{ appointment.status }}
+
+                  }
+
                 </span>
 
               </td>
@@ -216,9 +278,7 @@
   }
 
 
-  <!-- ===================================== -->
   <!-- BOTTOM -->
-  <!-- ===================================== -->
 
   <div class="bottom-actions">
 
@@ -227,7 +287,9 @@
       class="back-button"
       (click)="goBack()"
     >
+
       ← Back to Dashboard
+
     </button>
 
   </div>

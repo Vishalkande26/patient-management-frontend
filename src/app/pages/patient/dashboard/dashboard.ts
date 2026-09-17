@@ -19,8 +19,13 @@ import {
 
 @Component({
   selector: 'app-dashboard',
-  imports: [RouterLink],
+
+  imports: [
+    RouterLink
+  ],
+
   templateUrl: './dashboard.html',
+
   styleUrl: './dashboard.css'
 })
 export class Dashboard implements OnInit {
@@ -35,10 +40,6 @@ export class Dashboard implements OnInit {
   /*
    * Load doctors in the background
    * as soon as the patient dashboard opens.
-   *
-   * This means when the patient clicks
-   * "View Doctors" or "Create Appointment",
-   * the doctor list is already available.
    */
   ngOnInit(): void {
 
@@ -69,9 +70,6 @@ export class Dashboard implements OnInit {
 
     /*
      * Load doctors silently in the background.
-     *
-     * There is intentionally NO loading spinner
-     * on the Patient Dashboard.
      */
     this.doctorService
       .getDoctors()
@@ -90,9 +88,6 @@ export class Dashboard implements OnInit {
 
           /*
            * Do not show an error on the dashboard.
-           *
-           * The doctor pages will handle the error
-           * if the request actually fails.
            */
           console.error(
             'Unable to preload doctors:',

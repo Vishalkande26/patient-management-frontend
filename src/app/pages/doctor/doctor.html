@@ -1,49 +1,888 @@
 <div class="doctor-page">
-  <header class="doctor-header">
-    <div class="brand"><span class="brand-mark">&#10010;</span><strong>CarePortal</strong><small>Doctor workspace</small></div>
-    <div class="doctor-account"><span class="avatar">{{ username.charAt(0).toUpperCase() }}</span><span><strong>{{ username }}</strong><small>DOCTOR</small></span><button type="button" (click)="logout()">Sign out</button></div>
-  </header>
 
-  <main class="doctor-content">
-    <div class="page-intro">
-      <div><span class="eyebrow">CLINICAL WORKSPACE</span><h1>Good day, {{ doctorDisplayName ? 'Dr. ' + doctorDisplayName : 'Doctor' }}</h1><p>Review your patients and appointments from one place.</p></div>
-      <button type="button" class="refresh-button" (click)="refreshActiveView()" [disabled]="isProfileLoading || isPatientsLoading || isAppointmentsLoading">{{ isPatientsLoading || isAppointmentsLoading ? 'Refreshing...' : '↻ Refresh' }}</button>
+  <!-- HEADER -->
+  <header class="doctor-header">
+
+    <div class="brand">
+      <span class="brand-mark">&#10010;</span>
+
+      <strong>
+        CarePortal
+      </strong>
+
+      <small>
+        Doctor workspace
+      </small>
     </div>
 
-    <div *ngIf="errorMessage" class="alert error">{{ errorMessage }}</div>
-    <div *ngIf="isProfileLoading" class="loading-card"><span class="spinner"></span> Setting up your workspace...</div>
 
-    <ng-container *ngIf="!isProfileLoading && doctor">
+    <div class="doctor-account">
+
+      <span class="avatar">
+        {{ username.charAt(0).toUpperCase() }}
+      </span>
+
+      <span>
+        <strong>
+          {{ username }}
+        </strong>
+
+        <small>
+          DOCTOR
+        </small>
+      </span>
+
+      <button
+        type="button"
+        (click)="logout()"
+      >
+        Sign out
+      </button>
+
+    </div>
+
+  </header>
+
+
+  <!-- CONTENT -->
+  <main class="doctor-content">
+
+    <!-- INTRO -->
+    <div class="page-intro">
+
+      <div>
+
+        <span class="eyebrow">
+          CLINICAL WORKSPACE
+        </span>
+
+        <h1>
+          Good day,
+          {{
+            doctorDisplayName
+              ? 'Dr. ' + doctorDisplayName
+              : 'Doctor'
+          }}
+        </h1>
+
+        <p>
+          Review your patients and appointments
+          from one place.
+        </p>
+
+      </div>
+
+
+      <button
+        type="button"
+        class="refresh-button"
+        (click)="refreshActiveView()"
+        [disabled]="
+          isProfileLoading ||
+          isPatientsLoading ||
+          isAppointmentsLoading
+        "
+      >
+
+        {{
+          isPatientsLoading ||
+          isAppointmentsLoading
+            ? 'Refreshing...'
+            : '↻ Refresh'
+        }}
+
+      </button>
+
+    </div>
+
+
+    <!-- ERROR -->
+    <div
+      *ngIf="errorMessage"
+      class="alert error"
+    >
+      {{ errorMessage }}
+    </div>
+
+
+    <!-- PROFILE LOADING -->
+    <div
+      *ngIf="isProfileLoading"
+      class="loading-card"
+    >
+
+      <span class="spinner"></span>
+
+      Setting up your workspace...
+
+    </div>
+
+
+    <!-- DOCTOR WORKSPACE -->
+    <ng-container
+      *ngIf="
+        !isProfileLoading &&
+        doctor
+      "
+    >
+
+      <!-- PROFILE -->
       <section class="profile-banner">
-        <span class="profile-icon">&#129489;&#8205;&#9877;&#65039;</span>
-        <div><span class="eyebrow">YOUR PROFILE</span><h2>{{ doctor.name }}</h2><p>{{ doctor.specialization }} <span *ngIf="doctor.experience">&middot; {{ doctor.experience }} years experience</span></p></div>
-        <span class="profile-status">Active profile</span>
+
+        <span class="profile-icon">
+          &#129489;&#8205;&#9877;&#65039;
+        </span>
+
+        <div>
+
+          <span class="eyebrow">
+            YOUR PROFILE
+          </span>
+
+          <h2>
+            {{ doctor.name }}
+          </h2>
+
+          <p>
+
+            {{ doctor.specialization }}
+
+            <span
+              *ngIf="doctor.experience"
+            >
+              &middot;
+              {{ doctor.experience }}
+              years experience
+            </span>
+
+          </p>
+
+        </div>
+
+        <span class="profile-status">
+          Active profile
+        </span>
+
       </section>
 
-      <nav class="workspace-tabs" aria-label="Doctor workspace">
-        <button type="button" [class.active]="activeView === 'dashboard'" (click)="selectView('dashboard')">Overview</button>
-        <button type="button" [class.active]="activeView === 'patients'" (click)="selectView('patients')">My Patients <span>{{ patients.length }}</span></button>
-        <button type="button" [class.active]="activeView === 'appointments'" (click)="selectView('appointments')">Appointments <span>{{ appointmentCount }}</span></button>
+
+      <!-- TABS -->
+      <nav
+        class="workspace-tabs"
+        aria-label="Doctor workspace"
+      >
+
+        <button
+          type="button"
+          [class.active]="
+            activeView === 'dashboard'
+          "
+          (click)="
+            selectView('dashboard')
+          "
+        >
+          Overview
+        </button>
+
+
+        <button
+          type="button"
+          [class.active]="
+            activeView === 'patients'
+          "
+          (click)="
+            selectView('patients')
+          "
+        >
+
+          My Patients
+
+          <span>
+            {{ patients.length }}
+          </span>
+
+        </button>
+
+
+        <button
+          type="button"
+          [class.active]="
+            activeView === 'appointments'
+          "
+          (click)="
+            selectView('appointments')
+          "
+        >
+
+          Appointments
+
+          <span>
+            {{ appointmentCount }}
+          </span>
+
+        </button>
+
       </nav>
 
-      <section *ngIf="activeView === 'dashboard'" class="overview-grid">
-        <button type="button" class="overview-card patients" (click)="selectView('patients')"><span class="overview-icon">&#128101;</span><strong>My Patients</strong><b>{{ patients.length }}</b><p>View health details for patients assigned to you.</p><em>View patients &rarr;</em></button>
-        <button type="button" class="overview-card appointments" (click)="selectView('appointments')"><span class="overview-icon">&#128197;</span><strong>Appointments</strong><b>{{ appointmentCount }}</b><p>Review your upcoming visits and appointment requests.</p><em>View appointments &rarr;</em></button>
+
+      <!-- DASHBOARD -->
+      <section
+        *ngIf="
+          activeView === 'dashboard'
+        "
+        class="overview-grid"
+      >
+
+        <button
+          type="button"
+          class="overview-card patients"
+          (click)="
+            selectView('patients')
+          "
+        >
+
+          <span class="overview-icon">
+            &#128101;
+          </span>
+
+          <strong>
+            My Patients
+          </strong>
+
+          <b>
+            {{ patients.length }}
+          </b>
+
+          <p>
+            View health details for patients
+            assigned to you.
+          </p>
+
+          <em>
+            View patients &rarr;
+          </em>
+
+        </button>
+
+
+        <button
+          type="button"
+          class="overview-card appointments"
+          (click)="
+            selectView('appointments')
+          "
+        >
+
+          <span class="overview-icon">
+            &#128197;
+          </span>
+
+          <strong>
+            Appointments
+          </strong>
+
+          <b>
+            {{ appointmentCount }}
+          </b>
+
+          <p>
+            Review your upcoming visits
+            and appointment requests.
+          </p>
+
+          <em>
+            View appointments &rarr;
+          </em>
+
+        </button>
+
       </section>
 
-      <section *ngIf="activeView === 'patients'" class="data-card">
-        <div class="card-heading"><div><span class="eyebrow">YOUR PATIENTS</span><h2>My Patients</h2></div><span>{{ patients.length }} total</span></div>
-        <div *ngIf="isPatientsLoading" class="inline-loading"><span class="spinner"></span> Loading your patients...</div>
-        <div *ngIf="!isPatientsLoading && patients.length === 0" class="empty-state"><span>&#128101;</span><h3>No patients yet</h3><p>Patients who book appointments with you or are assigned to your profile will appear here.</p></div>
-        <div *ngIf="!isPatientsLoading && patients.length > 0" class="table-wrap"><table><thead><tr><th>Patient</th><th>Age / Gender</th><th>Contact</th><th>Condition</th></tr></thead><tbody><tr *ngFor="let patient of patients"><td><strong>{{ patient.name }}</strong><small>Patient ID: {{ patient.id }}</small></td><td>{{ patient.age ? patient.age + ' years &middot; ' : '' }}{{ patient.gender && patient.gender !== '-' ? patient.gender : 'Not specified' }}</td><td>{{ patient.phone && patient.phone !== '-' ? patient.phone : 'Not provided' }}</td><td>{{ patient.disease || 'Not recorded' }}</td></tr></tbody></table></div>
+
+      <!-- PATIENTS -->
+      <section
+        *ngIf="
+          activeView === 'patients'
+        "
+        class="data-card"
+      >
+
+        <div class="card-heading">
+
+          <div>
+
+            <span class="eyebrow">
+              YOUR PATIENTS
+            </span>
+
+            <h2>
+              My Patients
+            </h2>
+
+          </div>
+
+          <span>
+            {{ patients.length }} total
+          </span>
+
+        </div>
+
+
+        <div
+          *ngIf="isPatientsLoading"
+          class="inline-loading"
+        >
+
+          <span class="spinner"></span>
+
+          Loading your patients...
+
+        </div>
+
+
+        <div
+          *ngIf="
+            !isPatientsLoading &&
+            patients.length === 0
+          "
+          class="empty-state"
+        >
+
+          <span>
+            &#128101;
+          </span>
+
+          <h3>
+            No patients yet
+          </h3>
+
+          <p>
+            Patients who book appointments
+            with you or are assigned to your
+            profile will appear here.
+          </p>
+
+        </div>
+
+
+        <div
+          *ngIf="
+            !isPatientsLoading &&
+            patients.length > 0
+          "
+          class="table-wrap"
+        >
+
+          <table>
+
+            <thead>
+
+              <tr>
+
+                <th>
+                  Patient
+                </th>
+
+                <th>
+                  Age / Gender
+                </th>
+
+                <th>
+                  Contact
+                </th>
+
+                <th>
+                  Condition
+                </th>
+
+              </tr>
+
+            </thead>
+
+
+            <tbody>
+
+              <tr
+                *ngFor="
+                  let patient of patients
+                "
+              >
+
+                <td>
+
+                  <strong>
+                    {{ patient.name }}
+                  </strong>
+
+                  <small>
+                    Patient ID:
+                    {{ patient.id }}
+                  </small>
+
+                </td>
+
+
+                <td>
+
+                  {{
+                    patient.age
+                      ? patient.age +
+                        ' years · '
+                      : ''
+                  }}
+
+                  {{
+                    patient.gender &&
+                    patient.gender !== '-'
+                      ? patient.gender
+                      : 'Not specified'
+                  }}
+
+                </td>
+
+
+                <td>
+
+                  {{
+                    patient.phone &&
+                    patient.phone !== '-'
+                      ? patient.phone
+                      : 'Not provided'
+                  }}
+
+                </td>
+
+
+                <td>
+
+                  {{
+                    patient.disease ||
+                    'Not recorded'
+                  }}
+
+                </td>
+
+              </tr>
+
+            </tbody>
+
+          </table>
+
+        </div>
+
       </section>
 
-      <section *ngIf="activeView === 'appointments'" class="data-card">
-        <div class="card-heading"><div><span class="eyebrow">YOUR SCHEDULE</span><h2>Appointments</h2></div><span>{{ appointmentCount }} total</span></div>
-        <div *ngIf="isAppointmentsLoading" class="inline-loading"><span class="spinner"></span> Loading appointments...</div>
-        <div *ngIf="!isAppointmentsLoading && appointments.length === 0" class="empty-state"><span>&#128197;</span><h3>No appointments yet</h3><p>Appointments booked with you will appear here.</p></div>
-        <div *ngIf="!isAppointmentsLoading && appointments.length > 0" class="table-wrap"><table><thead><tr><th>Patient</th><th>Date</th><th>Time</th><th>Reason</th><th>Status</th></tr></thead><tbody><tr *ngFor="let appointment of appointments"><td><strong>{{ appointment.patientName || 'Patient' }}</strong><small>Patient ID: {{ appointment.patientId }}</small></td><td>{{ appointment.appointmentDate }}</td><td>{{ appointment.appointmentTime }}</td><td>{{ appointment.reason }}</td><td><span class="status" [class.pending]="appointment.status === 'PENDING'" [class.approved]="appointment.status === 'APPROVED'" [class.completed]="appointment.status === 'COMPLETED'" [class.cancelled]="appointment.status === 'CANCELLED'">{{ formatStatus(appointment.status) }}</span></td></tr></tbody></table></div>
+
+      <!-- APPOINTMENTS -->
+      <section
+        *ngIf="
+          activeView === 'appointments'
+        "
+        class="data-card"
+      >
+
+        <div class="card-heading">
+
+          <div>
+
+            <span class="eyebrow">
+              YOUR SCHEDULE
+            </span>
+
+            <h2>
+              Appointments
+            </h2>
+
+          </div>
+
+          <span>
+            {{ appointmentCount }} total
+          </span>
+
+        </div>
+
+
+        <!-- SUCCESS MESSAGE -->
+        <div
+          *ngIf="
+            appointmentActionMessage
+          "
+          class="appointment-message success-message"
+        >
+
+          <span class="message-icon">
+            ✓
+          </span>
+
+          {{ appointmentActionMessage }}
+
+        </div>
+
+
+        <!-- ERROR MESSAGE -->
+        <div
+          *ngIf="
+            appointmentActionError
+          "
+          class="appointment-message error-message"
+        >
+
+          <span class="message-icon">
+            !
+          </span>
+
+          {{ appointmentActionError }}
+
+        </div>
+
+
+        <!-- LOADING -->
+        <div
+          *ngIf="
+            isAppointmentsLoading
+          "
+          class="inline-loading"
+        >
+
+          <span class="spinner"></span>
+
+          Loading appointments...
+
+        </div>
+
+
+        <!-- EMPTY -->
+        <div
+          *ngIf="
+            !isAppointmentsLoading &&
+            appointments.length === 0
+          "
+          class="empty-state"
+        >
+
+          <span>
+            &#128197;
+          </span>
+
+          <h3>
+            No appointments yet
+          </h3>
+
+          <p>
+            Appointments booked with you
+            will appear here.
+          </p>
+
+        </div>
+
+
+        <!-- TABLE -->
+        <div
+          *ngIf="
+            !isAppointmentsLoading &&
+            appointments.length > 0
+          "
+          class="table-wrap"
+        >
+
+          <table>
+
+            <thead>
+
+              <tr>
+
+                <th>
+                  Patient
+                </th>
+
+                <th>
+                  Date
+                </th>
+
+                <th>
+                  Time
+                </th>
+
+                <th>
+                  Reason
+                </th>
+
+                <th>
+                  Status
+                </th>
+
+                <th class="action-column">
+                  Action
+                </th>
+
+              </tr>
+
+            </thead>
+
+
+            <tbody>
+
+              <tr
+                *ngFor="
+                  let appointment of appointments
+                "
+              >
+
+                <!-- PATIENT -->
+                <td>
+
+                  <strong>
+                    {{
+                      appointment.patientName ||
+                      'Patient'
+                    }}
+                  </strong>
+
+                  <small>
+                    Patient ID:
+                    {{ appointment.patientId }}
+                  </small>
+
+                </td>
+
+
+                <!-- DATE -->
+                <td>
+
+                  {{
+                    appointment.appointmentDate
+                  }}
+
+                </td>
+
+
+                <!-- TIME -->
+                <td>
+
+                  {{
+                    appointment.appointmentTime
+                  }}
+
+                </td>
+
+
+                <!-- REASON -->
+                <td>
+
+                  {{
+                    appointment.reason
+                  }}
+
+                </td>
+
+
+                <!-- STATUS -->
+                <td>
+
+                  <span
+                    class="status"
+
+                    [class.pending]="
+                      appointment.status ===
+                      'PENDING'
+                    "
+
+                    [class.approved]="
+                      appointment.status ===
+                      'APPROVED'
+                    "
+
+                    [class.rejected]="
+                      appointment.status ===
+                      'REJECTED'
+                    "
+
+                    [class.completed]="
+                      appointment.status ===
+                      'COMPLETED'
+                    "
+
+                    [class.cancelled]="
+                      appointment.status ===
+                      'CANCELLED'
+                    "
+                  >
+
+                    {{ formatStatus(
+                      appointment.status
+                    ) }}
+
+                  </span>
+
+                </td>
+
+
+                <!-- ACTION -->
+                <td
+                  class="appointment-actions"
+                >
+
+                  <!-- PENDING -->
+                  <ng-container
+                    *ngIf="
+                      appointment.status ===
+                      'PENDING';
+                      else processedAppointment
+                    "
+                  >
+
+                    <!-- ACCEPT -->
+                    <button
+                      type="button"
+
+                      class="
+                        appointment-action
+                        accept-action
+                      "
+
+                      (click)="
+                        updateAppointmentStatus(
+                          appointment,
+                          'APPROVED'
+                        )
+                      "
+
+                      [disabled]="
+                        updatingAppointmentId !==
+                        null
+                      "
+                    >
+
+                      <span
+                        *ngIf="
+                          updatingAppointmentId ===
+                          appointment.id
+                        "
+                        class="button-spinner"
+                      ></span>
+
+
+                      <span
+                        *ngIf="
+                          updatingAppointmentId !==
+                          appointment.id
+                        "
+                      >
+                        ✓
+                      </span>
+
+
+                      {{
+                        updatingAppointmentId ===
+                        appointment.id
+                          ? 'Updating...'
+                          : 'Accept'
+                      }}
+
+                    </button>
+
+
+                    <!-- REJECT -->
+                    <button
+                      type="button"
+
+                      class="
+                        appointment-action
+                        reject-action
+                      "
+
+                      (click)="
+                        updateAppointmentStatus(
+                          appointment,
+                          'REJECTED'
+                        )
+                      "
+
+                      [disabled]="
+                        updatingAppointmentId !==
+                        null
+                      "
+                    >
+
+                      <span>
+                        ✕
+                      </span>
+
+                      Reject
+
+                    </button>
+
+                  </ng-container>
+
+
+                  <!-- ALREADY PROCESSED -->
+                  <ng-template
+                    #processedAppointment
+                  >
+
+                    <span
+                      class="action-completed"
+
+                      [class.action-approved]="
+                        appointment.status ===
+                        'APPROVED'
+                      "
+
+                      [class.action-rejected]="
+                        appointment.status ===
+                        'REJECTED'
+                      "
+                    >
+
+                      <span
+                        *ngIf="
+                          appointment.status ===
+                          'APPROVED'
+                        "
+                      >
+                        ✓ Confirmed
+                      </span>
+
+
+                      <span
+                        *ngIf="
+                          appointment.status ===
+                          'REJECTED'
+                        "
+                      >
+                        ✕ Rejected
+                      </span>
+
+
+                      <span
+                        *ngIf="
+                          appointment.status !==
+                          'APPROVED' &&
+                          appointment.status !==
+                          'REJECTED'
+                        "
+                      >
+                        —
+                      </span>
+
+                    </span>
+
+                  </ng-template>
+
+                </td>
+
+              </tr>
+
+            </tbody>
+
+          </table>
+
+        </div>
+
       </section>
+
     </ng-container>
+
   </main>
+
 </div>

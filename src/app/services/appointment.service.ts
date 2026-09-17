@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, throwError } from 'rxjs';
 
 export interface AppointmentRequest {
 
@@ -16,6 +16,7 @@ export interface AppointmentRequest {
 
   status: string;
 }
+
 
 export interface Appointment {
 
@@ -44,6 +45,7 @@ export interface Appointment {
   status: string;
 }
 
+
 @Injectable({
   providedIn: 'root'
 })
@@ -51,12 +53,13 @@ export class AppointmentService {
 
   private http = inject(HttpClient);
 
+
   private readonly apiUrl =
     'http://localhost:8080/api/appointments';
 
-  // Carries a newly-created appointment to the list page so it can be shown
-  // before the follow-up API refresh has finished.
+
   private recentlyCreatedAppointment: Appointment | null = null;
+
 
   rememberCreatedAppointment(
     appointment: Appointment
@@ -65,9 +68,11 @@ export class AppointmentService {
     this.recentlyCreatedAppointment = appointment;
   }
 
+
   consumeRecentlyCreatedAppointment(): Appointment | null {
 
-    const appointment = this.recentlyCreatedAppointment;
+    const appointment =
+      this.recentlyCreatedAppointment;
 
     this.recentlyCreatedAppointment = null;
 
@@ -133,6 +138,59 @@ export class AppointmentService {
 
 
   // ==========================================
+  // UPDATE APPOINTMENT STATUS
+  // ==========================================
+
+  updateAppointmentStatus(
+    appointment: Appointment,
+    status: 'APPROVED' | 'REJECTED'
+  ): Observable<Appointment> {
+
+    if (
+      appointment.id == null ||
+      appointment.patientId == null ||
+      appointment.doctorId == null
+    ) {
+
+      return throwError(
+        () =>
+          new Error(
+            'Appointment information is incomplete.'
+          )
+      );
+    }
+
+
+    const request: AppointmentRequest = {
+
+      patientId:
+        Number(appointment.patientId),
+
+      doctorId:
+        Number(appointment.doctorId),
+
+      appointmentDate:
+        appointment.appointmentDate,
+
+      appointmentTime:
+        appointment.appointmentTime,
+
+      reason:
+        appointment.reason ?? '',
+
+      status:
+        status
+    };
+
+
+    return this.updateAppointment(
+      Number(appointment.id),
+      request
+    );
+  }
+
+
+  // ==========================================
   // DELETE APPOINTMENT
   // ==========================================
 
@@ -144,4 +202,5 @@ export class AppointmentService {
       `${this.apiUrl}/${id}`
     );
   }
+
 }
