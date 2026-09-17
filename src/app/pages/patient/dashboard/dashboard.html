@@ -1,140 +1,100 @@
 <div class="dashboard-page">
 
-  <!-- Header -->
   <header class="dashboard-header">
-
-    <div class="header-left">
-      <div class="logo-icon">
-        🏥
-      </div>
-
-      <div>
-        <h1>Patient Dashboard</h1>
-        <p>Patient Management System</p>
-      </div>
-    </div>
+    <a class="brand" routerLink="/patient" aria-label="Go to patient dashboard">
+      <span class="brand-mark">&#10010;</span>
+      <span>
+        <strong>CarePortal</strong>
+        <small>Patient dashboard</small>
+      </span>
+    </a>
 
     <div class="header-right">
-
       <div class="user-info">
-        <span class="user-icon">👤</span>
-
+        <span class="user-avatar">{{ username.charAt(0).toUpperCase() }}</span>
         <div>
           <strong>{{ username }}</strong>
           <small>{{ role }}</small>
         </div>
       </div>
-
-      <button
-        type="button"
-        class="logout-button"
-        (click)="logout()">
-        Logout
+      <button type="button" class="logout-button" (click)="logout()">
+        Sign out
       </button>
-
     </div>
-
   </header>
 
-
-  <!-- Main Content -->
   <main class="dashboard-content">
+    <section class="welcome-panel">
+      <div>
+        <span class="eyebrow">YOUR CARE, IN ONE PLACE</span>
+        <h1>Welcome back, {{ username }} <span aria-hidden="true">&#128075;</span></h1>
+        <p>Choose an action below to manage your healthcare with confidence.</p>
+      </div>
+      <div class="welcome-art" aria-hidden="true">
+        <span>&#10010;</span>
+        <span>&#10084;</span>
+        <span>&#10022;</span>
+      </div>
+    </section>
 
-    <div class="welcome-section">
-
-      <h2>
-        Welcome, {{ username }} 👋
-      </h2>
-
-      <p>
-        Manage your doctors, appointments and healthcare information.
-      </p>
-
-    </div>
-
-
-    <!-- Dashboard Cards -->
-    <div class="dashboard-cards">
-
-      <!-- Doctors -->
-      <div class="dashboard-card">
-
-        <div class="card-icon doctor-icon">
-          👨‍⚕️
+    <section class="actions-section" aria-labelledby="quick-actions-title">
+      <div class="section-heading">
+        <div>
+          <span class="eyebrow">QUICK ACTIONS</span>
+          <h2 id="quick-actions-title">Manage your care</h2>
         </div>
-
-        <div class="card-content">
-
-          <h3>View Doctors</h3>
-
-          <p>
-            View available doctors and their specializations.
-          </p>
-
-          <a
-            routerLink="/patient/doctors"
-            class="dashboard-button">
-            View Doctors
-          </a>
-
-        </div>
-
+        <span class="action-count">4 services available</span>
       </div>
 
+      <div class="dashboard-cards">
+        <a routerLink="/patient/doctors" class="dashboard-card doctors-card">
+          <span class="card-icon">&#129489;&#8205;&#9877;&#65039;</span>
+          <span class="card-content">
+            <span class="card-kicker">FIND CARE</span>
+            <strong>View Doctors</strong>
+            <span>Browse available doctors and their specializations.</span>
+          </span>
+          <span class="card-footer">Browse doctors <b>&rarr;</b></span>
+        </a>
 
-      <!-- Create Appointment -->
-      <div class="dashboard-card">
+        <a routerLink="/patient/create-appointment" class="dashboard-card booking-card">
+          <span class="card-icon">&#128197;</span>
+          <span class="card-content">
+            <span class="card-kicker">BOOK A VISIT</span>
+            <strong>Create Appointment</strong>
+            <span>Choose a doctor and request a convenient appointment time.</span>
+          </span>
+          <span class="card-footer">Book appointment <b>&rarr;</b></span>
+        </a>
 
-        <div class="card-icon appointment-icon">
-          📅
-        </div>
+        <a routerLink="/patient/appointments" class="dashboard-card appointments-card">
+          <span class="card-icon">&#128203;</span>
+          <span class="card-content">
+            <span class="card-kicker">YOUR SCHEDULE</span>
+            <strong>My Appointments</strong>
+            <span>Review upcoming visits and your appointment history.</span>
+          </span>
+          <span class="card-footer">View appointments <b>&rarr;</b></span>
+        </a>
 
-        <div class="card-content">
-
-          <h3>Create Appointment</h3>
-
-          <p>
-            Book a new appointment with a doctor.
-          </p>
-
-          <a
-            routerLink="/patient/create-appointment"
-            class="dashboard-button">
-            Create Appointment
-          </a>
-
-        </div>
-
+        <a routerLink="/patient/files" class="dashboard-card files-card">
+          <span class="card-icon">&#128193;</span>
+          <span class="card-content">
+            <span class="card-kicker">MEDICAL RECORDS</span>
+            <strong>My Files</strong>
+            <span>Upload, download, and manage your medical documents.</span>
+          </span>
+          <span class="card-footer">Manage files <b>&rarr;</b></span>
+        </a>
       </div>
+    </section>
 
-
-      <!-- My Appointments -->
-      <div class="dashboard-card">
-
-        <div class="card-icon history-icon">
-          📋
-        </div>
-
-        <div class="card-content">
-
-          <h3>My Appointments</h3>
-
-          <p>
-            View your upcoming and previous appointments.
-          </p>
-
-          <a
-            routerLink="/patient/appointments"
-            class="dashboard-button">
-            View Appointments
-          </a>
-
-        </div>
-
+    <section class="support-panel">
+      <span class="support-icon">&#128274;</span>
+      <div>
+        <strong>Your information is protected</strong>
+        <p>Only authorized users can access your appointments and medical records.</p>
       </div>
-
-    </div>
-
+    </section>
   </main>
-
 </div>

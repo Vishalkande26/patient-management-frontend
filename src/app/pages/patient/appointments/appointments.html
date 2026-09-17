@@ -25,6 +25,7 @@
         type="button"
         class="refresh-button"
         (click)="refreshAppointments()"
+        [disabled]="isLoading || isRefreshing"
       >
         ↻ Refresh
       </button>
@@ -80,6 +81,7 @@
 
   @if (
     !isLoading &&
+    !isRefreshing &&
     message
   ) {
 

@@ -76,6 +76,15 @@ import {
 
 
 // ==========================================
+// PATIENT FILES
+// ==========================================
+
+import {
+  Files
+} from './pages/patient/files/files';
+
+
+// ==========================================
 // GUARD
 // ==========================================
 
@@ -132,13 +141,17 @@ export const routes: Routes = [
     children: [
 
       // ------------------------------------
-      // ADMIN DEFAULT
+      // ADMIN DASHBOARD
       // ------------------------------------
       //
       // IMPORTANT:
-      // Do NOT redirect to patients.
+      // Do not use component: Admin here.
       //
-      // /admin itself is the Admin Dashboard.
+      // The Admin component is already the
+      // parent component.
+      //
+      // Therefore /admin will display the
+      // Admin parent content.
       //
 
       {
@@ -146,7 +159,7 @@ export const routes: Routes = [
 
         pathMatch: 'full',
 
-        component: Admin
+        redirectTo: ''
       },
 
 
@@ -251,10 +264,6 @@ export const routes: Routes = [
   // ========================================
   // DOCTOR DASHBOARD
   // ========================================
-  //
-  // This allows /doctor/dashboard to safely
-  // return to the Doctor dashboard.
-  //
 
   {
     path: 'doctor/dashboard',
@@ -327,6 +336,28 @@ export const routes: Routes = [
         path: 'appointments',
 
         component: Appointments
+      },
+
+
+      // ------------------------------------
+      // PATIENT FILES
+      // ------------------------------------
+      //
+      // URL:
+      //
+      // /patient/files
+      //
+      // This page will use:
+      //
+      // files.ts
+      // files.html
+      // files.css
+      //
+
+      {
+        path: 'files',
+
+        component: Files
       }
 
     ]

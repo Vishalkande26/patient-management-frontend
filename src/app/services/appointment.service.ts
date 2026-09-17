@@ -54,6 +54,26 @@ export class AppointmentService {
   private readonly apiUrl =
     'http://localhost:8080/api/appointments';
 
+  // Carries a newly-created appointment to the list page so it can be shown
+  // before the follow-up API refresh has finished.
+  private recentlyCreatedAppointment: Appointment | null = null;
+
+  rememberCreatedAppointment(
+    appointment: Appointment
+  ): void {
+
+    this.recentlyCreatedAppointment = appointment;
+  }
+
+  consumeRecentlyCreatedAppointment(): Appointment | null {
+
+    const appointment = this.recentlyCreatedAppointment;
+
+    this.recentlyCreatedAppointment = null;
+
+    return appointment;
+  }
+
 
   // ==========================================
   // CREATE APPOINTMENT

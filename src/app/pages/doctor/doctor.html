@@ -1,95 +1,49 @@
-<div class="dashboard">
+<div class="doctor-page">
+  <header class="doctor-header">
+    <div class="brand"><span class="brand-mark">&#10010;</span><strong>CarePortal</strong><small>Doctor workspace</small></div>
+    <div class="doctor-account"><span class="avatar">{{ username.charAt(0).toUpperCase() }}</span><span><strong>{{ username }}</strong><small>DOCTOR</small></span><button type="button" (click)="logout()">Sign out</button></div>
+  </header>
 
-  <!-- ==========================================
-       TOP BAR
-       ========================================== -->
+  <main class="doctor-content">
+    <div class="page-intro">
+      <div><span class="eyebrow">CLINICAL WORKSPACE</span><h1>Good day, {{ doctorDisplayName ? 'Dr. ' + doctorDisplayName : 'Doctor' }}</h1><p>Review your patients and appointments from one place.</p></div>
+      <button type="button" class="refresh-button" (click)="refreshActiveView()" [disabled]="isProfileLoading || isPatientsLoading || isAppointmentsLoading">{{ isPatientsLoading || isAppointmentsLoading ? 'Refreshing...' : '↻ Refresh' }}</button>
+    </div>
 
-  <div class="top-bar">
+    <div *ngIf="errorMessage" class="alert error">{{ errorMessage }}</div>
+    <div *ngIf="isProfileLoading" class="loading-card"><span class="spinner"></span> Setting up your workspace...</div>
 
-    <h1>
-      Doctor Dashboard
-    </h1>
+    <ng-container *ngIf="!isProfileLoading && doctor">
+      <section class="profile-banner">
+        <span class="profile-icon">&#129489;&#8205;&#9877;&#65039;</span>
+        <div><span class="eyebrow">YOUR PROFILE</span><h2>{{ doctor.name }}</h2><p>{{ doctor.specialization }} <span *ngIf="doctor.experience">&middot; {{ doctor.experience }} years experience</span></p></div>
+        <span class="profile-status">Active profile</span>
+      </section>
 
-    <button
-      type="button"
-      (click)="goToDashboard()">
+      <nav class="workspace-tabs" aria-label="Doctor workspace">
+        <button type="button" [class.active]="activeView === 'dashboard'" (click)="selectView('dashboard')">Overview</button>
+        <button type="button" [class.active]="activeView === 'patients'" (click)="selectView('patients')">My Patients <span>{{ patients.length }}</span></button>
+        <button type="button" [class.active]="activeView === 'appointments'" (click)="selectView('appointments')">Appointments <span>{{ appointmentCount }}</span></button>
+      </nav>
 
-      Dashboard
+      <section *ngIf="activeView === 'dashboard'" class="overview-grid">
+        <button type="button" class="overview-card patients" (click)="selectView('patients')"><span class="overview-icon">&#128101;</span><strong>My Patients</strong><b>{{ patients.length }}</b><p>View health details for patients assigned to you.</p><em>View patients &rarr;</em></button>
+        <button type="button" class="overview-card appointments" (click)="selectView('appointments')"><span class="overview-icon">&#128197;</span><strong>Appointments</strong><b>{{ appointmentCount }}</b><p>Review your upcoming visits and appointment requests.</p><em>View appointments &rarr;</em></button>
+      </section>
 
-    </button>
+      <section *ngIf="activeView === 'patients'" class="data-card">
+        <div class="card-heading"><div><span class="eyebrow">YOUR PATIENTS</span><h2>My Patients</h2></div><span>{{ patients.length }} total</span></div>
+        <div *ngIf="isPatientsLoading" class="inline-loading"><span class="spinner"></span> Loading your patients...</div>
+        <div *ngIf="!isPatientsLoading && patients.length === 0" class="empty-state"><span>&#128101;</span><h3>No patients yet</h3><p>Patients who book appointments with you or are assigned to your profile will appear here.</p></div>
+        <div *ngIf="!isPatientsLoading && patients.length > 0" class="table-wrap"><table><thead><tr><th>Patient</th><th>Age / Gender</th><th>Contact</th><th>Condition</th></tr></thead><tbody><tr *ngFor="let patient of patients"><td><strong>{{ patient.name }}</strong><small>Patient ID: {{ patient.id }}</small></td><td>{{ patient.age ? patient.age + ' years &middot; ' : '' }}{{ patient.gender && patient.gender !== '-' ? patient.gender : 'Not specified' }}</td><td>{{ patient.phone && patient.phone !== '-' ? patient.phone : 'Not provided' }}</td><td>{{ patient.disease || 'Not recorded' }}</td></tr></tbody></table></div>
+      </section>
 
-  </div>
-
-
-  <!-- ==========================================
-       WELCOME
-       ========================================== -->
-
-  <p>
-    Welcome to the Doctor Dashboard
-  </p>
-
-
-  <p>
-    <strong>
-      Role:
-    </strong>
-
-    DOCTOR
-  </p>
-
-
-  <!-- ==========================================
-       MENU
-       ========================================== -->
-
-  <div class="menu">
-
-
-    <!-- DASHBOARD -->
-
-    <button
-      type="button"
-      (click)="goToDashboard()">
-
-      Dashboard
-
-    </button>
-
-
-    <!-- PATIENTS -->
-
-    <button
-      type="button"
-      (click)="goToPatients()">
-
-      View Patients
-
-    </button>
-
-
-    <!-- APPOINTMENTS -->
-
-    <button
-      type="button"
-      (click)="goToAppointments()">
-
-      View Appointments
-
-    </button>
-
-
-    <!-- LOGOUT -->
-
-    <button
-      type="button"
-      class="logout-button"
-      (click)="logout()">
-
-      Logout
-
-    </button>
-
-  </div>
-
+      <section *ngIf="activeView === 'appointments'" class="data-card">
+        <div class="card-heading"><div><span class="eyebrow">YOUR SCHEDULE</span><h2>Appointments</h2></div><span>{{ appointmentCount }} total</span></div>
+        <div *ngIf="isAppointmentsLoading" class="inline-loading"><span class="spinner"></span> Loading appointments...</div>
+        <div *ngIf="!isAppointmentsLoading && appointments.length === 0" class="empty-state"><span>&#128197;</span><h3>No appointments yet</h3><p>Appointments booked with you will appear here.</p></div>
+        <div *ngIf="!isAppointmentsLoading && appointments.length > 0" class="table-wrap"><table><thead><tr><th>Patient</th><th>Date</th><th>Time</th><th>Reason</th><th>Status</th></tr></thead><tbody><tr *ngFor="let appointment of appointments"><td><strong>{{ appointment.patientName || 'Patient' }}</strong><small>Patient ID: {{ appointment.patientId }}</small></td><td>{{ appointment.appointmentDate }}</td><td>{{ appointment.appointmentTime }}</td><td>{{ appointment.reason }}</td><td><span class="status" [class.pending]="appointment.status === 'PENDING'" [class.approved]="appointment.status === 'APPROVED'" [class.completed]="appointment.status === 'COMPLETED'" [class.cancelled]="appointment.status === 'CANCELLED'">{{ formatStatus(appointment.status) }}</span></td></tr></tbody></table></div>
+      </section>
+    </ng-container>
+  </main>
 </div>

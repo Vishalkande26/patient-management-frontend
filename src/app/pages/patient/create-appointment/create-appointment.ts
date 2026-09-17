@@ -331,6 +331,12 @@ export class CreateAppointment {
           this.successMessage =
             'Appointment created successfully.';
 
+          this.appointmentService
+            .rememberCreatedAppointment({
+              ...response,
+              patientId: this.appointment.patientId
+            });
+
 
           /*
            * Go directly to appointment list.

@@ -58,6 +58,8 @@ export class Appointments {
 
   isLoading = false;
 
+  isRefreshing = false;
+
   message = '';
 
   searchText = '';
@@ -89,6 +91,22 @@ export class Appointments {
       return;
     }
 
+    const recentlyCreated =
+      this.appointmentService
+        .consumeRecentlyCreatedAppointment();
+
+    if (
+      recentlyCreated &&
+      Number(recentlyCreated.patientId) === Number(this.patientId)
+    ) {
+
+      this.appointments = [recentlyCreated];
+
+      this.filteredAppointments = [recentlyCreated];
+
+      this.message = 'Appointment created successfully.';
+    }
+
     this.loadAppointments();
   }
 
@@ -99,7 +117,12 @@ export class Appointments {
 
   loadAppointments(): void {
 
-    this.isLoading = true;
+    const hasAppointmentsToDisplay =
+      this.appointments.length > 0;
+
+    this.isLoading = !hasAppointmentsToDisplay;
+
+    this.isRefreshing = hasAppointmentsToDisplay;
 
     this.message = '';
 
@@ -227,6 +250,8 @@ export class Appointments {
            */
           this.isLoading = false;
 
+          this.isRefreshing = false;
+
 
           /*
            * Show message only when
@@ -258,6 +283,8 @@ export class Appointments {
            * when API fails.
            */
           this.isLoading = false;
+
+          this.isRefreshing = false;
 
 
           if (error.status === 401) {

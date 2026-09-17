@@ -15,12 +15,13 @@
     </div>
 
 
-    <a
-      routerLink="/patient"
+    <button
+      type="button"
       class="back-button"
+      (click)="goBack()"
     >
       ← Back to Dashboard
-    </a>
+    </button>
 
   </div>
 
@@ -240,12 +241,13 @@
 
       <div class="form-actions">
 
-        <a
-          routerLink="/patient"
+        <button
+          type="button"
           class="cancel-button"
+          (click)="goBack()"
         >
           Cancel
-        </a>
+        </button>
 
 
         <button
