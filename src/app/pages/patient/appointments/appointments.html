@@ -1,1 +1,233 @@
-<p>appointments works!</p>
+<div class="appointments-page">
+
+  <!-- ===================================== -->
+  <!-- HEADER -->
+  <!-- ===================================== -->
+
+  <div class="page-header">
+
+    <div>
+
+      <h1>
+        My Appointments
+      </h1>
+
+      <p>
+        View your booked appointments
+      </p>
+
+    </div>
+
+
+    <div class="header-buttons">
+
+      <button
+        type="button"
+        class="refresh-button"
+        (click)="refreshAppointments()"
+      >
+        ↻ Refresh
+      </button>
+
+
+      <button
+        type="button"
+        class="create-button"
+        (click)="createNewAppointment()"
+      >
+        + Create Appointment
+      </button>
+
+    </div>
+
+  </div>
+
+
+  <!-- ===================================== -->
+  <!-- SEARCH -->
+  <!-- ===================================== -->
+
+  <div class="search-section">
+
+    <input
+      type="text"
+      [(ngModel)]="searchText"
+      (input)="searchAppointments()"
+      placeholder="Search doctor, reason, status or date"
+    />
+
+  </div>
+
+
+  <!-- ===================================== -->
+  <!-- LOADING -->
+  <!-- ===================================== -->
+
+  @if (isLoading) {
+
+    <div class="message loading">
+
+      Loading appointments...
+
+    </div>
+
+  }
+
+
+  <!-- ===================================== -->
+  <!-- MESSAGE -->
+  <!-- ===================================== -->
+
+  @if (
+    !isLoading &&
+    message
+  ) {
+
+    <div class="message">
+
+      {{ message }}
+
+    </div>
+
+  }
+
+
+  <!-- ===================================== -->
+  <!-- APPOINTMENT TABLE -->
+  <!-- ===================================== -->
+
+  @if (
+    !isLoading &&
+    filteredAppointments.length > 0
+  ) {
+
+    <div class="table-container">
+
+      <table>
+
+        <thead>
+
+          <tr>
+
+            <th>ID</th>
+
+            <th>Doctor</th>
+
+            <th>Specialization</th>
+
+            <th>Date</th>
+
+            <th>Time</th>
+
+            <th>Reason</th>
+
+            <th>Status</th>
+
+          </tr>
+
+        </thead>
+
+
+        <tbody>
+
+          @for (
+            appointment of filteredAppointments;
+            track appointment.id
+          ) {
+
+            <tr>
+
+              <td>
+                {{ appointment.id }}
+              </td>
+
+
+              <td>
+                {{
+                  appointment.doctorName || 'N/A'
+                }}
+              </td>
+
+
+              <td>
+                {{
+                  appointment.doctorSpecialization || 'N/A'
+                }}
+              </td>
+
+
+              <td>
+                {{
+                  appointment.appointmentDate
+                }}
+              </td>
+
+
+              <td>
+                {{
+                  appointment.appointmentTime
+                }}
+              </td>
+
+
+              <td>
+                {{
+                  appointment.reason
+                }}
+              </td>
+
+
+              <td>
+
+                <span
+                  class="status"
+                  [class.pending]="
+                    appointment.status === 'PENDING'
+                  "
+                  [class.approved]="
+                    appointment.status === 'APPROVED'
+                  "
+                  [class.completed]="
+                    appointment.status === 'COMPLETED'
+                  "
+                  [class.cancelled]="
+                    appointment.status === 'CANCELLED'
+                  "
+                >
+                  {{
+                    appointment.status
+                  }}
+                </span>
+
+              </td>
+
+            </tr>
+
+          }
+
+        </tbody>
+
+      </table>
+
+    </div>
+
+  }
+
+
+  <!-- ===================================== -->
+  <!-- BOTTOM -->
+  <!-- ===================================== -->
+
+  <div class="bottom-actions">
+
+    <button
+      type="button"
+      class="back-button"
+      (click)="goBack()"
+    >
+      ← Back to Dashboard
+    </button>
+
+  </div>
+
+</div>

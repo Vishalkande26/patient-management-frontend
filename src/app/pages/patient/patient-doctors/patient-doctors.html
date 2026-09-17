@@ -1,1 +1,188 @@
-<p>patient-doctors works!</p>
+<div class="doctors-page">
+
+  <div class="page-header">
+
+    <div>
+      <h1>Available Doctors</h1>
+      <p>View doctors available for appointments.</p>
+    </div>
+
+    <a
+      routerLink="/patient"
+      class="back-button"
+    >
+      ← Back to Dashboard
+    </a>
+
+  </div>
+
+
+  <div class="doctors-card">
+
+    <!-- Error -->
+    @if (errorMessage && hasLoaded && doctors.length === 0) {
+
+      <div class="state-container">
+
+        <div class="state-icon">
+          ⚠️
+        </div>
+
+        <h2>
+          Unable to Load Doctors
+        </h2>
+
+        <p>
+          {{ errorMessage }}
+        </p>
+
+        <button
+          type="button"
+          class="retry-button"
+          (click)="loadDoctors()"
+        >
+          Try Again
+        </button>
+
+      </div>
+
+    }
+
+
+    <!-- No doctors -->
+    @if (
+      hasLoaded &&
+      !errorMessage &&
+      doctors.length === 0
+    ) {
+
+      <div class="state-container">
+
+        <div class="state-icon">
+          👨‍⚕️
+        </div>
+
+        <h2>
+          No Doctors Available
+        </h2>
+
+        <p>
+          No doctors are currently available.
+        </p>
+
+      </div>
+
+    }
+
+
+    <!-- Doctors list -->
+    @if (doctors.length > 0) {
+
+      <div class="doctor-list-container">
+
+        <div class="list-header">
+
+          <div>
+            <h2>
+              Doctors List
+            </h2>
+
+            <p>
+              {{ doctors.length }}
+              doctor(s) available
+            </p>
+          </div>
+
+        </div>
+
+
+        <div class="doctor-grid">
+
+          @for (
+            doctor of doctors;
+            track doctor.id
+          ) {
+
+            <div class="doctor-card">
+
+              <div class="doctor-icon">
+                👨‍⚕️
+              </div>
+
+
+              <div class="doctor-details">
+
+                <h3>
+                  {{ doctor.name }}
+                </h3>
+
+                <div class="specialization">
+                  {{ doctor.specialization }}
+                </div>
+
+
+                <div class="doctor-info">
+
+                  <div class="info-row">
+
+                    <span class="info-label">
+                      📞 Phone
+                    </span>
+
+                    <span>
+                      {{ doctor.phone }}
+                    </span>
+
+                  </div>
+
+
+                  <div class="info-row">
+
+                    <span class="info-label">
+                      ✉️ Email
+                    </span>
+
+                    <span>
+                      {{ doctor.email }}
+                    </span>
+
+                  </div>
+
+
+                  <div class="info-row">
+
+                    <span class="info-label">
+                      💼 Experience
+                    </span>
+
+                    <span>
+                      {{ doctor.experience }} years
+                    </span>
+
+                  </div>
+
+                </div>
+
+
+                <a
+                  routerLink="/patient/create-appointment"
+                  class="book-button"
+                >
+                  Book Appointment
+                </a>
+
+              </div>
+
+            </div>
+
+          }
+
+        </div>
+
+      </div>
+
+    }
+
+  </div>
+
+</div>

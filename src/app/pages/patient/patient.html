@@ -1,42 +1,5 @@
-<div class="dashboard">
+<div class="patient-container">
 
-  <div class="top-bar">
-
-    <h1>Patient Dashboard</h1>
-
-    <button
-      class="logout-button"
-      (click)="logout()">
-      Logout
-    </button>
-
-  </div>
-
-  <p>
-    Welcome to the Patient Dashboard
-  </p>
-
-  <p>
-    <strong>Role:</strong> PATIENT
-  </p>
-
-  <div class="menu">
-
-    <button
-      (click)="goToDoctors()">
-      View Doctors
-    </button>
-
-    <button
-      (click)="goToCreateAppointment()">
-      Create Appointment
-    </button>
-
-    <button
-      (click)="goToAppointments()">
-      View Appointments
-    </button>
-
-  </div>
+  <router-outlet></router-outlet>
 
 </div>

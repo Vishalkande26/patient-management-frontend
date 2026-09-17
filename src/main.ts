@@ -10,6 +10,7 @@ import {
   App
 } from './app/app';
 
+
 bootstrapApplication(
   App,
   appConfig

@@ -1,35 +1,93 @@
 <div class="dashboard">
 
+  <!-- ==========================================
+       TOP BAR
+       ========================================== -->
+
   <div class="top-bar">
 
-    <h1>Doctor Dashboard</h1>
+    <h1>
+      Doctor Dashboard
+    </h1>
 
-    
+    <button
+      type="button"
+      (click)="goToDashboard()">
+
+      Dashboard
+
+    </button>
 
   </div>
 
-  <p>Welcome to the Doctor Dashboard</p>
+
+  <!-- ==========================================
+       WELCOME
+       ========================================== -->
 
   <p>
-    <strong>Role:</strong> DOCTOR
+    Welcome to the Doctor Dashboard
   </p>
+
+
+  <p>
+    <strong>
+      Role:
+    </strong>
+
+    DOCTOR
+  </p>
+
+
+  <!-- ==========================================
+       MENU
+       ========================================== -->
 
   <div class="menu">
 
+
+    <!-- DASHBOARD -->
+
     <button
+      type="button"
+      (click)="goToDashboard()">
+
+      Dashboard
+
+    </button>
+
+
+    <!-- PATIENTS -->
+
+    <button
+      type="button"
       (click)="goToPatients()">
+
       View Patients
+
     </button>
 
+
+    <!-- APPOINTMENTS -->
+
     <button
+      type="button"
       (click)="goToAppointments()">
+
       View Appointments
+
     </button>
 
+
+    <!-- LOGOUT -->
+
     <button
+      type="button"
       class="logout-button"
       (click)="logout()">
+
       Logout
+
     </button>
 
   </div>

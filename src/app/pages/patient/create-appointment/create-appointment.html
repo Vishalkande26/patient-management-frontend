@@ -1,1 +1,280 @@
-<p>create-appointment works!</p>
+<div class="appointment-page">
+
+  <div class="page-header">
+
+    <div>
+
+      <h1>
+        Create Appointment
+      </h1>
+
+      <p>
+        Book an appointment with a doctor.
+      </p>
+
+    </div>
+
+
+    <a
+      routerLink="/patient"
+      class="back-button"
+    >
+      ← Back to Dashboard
+    </a>
+
+  </div>
+
+
+  <div class="appointment-card">
+
+    <div class="form-header">
+
+      <div class="form-icon">
+        📅
+      </div>
+
+      <div>
+
+        <h2>
+          Appointment Details
+        </h2>
+
+        <p>
+          Select a doctor and provide your appointment details.
+        </p>
+
+      </div>
+
+    </div>
+
+
+    <!-- Success message -->
+
+    @if (successMessage) {
+
+      <div class="success-message">
+
+        <span>
+          ✓
+        </span>
+
+        {{ successMessage }}
+
+      </div>
+
+    }
+
+
+    <!-- Error message -->
+
+    @if (errorMessage) {
+
+      <div class="error-message">
+
+        <span>
+          ⚠️
+        </span>
+
+        {{ errorMessage }}
+
+      </div>
+
+    }
+
+
+    <form
+      #appointmentForm="ngForm"
+      (ngSubmit)="submitAppointment()"
+    >
+
+
+      <!-- DOCTOR -->
+
+      <div class="form-group">
+
+        <label for="doctorId">
+
+          Doctor
+
+          <span>
+            *
+          </span>
+
+        </label>
+
+
+        <select
+          id="doctorId"
+          name="doctorId"
+          [(ngModel)]="appointment.doctorId"
+          required
+        >
+
+          <option
+            value=""
+          >
+            Select Doctor
+          </option>
+
+
+          @for (
+            doctor of doctors;
+            track doctor.id
+          ) {
+
+            <option
+              [value]="doctor.id"
+            >
+
+              {{ doctor.name }}
+
+              -
+
+              {{ doctor.specialization }}
+
+            </option>
+
+          }
+
+        </select>
+
+
+        @if (
+          hasLoaded &&
+          doctors.length === 0 &&
+          !errorMessage
+        ) {
+
+          <small class="field-info">
+
+            No doctors are currently available.
+
+          </small>
+
+        }
+
+      </div>
+
+
+      <!-- DATE -->
+
+      <div class="form-group">
+
+        <label for="appointmentDate">
+
+          Appointment Date
+
+          <span>
+            *
+          </span>
+
+        </label>
+
+
+        <input
+          id="appointmentDate"
+          type="date"
+          name="appointmentDate"
+          [(ngModel)]="appointment.appointmentDate"
+          [min]="today"
+          required
+        />
+
+      </div>
+
+
+      <!-- TIME -->
+
+      <div class="form-group">
+
+        <label for="appointmentTime">
+
+          Appointment Time
+
+          <span>
+            *
+          </span>
+
+        </label>
+
+
+        <input
+          id="appointmentTime"
+          type="time"
+          name="appointmentTime"
+          [(ngModel)]="appointment.appointmentTime"
+          required
+        />
+
+      </div>
+
+
+      <!-- REASON -->
+
+      <div class="form-group">
+
+        <label for="reason">
+
+          Reason
+
+          <span>
+            *
+          </span>
+
+        </label>
+
+
+        <textarea
+          id="reason"
+          name="reason"
+          [(ngModel)]="appointment.reason"
+          rows="5"
+          placeholder="Enter reason for appointment"
+          required
+        ></textarea>
+
+      </div>
+
+
+      <!-- ACTIONS -->
+
+      <div class="form-actions">
+
+        <a
+          routerLink="/patient"
+          class="cancel-button"
+        >
+          Cancel
+        </a>
+
+
+        <button
+          type="submit"
+          [disabled]="
+            !appointmentForm.form.valid ||
+            doctors.length === 0 ||
+            submitting
+          "
+        >
+
+          @if (submitting) {
+
+            Creating...
+
+          }
+          @else {
+
+            Create Appointment
+
+          }
+
+        </button>
+
+      </div>
+
+
+    </form>
+
+  </div>
+
+</div>

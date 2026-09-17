@@ -1,19 +1,48 @@
 import { HttpInterceptorFn } from '@angular/common/http';
 
-export const authInterceptor: HttpInterceptorFn = (req, next) => {
+export const authInterceptor: HttpInterceptorFn =
+  (req, next) => {
 
-  const token = localStorage.getItem('token');
+    const token =
+      localStorage.getItem('token');
 
-  if (token) {
+    /*
+     * Login and registration do not need JWT.
+     */
+    if (
+      req.url.includes('/api/auth/login') ||
+      req.url.includes('/api/auth/register')
+    ) {
+      return next(req);
+    }
 
-    const authReq = req.clone({
-      setHeaders: {
-        Authorization: `Bearer ${token}`
-      }
-    });
+    /*
+     * Add JWT to every protected API request.
+     */
+    if (token) {
 
-    return next(authReq);
-  }
+      const authReq =
+        req.clone({
+          setHeaders: {
+            Authorization: `Bearer ${token}`
+          }
+        });
 
-  return next(req);
-};
+      console.log(
+        'Authorization header added:',
+        req.url
+      );
+
+      return next(authReq);
+    }
+
+    /*
+     * No token available.
+     */
+    console.warn(
+      'No JWT token found for request:',
+      req.url
+    );
+
+    return next(req);
+  };

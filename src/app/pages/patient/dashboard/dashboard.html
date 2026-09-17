@@ -1,1 +1,140 @@
-<p>dashboard works!</p>
+<div class="dashboard-page">
+
+  <!-- Header -->
+  <header class="dashboard-header">
+
+    <div class="header-left">
+      <div class="logo-icon">
+        🏥
+      </div>
+
+      <div>
+        <h1>Patient Dashboard</h1>
+        <p>Patient Management System</p>
+      </div>
+    </div>
+
+    <div class="header-right">
+
+      <div class="user-info">
+        <span class="user-icon">👤</span>
+
+        <div>
+          <strong>{{ username }}</strong>
+          <small>{{ role }}</small>
+        </div>
+      </div>
+
+      <button
+        type="button"
+        class="logout-button"
+        (click)="logout()">
+        Logout
+      </button>
+
+    </div>
+
+  </header>
+
+
+  <!-- Main Content -->
+  <main class="dashboard-content">
+
+    <div class="welcome-section">
+
+      <h2>
+        Welcome, {{ username }} 👋
+      </h2>
+
+      <p>
+        Manage your doctors, appointments and healthcare information.
+      </p>
+
+    </div>
+
+
+    <!-- Dashboard Cards -->
+    <div class="dashboard-cards">
+
+      <!-- Doctors -->
+      <div class="dashboard-card">
+
+        <div class="card-icon doctor-icon">
+          👨‍⚕️
+        </div>
+
+        <div class="card-content">
+
+          <h3>View Doctors</h3>
+
+          <p>
+            View available doctors and their specializations.
+          </p>
+
+          <a
+            routerLink="/patient/doctors"
+            class="dashboard-button">
+            View Doctors
+          </a>
+
+        </div>
+
+      </div>
+
+
+      <!-- Create Appointment -->
+      <div class="dashboard-card">
+
+        <div class="card-icon appointment-icon">
+          📅
+        </div>
+
+        <div class="card-content">
+
+          <h3>Create Appointment</h3>
+
+          <p>
+            Book a new appointment with a doctor.
+          </p>
+
+          <a
+            routerLink="/patient/create-appointment"
+            class="dashboard-button">
+            Create Appointment
+          </a>
+
+        </div>
+
+      </div>
+
+
+      <!-- My Appointments -->
+      <div class="dashboard-card">
+
+        <div class="card-icon history-icon">
+          📋
+        </div>
+
+        <div class="card-content">
+
+          <h3>My Appointments</h3>
+
+          <p>
+            View your upcoming and previous appointments.
+          </p>
+
+          <a
+            routerLink="/patient/appointments"
+            class="dashboard-button">
+            View Appointments
+          </a>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </main>
+
+</div>

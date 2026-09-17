@@ -1,47 +1,137 @@
-import { inject } from '@angular/core';
+import {
+  inject
+} from '@angular/core';
 
-import { CanActivateFn, Router } from '@angular/router';
+import {
+  CanActivateFn,
+  Router
+} from '@angular/router';
 
-import { AuthService } from '../services/auth.service';
+import {
+  AuthService
+} from '../services/auth.service';
 
-export const authGuard: CanActivateFn = (route, state) => {
 
-  const authService = inject(AuthService);
+export const authGuard: CanActivateFn =
+  (route, state) => {
 
-  const router = inject(Router);
+    const authService =
+      inject(AuthService);
 
-  if (!authService.isLoggedIn()) {
+    const router =
+      inject(Router);
 
-    router.navigate(['/login']);
 
-    return false;
-  }
+    // ==========================================
+    // GET LOGIN DATA
+    // ==========================================
 
-  const userRole = authService.getRole();
+    const token =
+      authService.getToken();
 
-  const requiredRole = route.data['role'];
+    const role =
+      authService.getRole();
 
-  if (userRole === requiredRole) {
+
+    console.log(
+      'Auth Guard',
+      {
+        url: state.url,
+        hasToken: !!token,
+        role: role
+      }
+    );
+
+
+    // ==========================================
+    // NO TOKEN
+    // ==========================================
+
+    if (
+      !token ||
+      token.trim().length === 0
+    ) {
+
+      console.log(
+        'Auth Guard: No token'
+      );
+
+      return router.createUrlTree(
+        ['/login']
+      );
+    }
+
+
+    // ==========================================
+    // REQUIRED ROLE
+    // ==========================================
+
+    const requiredRole =
+      route.data['role'] as
+        string | undefined;
+
+
+    // ==========================================
+    // NO ROLE REQUIRED
+    // ==========================================
+
+    if (!requiredRole) {
+
+      return true;
+    }
+
+
+    // ==========================================
+    // ROLE CHECK
+    // ==========================================
+
+    if (
+      role !== requiredRole
+    ) {
+
+      console.log(
+        'Auth Guard: Role denied',
+        {
+          requiredRole,
+          currentRole: role
+        }
+      );
+
+
+      // Send user to their own dashboard
+      if (role === 'ADMIN') {
+
+        return router.createUrlTree(
+          ['/admin']
+        );
+      }
+
+
+      if (role === 'DOCTOR') {
+
+        return router.createUrlTree(
+          ['/doctor']
+        );
+      }
+
+
+      if (role === 'PATIENT') {
+
+        return router.createUrlTree(
+          ['/patient']
+        );
+      }
+
+
+      return router.createUrlTree(
+        ['/login']
+      );
+    }
+
+
+    // ==========================================
+    // AUTHORIZED
+    // ==========================================
 
     return true;
-  }
-
-  if (userRole === 'ADMIN') {
-
-    router.navigate(['/admin']);
-
-  } else if (userRole === 'DOCTOR') {
-
-    router.navigate(['/doctor']);
-
-  } else if (userRole === 'PATIENT') {
-
-    router.navigate(['/patient']);
-
-  } else {
-
-    router.navigate(['/login']);
-  }
-
-  return false;
-};
+  };

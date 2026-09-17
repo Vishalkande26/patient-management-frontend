@@ -1,9 +1,14 @@
 <div class="admin-layout">
 
-  <!-- TOP NAVIGATION -->
+  <!-- ==========================================
+       TOP NAVIGATION
+       ========================================== -->
+
   <header class="top-navigation">
 
+
     <!-- BRAND -->
+
     <div class="brand-section">
 
       <div class="brand-logo">
@@ -11,88 +16,148 @@
       </div>
 
       <div class="brand-text">
-        <strong>Patient Management</strong>
-        <span>Admin Panel</span>
+
+        <strong>
+          Patient Management
+        </strong>
+
+        <span>
+          Admin Panel
+        </span>
+
       </div>
 
     </div>
 
 
-    <!-- NAVIGATION -->
+    <!-- ==========================================
+         NAVIGATION
+         ========================================== -->
+
     <nav class="main-navigation">
+
+
+      <!-- DASHBOARD -->
 
       <a
         routerLink="/admin"
         routerLinkActive="active"
-        [routerLinkActiveOptions]="{ exact: true }"
+        [routerLinkActiveOptions]="{
+          exact: true
+        }"
         class="nav-item">
 
-        <span class="nav-icon">⌂</span>
-        <span>Dashboard</span>
+        <span class="nav-icon">
+          ⌂
+        </span>
+
+        <span>
+          Dashboard
+        </span>
 
       </a>
 
+
+      <!-- DOCTORS -->
 
       <a
         routerLink="/admin/doctors"
         routerLinkActive="active"
         class="nav-item">
 
-        <span class="nav-icon">D</span>
-        <span>Doctors</span>
+        <span class="nav-icon">
+          D
+        </span>
+
+        <span>
+          Doctors
+        </span>
 
       </a>
 
+
+      <!-- PATIENTS -->
 
       <a
         routerLink="/admin/patients"
         routerLinkActive="active"
         class="nav-item">
 
-        <span class="nav-icon">P</span>
-        <span>Patients</span>
+        <span class="nav-icon">
+          P
+        </span>
+
+        <span>
+          Patients
+        </span>
 
       </a>
 
+
+      <!-- USERS -->
 
       <a
         routerLink="/admin/users"
         routerLinkActive="active"
         class="nav-item">
 
-        <span class="nav-icon">U</span>
-        <span>Users</span>
+        <span class="nav-icon">
+          U
+        </span>
+
+        <span>
+          Users
+        </span>
 
       </a>
 
+
+      <!-- APPOINTMENTS -->
 
       <a
         routerLink="/admin/appointments"
         routerLinkActive="active"
         class="nav-item">
 
-        <span class="nav-icon">A</span>
-        <span>Appointments</span>
+        <span class="nav-icon">
+          A
+        </span>
+
+        <span>
+          Appointments
+        </span>
 
       </a>
 
     </nav>
 
 
-    <!-- USER SECTION -->
+    <!-- ==========================================
+         USER SECTION
+         ========================================== -->
+
     <div class="user-section">
 
       <div class="user-info">
 
         <div class="user-avatar">
-          {{ username.charAt(0).toUpperCase() }}
+
+          {{
+            username.charAt(0).toUpperCase()
+          }}
+
         </div>
+
 
         <div class="user-details">
 
-          <strong>{{ username }}</strong>
+          <strong>
+            {{ username }}
+          </strong>
 
-          <span>ADMIN</span>
+          <span>
+            ADMIN
+          </span>
 
         </div>
 
@@ -113,10 +178,17 @@
   </header>
 
 
-  <!-- PAGE AREA -->
+  <!-- ==========================================
+       PAGE AREA
+       ========================================== -->
+
   <section class="page-area">
 
-    <!-- PAGE HEADER -->
+
+    <!-- ==========================================
+         PAGE HEADER
+         ========================================== -->
+
     <header class="page-header">
 
       <div>
@@ -135,17 +207,191 @@
       <div class="welcome-message">
 
         Welcome,
-        <strong>{{ username }}</strong>
+        <strong>
+          {{ username }}
+        </strong>
 
       </div>
 
     </header>
 
 
-    <!-- CHILD PAGE -->
+    <!-- ==========================================
+         CONTENT AREA
+         ========================================== -->
+
     <main class="content-area">
 
-      <router-outlet></router-outlet>
+
+      <!-- ========================================
+           ADMIN DASHBOARD
+           ======================================== -->
+
+      @if (isDashboard) {
+
+        <div class="admin-dashboard">
+
+
+          <div class="dashboard-intro">
+
+            <span class="dashboard-label">
+              ADMINISTRATION
+            </span>
+
+            <h2>
+              Admin Dashboard
+            </h2>
+
+            <p>
+              Manage patients, doctors, users
+              and appointments from one place.
+            </p>
+
+          </div>
+
+
+          <!-- ======================================
+               DASHBOARD CARDS
+               ====================================== -->
+
+          <div class="dashboard-cards">
+
+
+            <!-- PATIENTS -->
+
+            <button
+              type="button"
+              class="dashboard-card"
+              (click)="goToPatients()">
+
+              <div class="card-icon">
+                P
+              </div>
+
+              <div class="card-content">
+
+                <h3>
+                  Patients
+                </h3>
+
+                <p>
+                  Manage patient records
+                </p>
+
+              </div>
+
+              <span class="card-arrow">
+                →
+              </span>
+
+            </button>
+
+
+            <!-- DOCTORS -->
+
+            <button
+              type="button"
+              class="dashboard-card"
+              (click)="goToDoctors()">
+
+              <div class="card-icon">
+                D
+              </div>
+
+              <div class="card-content">
+
+                <h3>
+                  Doctors
+                </h3>
+
+                <p>
+                  Manage doctor records
+                </p>
+
+              </div>
+
+              <span class="card-arrow">
+                →
+              </span>
+
+            </button>
+
+
+            <!-- USERS -->
+
+            <button
+              type="button"
+              class="dashboard-card"
+              (click)="goToUsers()">
+
+              <div class="card-icon">
+                U
+              </div>
+
+              <div class="card-content">
+
+                <h3>
+                  Users
+                </h3>
+
+                <p>
+                  Manage application users
+                </p>
+
+              </div>
+
+              <span class="card-arrow">
+                →
+              </span>
+
+            </button>
+
+
+            <!-- APPOINTMENTS -->
+
+            <button
+              type="button"
+              class="dashboard-card"
+              (click)="goToAppointments()">
+
+              <div class="card-icon">
+                A
+              </div>
+
+              <div class="card-content">
+
+                <h3>
+                  Appointments
+                </h3>
+
+                <p>
+                  Manage appointments
+                </p>
+
+              </div>
+
+              <span class="card-arrow">
+                →
+              </span>
+
+            </button>
+
+          </div>
+
+        </div>
+
+      }
+
+
+      <!-- ========================================
+           MANAGEMENT PAGES
+           ======================================== -->
+
+      @if (!isDashboard) {
+
+        <router-outlet></router-outlet>
+
+      }
 
     </main>
 

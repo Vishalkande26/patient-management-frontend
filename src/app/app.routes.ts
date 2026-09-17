@@ -1,79 +1,129 @@
-import { Routes } from '@angular/router';
+import {
+  Routes
+} from '@angular/router';
 
-import { Login } from './pages/login/login';
-import { Register } from './pages/register/register';
 
-import { Admin } from './pages/admin/admin';
-import { AdminHome } from './pages/admin/home/admin-home';
+// ==========================================
+// AUTH
+// ==========================================
 
-import { Doctors } from './pages/admin/doctors/doctors';
-import { Patients } from './pages/admin/patients/patients';
-import { Users } from './pages/admin/users/users';
-import { Appointments as AdminAppointments }
-  from './pages/admin/appointments/appointments';
+import {
+  Login
+} from './pages/login/login';
 
-import { Doctor } from './pages/doctor/doctor';
-import { Patient } from './pages/patient/patient';
+import {
+  Register
+} from './pages/register/register';
 
-import { Dashboard }
-  from './pages/patient/dashboard/dashboard';
 
-import { PatientDoctors }
-  from './pages/patient/patient-doctors/patient-doctors';
+// ==========================================
+// ADMIN
+// ==========================================
 
-import { CreateAppointment }
-  from './pages/patient/create-appointment/create-appointment';
+import {
+  Admin
+} from './pages/admin/admin';
 
-import { Appointments }
-  from './pages/patient/appointments/appointments';
+import {
+  Patients
+} from './pages/admin/patients/patients';
 
-import { authGuard }
-  from './guards/auth-guard';
+import {
+  Doctors
+} from './pages/admin/doctors/doctors';
 
+import {
+  Users
+} from './pages/admin/users/users';
+
+import {
+  Appointments as AdminAppointments
+} from './pages/admin/appointments/appointments';
+
+
+// ==========================================
+// DOCTOR
+// ==========================================
+
+import {
+  Doctor
+} from './pages/doctor/doctor';
+
+
+// ==========================================
+// PATIENT
+// ==========================================
+
+import {
+  Patient
+} from './pages/patient/patient';
+
+import {
+  Dashboard
+} from './pages/patient/dashboard/dashboard';
+
+import {
+  PatientDoctors
+} from './pages/patient/patient-doctors/patient-doctors';
+
+import {
+  CreateAppointment
+} from './pages/patient/create-appointment/create-appointment';
+
+import {
+  Appointments
+} from './pages/patient/appointments/appointments';
+
+
+// ==========================================
+// GUARD
+// ==========================================
+
+import {
+  authGuard
+} from './guards/auth-guard';
+
+
+// ==========================================
+// ROUTES
+// ==========================================
 
 export const routes: Routes = [
 
-  /* =========================
-     DEFAULT
-     ========================= */
-
-  {
-    path: '',
-    redirectTo: 'login',
-    pathMatch: 'full'
-  },
-
-
-  /* =========================
-     LOGIN
-     ========================= */
+  // ========================================
+  // LOGIN
+  // ========================================
 
   {
     path: 'login',
+
     component: Login
   },
 
 
-  /* =========================
-     REGISTER
-     ========================= */
+  // ========================================
+  // REGISTER
+  // ========================================
 
   {
     path: 'register',
+
     component: Register
   },
 
 
-  /* =========================
-     ADMIN
-     ========================= */
+  // ========================================
+  // ADMIN
+  // ========================================
 
   {
     path: 'admin',
 
     component: Admin,
 
-    canActivate: [authGuard],
+    canActivate: [
+      authGuard
+    ],
 
     data: {
       role: 'ADMIN'
@@ -81,64 +131,152 @@ export const routes: Routes = [
 
     children: [
 
-      {
-        path: '',
-        component: AdminHome
-      },
+      // ------------------------------------
+      // ADMIN DEFAULT
+      // ------------------------------------
+      //
+      // IMPORTANT:
+      // Do NOT redirect to patients.
+      //
+      // /admin itself is the Admin Dashboard.
+      //
 
       {
-        path: 'doctors',
-        component: Doctors
+        path: '',
+
+        pathMatch: 'full',
+
+        component: Admin
       },
+
+
+      // ------------------------------------
+      // PATIENT MANAGEMENT
+      // ------------------------------------
 
       {
         path: 'patients',
-        component: Patients
+
+        component: Patients,
+
+        canActivate: [
+          authGuard
+        ],
+
+        data: {
+          role: 'ADMIN'
+        }
       },
+
+
+      // ------------------------------------
+      // DOCTOR MANAGEMENT
+      // ------------------------------------
+
+      {
+        path: 'doctors',
+
+        component: Doctors,
+
+        canActivate: [
+          authGuard
+        ],
+
+        data: {
+          role: 'ADMIN'
+        }
+      },
+
+
+      // ------------------------------------
+      // USER MANAGEMENT
+      // ------------------------------------
 
       {
         path: 'users',
-        component: Users
+
+        component: Users,
+
+        canActivate: [
+          authGuard
+        ],
+
+        data: {
+          role: 'ADMIN'
+        }
       },
+
+
+      // ------------------------------------
+      // APPOINTMENT MANAGEMENT
+      // ------------------------------------
 
       {
         path: 'appointments',
-        component: AdminAppointments
+
+        component: AdminAppointments,
+
+        canActivate: [
+          authGuard
+        ],
+
+        data: {
+          role: 'ADMIN'
+        }
       }
 
     ]
-
   },
 
 
-  /* =========================
-     DOCTOR
-     ========================= */
+  // ========================================
+  // DOCTOR
+  // ========================================
 
   {
     path: 'doctor',
 
     component: Doctor,
 
-    canActivate: [authGuard],
+    canActivate: [
+      authGuard
+    ],
 
     data: {
       role: 'DOCTOR'
     }
-
   },
 
 
-  /* =========================
-     PATIENT
-     ========================= */
+  // ========================================
+  // DOCTOR DASHBOARD
+  // ========================================
+  //
+  // This allows /doctor/dashboard to safely
+  // return to the Doctor dashboard.
+  //
+
+  {
+    path: 'doctor/dashboard',
+
+    redirectTo: '/doctor',
+
+    pathMatch: 'full'
+  },
+
+
+  // ========================================
+  // PATIENT
+  // ========================================
 
   {
     path: 'patient',
 
     component: Patient,
 
-    canActivate: [authGuard],
+    canActivate: [
+      authGuard
+    ],
 
     data: {
       role: 'PATIENT'
@@ -146,38 +284,76 @@ export const routes: Routes = [
 
     children: [
 
+      // ------------------------------------
+      // PATIENT DASHBOARD
+      // ------------------------------------
+
       {
         path: '',
+
+        pathMatch: 'full',
+
         component: Dashboard
       },
 
+
+      // ------------------------------------
+      // PATIENT DOCTORS
+      // ------------------------------------
+
       {
         path: 'doctors',
+
         component: PatientDoctors
       },
 
+
+      // ------------------------------------
+      // CREATE APPOINTMENT
+      // ------------------------------------
+
       {
         path: 'create-appointment',
+
         component: CreateAppointment
       },
 
+
+      // ------------------------------------
+      // PATIENT APPOINTMENTS
+      // ------------------------------------
+
       {
         path: 'appointments',
+
         component: Appointments
       }
 
     ]
-
   },
 
 
-  /* =========================
-     INVALID URL
-     ========================= */
+  // ========================================
+  // DEFAULT
+  // ========================================
+
+  {
+    path: '',
+
+    redirectTo: '/login',
+
+    pathMatch: 'full'
+  },
+
+
+  // ========================================
+  // UNKNOWN URL
+  // ========================================
 
   {
     path: '**',
-    redirectTo: 'login'
+
+    redirectTo: '/login'
   }
 
 ];
