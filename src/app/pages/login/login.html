@@ -1,55 +1,525 @@
-<div class="login-container">
+<div class="login-page">
 
-  <h2>Patient Management System</h2>
+  <!-- ================================
+       BACKGROUND EFFECTS
+  ================================= -->
 
-  <h3>Login</h3>
+  <div class="background-grid"></div>
 
-  <form (ngSubmit)="login()">
+  <div class="background-glow glow-one"></div>
+  <div class="background-glow glow-two"></div>
+  <div class="background-glow glow-three"></div>
 
-    <div class="form-group">
+  <div class="floating-orb orb-one"></div>
+  <div class="floating-orb orb-two"></div>
+  <div class="floating-orb orb-three"></div>
 
-      <label>Email</label>
+  <div class="background-ring ring-one"></div>
+  <div class="background-ring ring-two"></div>
 
-      <input
-        type="email"
-        name="email"
-        [(ngModel)]="email"
-        placeholder="Enter email"
-      >
+
+  <!-- ================================
+       LOGIN CONTAINER
+  ================================= -->
+
+  <div class="login-container">
+
+
+    <!-- Top glow -->
+    <div class="card-top-glow"></div>
+
+
+    <!-- ================================
+         BRAND ICON
+    ================================= -->
+
+    <div class="brand-wrapper">
+
+      <div class="brand-icon">
+
+        <div class="brand-icon-glow"></div>
+
+        <svg
+          viewBox="0 0 64 64"
+          aria-hidden="true"
+        >
+
+          <path
+            d="M32 8
+               C20 8 10 18 10 30
+               C10 42 20 52 32 52
+               C44 52 54 42 54 30
+               C54 18 44 8 32 8Z"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="3"
+          />
+
+          <path
+            d="M32 18V42"
+            stroke="currentColor"
+            stroke-width="4"
+            stroke-linecap="round"
+          />
+
+          <path
+            d="M20 30H44"
+            stroke="currentColor"
+            stroke-width="4"
+            stroke-linecap="round"
+          />
+
+        </svg>
+
+      </div>
 
     </div>
 
-    <div class="form-group">
 
-      <label>Password</label>
+    <!-- ================================
+         HEADER
+    ================================= -->
 
-      <input
-        type="password"
-        name="password"
-        [(ngModel)]="password"
-        placeholder="Enter password"
-      >
+    <div class="login-header">
+
+      <div class="title-line"></div>
+
+      <h1>
+        Patient Management
+      </h1>
+
+      <p>
+        System
+      </p>
+
+      <div class="welcome-text">
+
+        <span class="welcome-dot"></span>
+
+        Welcome back! Please login to continue.
+
+      </div>
 
     </div>
 
-    <button type="submit">
-      Login
-    </button>
 
-  </form>
+    <!-- ================================
+         LOGIN FORM
+    ================================= -->
 
-  @if (message) {
-    <p class="message">
-      {{ message }}
-    </p>
-  }
+    <form
+      (ngSubmit)="login()"
+      class="login-form"
+    >
 
-  <p class="register-link">
-    Don't have an account?
 
-    <a routerLink="/register">
-      Register
-    </a>
-  </p>
+      <!-- ================================
+           EMAIL
+      ================================= -->
+
+      <div class="form-group">
+
+        <label for="email">
+
+          <span class="label-icon">
+
+            <svg
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+
+              <path
+                d="M4 5h16c1.1 0 2 .9 2 2v10
+                   c0 1.1-.9 2-2 2H4
+                   c-1.1 0-2-.9-2-2V7
+                   c0-1.1.9-2 2-2Z"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+              />
+
+              <path
+                d="m4 7 8 6 8-6"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+
+            </svg>
+
+          </span>
+
+          Email
+
+        </label>
+
+
+        <div class="input-wrapper">
+
+          <div class="input-glow"></div>
+
+          <svg
+            class="input-icon"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+
+            <path
+              d="M4 5h16c1.1 0 2 .9 2 2v10
+                 c0 1.1-.9 2-2 2H4
+                 c-1.1 0-2-.9-2-2V7
+                 c0-1.1.9-2 2-2Z"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+            />
+
+            <path
+              d="m4 7 8 6 8-6"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+
+          </svg>
+
+
+          <input
+            id="email"
+            type="email"
+            name="email"
+            [(ngModel)]="email"
+            placeholder="Enter your email"
+            autocomplete="email"
+            required
+          />
+
+        </div>
+
+      </div>
+
+
+      <!-- ================================
+           PASSWORD
+      ================================= -->
+
+      <div class="form-group">
+
+        <label for="password">
+
+          <span class="label-icon">
+
+            <svg
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+
+              <rect
+                x="5"
+                y="10"
+                width="14"
+                height="10"
+                rx="2"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+              />
+
+              <path
+                d="M8 10V7
+                   a4 4 0 0 1 8 0v3"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+              />
+
+              <circle
+                cx="12"
+                cy="15"
+                r="1.2"
+                fill="currentColor"
+              />
+
+            </svg>
+
+          </span>
+
+          Password
+
+        </label>
+
+
+        <div class="input-wrapper">
+
+          <div class="input-glow"></div>
+
+          <svg
+            class="input-icon"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+
+            <rect
+              x="5"
+              y="10"
+              width="14"
+              height="10"
+              rx="2"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+            />
+
+            <path
+              d="M8 10V7
+                 a4 4 0 0 1 8 0v3"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+            />
+
+            <circle
+              cx="12"
+              cy="15"
+              r="1.2"
+              fill="currentColor"
+            />
+
+          </svg>
+
+
+          <input
+            id="password"
+            [type]="showPassword ? 'text' : 'password'"
+            name="password"
+            [(ngModel)]="password"
+            placeholder="Enter your password"
+            autocomplete="current-password"
+            required
+          />
+
+
+          <!-- Password visibility -->
+          <button
+            type="button"
+            class="password-toggle"
+            (click)="togglePassword()"
+            [attr.aria-label]="showPassword ? 'Hide password' : 'Show password'"
+          >
+
+            @if (showPassword) {
+
+              <!-- Eye Off -->
+
+              <svg
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+
+                <path
+                  d="M3 3l18 18"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                />
+
+                <path
+                  d="M10.6 10.6
+                     A2 2 0 0 0 13.4 13.4"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                />
+
+                <path
+                  d="M9.9 5.1
+                     C10.6 4.9 11.3 4.8 12 4.8
+                     C17 4.8 20.5 9.1 21.5 12
+                     C21 13.5 20 15.1 18.5 16.5"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.7"
+                  stroke-linecap="round"
+                />
+
+                <path
+                  d="M6.2 6.2
+                     C4.5 7.5 3.2 9.6 2.5 12
+                     C3.5 15
+                     7.1 19.2 12 19.2
+                     C13.2 19.2 14.4 19
+                     15.5 18.5"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.7"
+                  stroke-linecap="round"
+                />
+
+              </svg>
+
+            } @else {
+
+              <!-- Eye -->
+
+              <svg
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+
+                <path
+                  d="M2.5 12
+                     C4 7.8 7.5 5 12 5
+                     C16.5 5 20 7.8 21.5 12
+                     C20 16.2 16.5 19 12 19
+                     C7.5 19 4 16.2 2.5 12Z"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                />
+
+                <circle
+                  cx="12"
+                  cy="12"
+                  r="3"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                />
+
+              </svg>
+
+            }
+
+          </button>
+
+        </div>
+
+      </div>
+
+
+      <!-- ================================
+           LOGIN BUTTON
+      ================================= -->
+
+      <button
+        type="submit"
+        class="login-button"
+      >
+
+        <span class="button-shine"></span>
+
+        <span class="button-content">
+
+          <span>
+            Login
+          </span>
+
+          <svg
+            class="button-arrow"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+
+            <path
+              d="M5 12h13"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+            />
+
+            <path
+              d="m13 6 6 6-6 6"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+
+          </svg>
+
+        </span>
+
+      </button>
+
+    </form>
+
+
+    <!-- ================================
+         MESSAGE
+    ================================= -->
+
+    @if (message) {
+
+      <div class="message">
+
+        <span class="message-icon">
+          !
+        </span>
+
+        <span>
+          {{ message }}
+        </span>
+
+      </div>
+
+    }
+
+
+    <!-- ================================
+         REGISTER
+    ================================= -->
+
+    <div class="register-section">
+
+      <div class="register-line"></div>
+
+      <div class="register-content">
+
+        <span>
+          Don't have an account?
+        </span>
+
+        <a routerLink="/register">
+          Register
+        </a>
+
+      </div>
+
+      <div class="register-line"></div>
+
+    </div>
+
+
+    <!-- ================================
+         FOOTER
+    ================================= -->
+
+    <div class="login-footer">
+
+      <span class="footer-status">
+
+        <span class="footer-dot"></span>
+
+        Secure
+
+      </span>
+
+      <span class="footer-separator">•</span>
+
+      Patient Management Portal
+
+    </div>
+
+  </div>
 
 </div>

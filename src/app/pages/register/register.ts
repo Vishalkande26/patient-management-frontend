@@ -9,11 +9,14 @@ import {
 
 @Component({
   selector: 'app-register',
+
   imports: [
     FormsModule,
     RouterLink
   ],
+
   templateUrl: './register.html',
+
   styleUrl: './register.css'
 })
 export class Register {
@@ -21,6 +24,7 @@ export class Register {
   private authService = inject(AuthService);
 
   private router = inject(Router);
+
 
   username = '';
 
@@ -30,6 +34,28 @@ export class Register {
 
   message = '';
 
+  showPassword = false;
+
+
+  /*
+   * Show / hide password.
+   *
+   * This is only a UI feature.
+   * It does not affect registration logic.
+   */
+  togglePassword(): void {
+
+    this.showPassword = !this.showPassword;
+
+  }
+
+
+  /*
+   * Existing registration functionality.
+   *
+   * The backend API and registration
+   * request structure remain unchanged.
+   */
   register(): void {
 
     if (
@@ -44,6 +70,7 @@ export class Register {
       return;
     }
 
+
     const registerData: RegisterRequest = {
 
       username: this.username,
@@ -54,6 +81,7 @@ export class Register {
 
     };
 
+
     this.authService.register(registerData).subscribe({
 
       next: (response: string) => {
@@ -63,8 +91,10 @@ export class Register {
           response
         );
 
+
         this.message =
           'Registration successful! Please login.';
+
 
         this.username = '';
 
@@ -72,12 +102,17 @@ export class Register {
 
         this.password = '';
 
+        this.showPassword = false;
+
+
         setTimeout(() => {
 
           this.router.navigate(['/login']);
 
         }, 1000);
+
       },
+
 
       error: (error: any) => {
 
@@ -86,9 +121,14 @@ export class Register {
           error
         );
 
+
         this.message =
           error.error || 'Registration failed';
+
       }
+
     });
+
   }
+
 }

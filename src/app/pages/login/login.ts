@@ -28,6 +28,28 @@ export class Login {
 
   message = '';
 
+  showPassword = false;
+
+
+  /*
+   * Show / hide password
+   *
+   * This only changes the UI.
+   * It does not change the authentication logic.
+   */
+  togglePassword(): void {
+
+    this.showPassword = !this.showPassword;
+
+  }
+
+
+  /*
+   * Existing login functionality
+   *
+   * Backend API, JWT handling and role-based
+   * navigation remain unchanged.
+   */
   login(): void {
 
     if (!this.email || !this.password) {
@@ -60,6 +82,7 @@ export class Login {
         this.message =
           'Login successful!';
 
+
         if (response.role === 'ADMIN') {
 
           this.router.navigate(['/admin']);
@@ -76,8 +99,11 @@ export class Login {
 
           this.message =
             'Invalid user role';
+
         }
+
       },
+
 
       error: (error: any) => {
 
@@ -85,6 +111,7 @@ export class Login {
           'Login error:',
           error
         );
+
 
         if (error.status === 401) {
 
@@ -100,8 +127,13 @@ export class Login {
 
           this.message =
             'Login failed. Please try again.';
+
         }
+
       }
+
     });
+
   }
+
 }
