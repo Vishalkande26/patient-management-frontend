@@ -1,21 +1,6 @@
-/*
- * The Doctor form uses the existing Admin Doctor page
- * form styles.
- *
- * Form separation changes only the component structure.
- * The existing UI classes are intentionally preserved:
- *
- * doctor-modal-form
- * form-intro
- * form-intro-icon
- * form-grid
- * form-group
- * input-with-suffix
- * modal-form-actions
- * modal-cancel-button
- * modal-submit-button
- * button-spinner
- *
- * Move the corresponding form rules from doctors.css
- * into this file if they are currently defined there.
- */
+.validation-message {
+  display: block;
+  margin-top: 5px;
+  font-size: 12px;
+  line-height: 1.4;
+}

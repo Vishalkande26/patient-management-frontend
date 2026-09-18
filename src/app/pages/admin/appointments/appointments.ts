@@ -5,7 +5,11 @@ import {
 } from '@angular/core';
 
 import {
-  FormsModule
+  FormsModule,
+  ReactiveFormsModule,
+  FormControl,
+  FormGroup,
+  Validators
 } from '@angular/forms';
 
 import {
@@ -65,14 +69,7 @@ interface AppointmentRow {
 
   status: string;
 
-  /*
-   * Frontend-only property.
-   *
-   * Used while Add / Update is running
-   * in the background.
-   */
   isSaving?: boolean;
-
 }
 
 
@@ -93,7 +90,6 @@ interface AppointmentRequest {
   reason: string;
 
   status: string;
-
 }
 
 
@@ -108,6 +104,7 @@ interface AppointmentRequest {
 
   imports: [
     FormsModule,
+    ReactiveFormsModule,
     Modal
   ],
 
@@ -160,22 +157,9 @@ export class Appointments implements OnInit {
      LOADING STATES
      ======================================================= */
 
-  /*
-   * Full-page loading is only used when
-   * there is no cached appointment data.
-   */
-
   loading = false;
 
-  /*
-   * Used for Add / Update.
-   */
-
   saving = false;
-
-  /*
-   * Used for Delete.
-   */
 
   deleting = false;
 
@@ -195,6 +179,69 @@ export class Appointments implements OnInit {
   reason = '';
 
   status = 'SCHEDULED';
+
+
+  /* =======================================================
+     REACTIVE FORM
+     ======================================================= */
+
+  appointmentForm = new FormGroup({
+
+    patientId: new FormControl<number | null>(
+      null,
+      [
+        Validators.required
+      ]
+    ),
+
+    doctorId: new FormControl<number | null>(
+      null,
+      [
+        Validators.required
+      ]
+    ),
+
+    appointmentDate: new FormControl<string>(
+      '',
+      {
+        nonNullable: true,
+        validators: [
+          Validators.required
+        ]
+      }
+    ),
+
+    appointmentTime: new FormControl<string>(
+      '',
+      {
+        nonNullable: true,
+        validators: [
+          Validators.required
+        ]
+      }
+    ),
+
+    status: new FormControl<string>(
+      'SCHEDULED',
+      {
+        nonNullable: true,
+        validators: [
+          Validators.required
+        ]
+      }
+    ),
+
+    reason: new FormControl<string>(
+      '',
+      {
+        nonNullable: true,
+        validators: [
+          Validators.required
+        ]
+      }
+    )
+
+  });
 
 
   /* =======================================================
@@ -322,21 +369,9 @@ export class Appointments implements OnInit {
 
   ngOnInit(): void {
 
-    /*
-     * Load patients and doctors.
-     *
-     * These do not control the main appointment
-     * table loading indicator.
-     */
-
     this.loadPatients();
 
     this.loadDoctors();
-
-
-    /*
-     * Load appointments using cache-first approach.
-     */
 
     this.initializeAppointments();
   }
@@ -347,10 +382,6 @@ export class Appointments implements OnInit {
      ======================================================= */
 
   private initializeAppointments(): void {
-
-    /*
-     * Read cached appointments first.
-     */
 
     const cachedAppointments =
       this.getCachedAppointments();
@@ -363,38 +394,17 @@ export class Appointments implements OnInit {
       this.appointments =
         cachedAppointments;
 
-
-      /*
-       * Show table immediately.
-       */
-
       this.applyFilters();
 
       this.fixCurrentPage();
-
-
-      /*
-       * Do NOT show loading.
-       */
 
       this.loading = false;
 
     } else {
 
-      /*
-       * No cache.
-       *
-       * Show loading only on first load.
-       */
-
       this.loading = true;
     }
 
-
-    /*
-     * Get latest data from backend
-     * in the background.
-     */
 
     this.loadAppointments();
   }
@@ -405,11 +415,6 @@ export class Appointments implements OnInit {
      ======================================================= */
 
   loadAppointments(): void {
-
-    /*
-     * Only show full loading when
-     * there is no existing data.
-     */
 
     if (
       this.appointments.length === 0
@@ -433,11 +438,6 @@ export class Appointments implements OnInit {
           );
 
 
-          /*
-           * Do not overwrite an optimistic
-           * Add / Update / Delete operation.
-           */
-
           if (
             this.saving ||
             this.deleting
@@ -458,18 +458,10 @@ export class Appointments implements OnInit {
             );
 
 
-          /*
-           * Save latest data to cache.
-           */
-
           this.setCachedAppointments(
             this.appointments
           );
 
-
-          /*
-           * Update UI.
-           */
 
           this.applyFilters();
 
@@ -492,11 +484,6 @@ export class Appointments implements OnInit {
 
           this.loading = false;
 
-
-          /*
-           * If cached data exists,
-           * keep displaying it.
-           */
 
           if (
             this.appointments.length > 0
@@ -616,7 +603,6 @@ export class Appointments implements OnInit {
 
       isSaving:
         false
-
     };
   }
 
@@ -627,6 +613,11 @@ export class Appointments implements OnInit {
 
   loadPatients(): void {
 
+    console.log(
+      'Loading patients...'
+    );
+
+
     this.patientService
       .getPatients()
       .subscribe({
@@ -634,6 +625,12 @@ export class Appointments implements OnInit {
         next: (
           data: Patient[]
         ) => {
+
+          console.log(
+            'Patients loaded:',
+            data
+          );
+
 
           this.patients =
             data ?? [];
@@ -659,6 +656,11 @@ export class Appointments implements OnInit {
 
   loadDoctors(): void {
 
+    console.log(
+      'Loading doctors...'
+    );
+
+
     this.doctorService
       .getDoctors()
       .subscribe({
@@ -666,6 +668,12 @@ export class Appointments implements OnInit {
         next: (
           data: Doctor[]
         ) => {
+
+          console.log(
+            'Doctors loaded:',
+            data
+          );
+
 
           this.doctors =
             data ?? [];
@@ -690,13 +698,6 @@ export class Appointments implements OnInit {
      ======================================================= */
 
   refreshAppointments(): void {
-
-    /*
-     * Manual refresh.
-     *
-     * Existing table remains visible while
-     * latest data is fetched.
-     */
 
     this.loadPatients();
 
@@ -1059,11 +1060,6 @@ export class Appointments implements OnInit {
 
   applySorting(): void {
 
-    /*
-     * Create a new array so that the
-     * original appointment list remains stable.
-     */
-
     this.filteredAppointments =
       [...this.filteredAppointments];
 
@@ -1320,16 +1316,6 @@ export class Appointments implements OnInit {
     event?: Event
   ): void {
 
-    /*
-     * Supports both:
-     *
-     * (change)="onPageSizeChange($event)"
-     *
-     * and:
-     *
-     * (change)="onPageSizeChange()"
-     */
-
     if (event) {
 
       const target =
@@ -1387,14 +1373,31 @@ export class Appointments implements OnInit {
   openAddAppointmentModal(): void {
 
     /*
-     * No API call.
-     *
-     * Modal opens immediately.
+     * Reset the Reactive Form.
      */
 
     this.clearForm();
 
     this.editingId = null;
+
+
+    /*
+     * IMPORTANT:
+     *
+     * Reload patients and doctors when
+     * Add Appointment is clicked.
+     *
+     * This does NOT change CRUD functionality.
+     */
+
+    this.loadPatients();
+
+    this.loadDoctors();
+
+
+    /*
+     * Open modal immediately.
+     */
 
     this.showAppointmentModal = true;
   }
@@ -1407,11 +1410,6 @@ export class Appointments implements OnInit {
   openEditAppointmentModal(
     appointment: AppointmentRow
   ): void {
-
-    /*
-     * Do not edit while optimistic
-     * operation is running.
-     */
 
     if (
       appointment.isSaving
@@ -1461,8 +1459,31 @@ export class Appointments implements OnInit {
 
 
     /*
-     * Modal opens immediately.
+     * Patch Reactive Form.
      */
+
+    this.appointmentForm.patchValue({
+
+      patientId:
+        this.patientId,
+
+      doctorId:
+        this.doctorId,
+
+      appointmentDate:
+        this.appointmentDate,
+
+      appointmentTime:
+        this.appointmentTime,
+
+      reason:
+        this.reason,
+
+      status:
+        this.status
+
+    });
+
 
     this.showAppointmentModal =
       true;
@@ -1474,10 +1495,6 @@ export class Appointments implements OnInit {
      ======================================================= */
 
   closeAppointmentModal(): void {
-
-    /*
-     * Close immediately.
-     */
 
     this.showAppointmentModal =
       false;
@@ -1502,7 +1519,127 @@ export class Appointments implements OnInit {
 
 
     /* -----------------------------------------------------
-       VALIDATION
+       REACTIVE FORM VALIDATION
+       ----------------------------------------------------- */
+
+    if (
+      this.appointmentForm.invalid
+    ) {
+
+      this.appointmentForm.markAllAsTouched();
+
+
+      const formValue =
+        this.appointmentForm.getRawValue();
+
+
+      if (
+        formValue.patientId === null ||
+        formValue.patientId === undefined
+      ) {
+
+        this.showError(
+          'Please select a patient.'
+        );
+
+        return;
+      }
+
+
+      if (
+        formValue.doctorId === null ||
+        formValue.doctorId === undefined
+      ) {
+
+        this.showError(
+          'Please select a doctor.'
+        );
+
+        return;
+      }
+
+
+      if (
+        !formValue.appointmentDate.trim()
+      ) {
+
+        this.showError(
+          'Please select appointment date.'
+        );
+
+        return;
+      }
+
+
+      if (
+        !formValue.appointmentTime.trim()
+      ) {
+
+        this.showError(
+          'Please select appointment time.'
+        );
+
+        return;
+      }
+
+
+      if (
+        !formValue.reason.trim()
+      ) {
+
+        this.showError(
+          'Please enter appointment reason.'
+        );
+
+        return;
+      }
+
+
+      if (
+        !formValue.status.trim()
+      ) {
+
+        this.showError(
+          'Please select appointment status.'
+        );
+
+        return;
+      }
+
+
+      return;
+    }
+
+
+    /* -----------------------------------------------------
+       READ REACTIVE FORM VALUES
+       ----------------------------------------------------- */
+
+    const formValue =
+      this.appointmentForm.getRawValue();
+
+
+    this.patientId =
+      formValue.patientId;
+
+    this.doctorId =
+      formValue.doctorId;
+
+    this.appointmentDate =
+      formValue.appointmentDate;
+
+    this.appointmentTime =
+      formValue.appointmentTime;
+
+    this.reason =
+      formValue.reason;
+
+    this.status =
+      formValue.status;
+
+
+    /* -----------------------------------------------------
+       EXISTING VALIDATION
        ----------------------------------------------------- */
 
     if (
@@ -1664,11 +1801,6 @@ export class Appointments implements OnInit {
     this.saving = true;
 
 
-    /*
-     * Find patient information for
-     * immediate table display.
-     */
-
     const patient =
       this.patients.find(
         item =>
@@ -1677,11 +1809,6 @@ export class Appointments implements OnInit {
       );
 
 
-    /*
-     * Find doctor information for
-     * immediate table display.
-     */
-
     const doctor =
       this.doctors.find(
         item =>
@@ -1689,12 +1816,6 @@ export class Appointments implements OnInit {
           request.doctorId
       );
 
-
-    /*
-     * IMPORTANT:
-     *
-     * Do NOT create a fake ID.
-     */
 
     const temporaryAppointment:
       AppointmentRow = {
@@ -1748,27 +1869,14 @@ export class Appointments implements OnInit {
       temporaryAppointment;
 
 
-    /*
-     * Add immediately to table.
-     */
-
     this.appointments = [
       ...this.appointments,
       temporaryAppointment
     ];
 
 
-    /*
-     * Update UI immediately.
-     */
-
     this.applyFilters();
 
-
-    /*
-     * Go to last page so the new
-     * appointment is visible.
-     */
 
     this.currentPage =
       this.totalPages;
@@ -1777,17 +1885,8 @@ export class Appointments implements OnInit {
     this.fixCurrentPage();
 
 
-    /*
-     * Close modal immediately.
-     */
-
     this.closeAppointmentModal();
 
-
-    /*
-     * Backend request runs in
-     * the background.
-     */
 
     this.appointmentService
       .createAppointment(request)
@@ -1797,20 +1896,11 @@ export class Appointments implements OnInit {
           createdAppointment: any
         ) => {
 
-          /*
-           * Convert backend response.
-           */
-
           const created =
             this.mapAppointment(
               createdAppointment
             );
 
-
-          /*
-           * Replace temporary row
-           * with real backend row.
-           */
 
           this.appointments =
             this.appointments.map(
@@ -1821,10 +1911,6 @@ export class Appointments implements OnInit {
                   : appointment
             );
 
-
-          /*
-           * Save cache.
-           */
 
           this.setCachedAppointments(
             this.appointments
@@ -1860,10 +1946,6 @@ export class Appointments implements OnInit {
           );
 
 
-          /*
-           * Remove optimistic row.
-           */
-
           this.appointments =
             this.appointments.filter(
               appointment =>
@@ -1875,10 +1957,6 @@ export class Appointments implements OnInit {
           this.temporaryAppointment =
             undefined;
 
-
-          /*
-           * Update cache.
-           */
 
           this.setCachedAppointments(
             this.appointments
@@ -1921,10 +1999,6 @@ export class Appointments implements OnInit {
     }
 
 
-    /*
-     * Find current appointment.
-     */
-
     const existingAppointment =
       this.appointments.find(
         appointment =>
@@ -1944,20 +2018,12 @@ export class Appointments implements OnInit {
     }
 
 
-    /*
-     * Backup old appointment.
-     */
-
     this.updatingAppointmentBackup =
       {
         ...existingAppointment,
         isSaving: false
       };
 
-
-    /*
-     * Find latest patient information.
-     */
 
     const patient =
       this.patients.find(
@@ -1967,10 +2033,6 @@ export class Appointments implements OnInit {
       );
 
 
-    /*
-     * Find latest doctor information.
-     */
-
     const doctor =
       this.doctors.find(
         item =>
@@ -1978,10 +2040,6 @@ export class Appointments implements OnInit {
           request.doctorId
       );
 
-
-    /*
-     * Create optimistic updated row.
-     */
 
     const updatedAppointment:
       AppointmentRow = {
@@ -2034,10 +2092,6 @@ export class Appointments implements OnInit {
     };
 
 
-    /*
-     * Update table immediately.
-     */
-
     this.appointments =
       this.appointments.map(
         appointment =>
@@ -2052,19 +2106,11 @@ export class Appointments implements OnInit {
     this.fixCurrentPage();
 
 
-    /*
-     * Close modal immediately.
-     */
-
     this.closeAppointmentModal();
 
 
     this.saving = true;
 
-
-    /*
-     * Backend PUT runs in background.
-     */
 
     this.appointmentService
       .updateAppointment(
@@ -2076,11 +2122,6 @@ export class Appointments implements OnInit {
         next: (
           responseAppointment: any
         ) => {
-
-          /*
-           * Replace optimistic row
-           * with backend response.
-           */
 
           const updated =
             this.mapAppointment(
@@ -2096,10 +2137,6 @@ export class Appointments implements OnInit {
                   : appointment
             );
 
-
-          /*
-           * Save cache.
-           */
 
           this.setCachedAppointments(
             this.appointments
@@ -2135,10 +2172,6 @@ export class Appointments implements OnInit {
           );
 
 
-          /*
-           * Restore old appointment.
-           */
-
           if (
             this.updatingAppointmentBackup
           ) {
@@ -2152,10 +2185,6 @@ export class Appointments implements OnInit {
               );
           }
 
-
-          /*
-           * Update cache.
-           */
 
           this.setCachedAppointments(
             this.appointments
@@ -2193,10 +2222,6 @@ export class Appointments implements OnInit {
     appointment: AppointmentRow
   ): void {
 
-    /*
-     * Do not delete temporary/saving row.
-     */
-
     if (
       appointment.isSaving
     ) {
@@ -2217,10 +2242,6 @@ export class Appointments implements OnInit {
       appointment;
 
 
-    /*
-     * Modal opens immediately.
-     */
-
     this.showDeleteModal =
       true;
   }
@@ -2231,10 +2252,6 @@ export class Appointments implements OnInit {
      ======================================================= */
 
   closeDeleteModal(): void {
-
-    /*
-     * Close immediately.
-     */
 
     this.showDeleteModal =
       false;
@@ -2280,20 +2297,12 @@ export class Appointments implements OnInit {
       appointment.id;
 
 
-    /*
-     * Backup appointment.
-     */
-
     this.deletedAppointmentBackup =
       {
         ...appointment,
         isSaving: false
       };
 
-
-    /*
-     * Close confirmation immediately.
-     */
 
     this.showDeleteModal =
       false;
@@ -2303,10 +2312,6 @@ export class Appointments implements OnInit {
       null;
 
 
-    /*
-     * Remove appointment immediately.
-     */
-
     this.appointments =
       this.appointments.filter(
         item =>
@@ -2314,18 +2319,10 @@ export class Appointments implements OnInit {
       );
 
 
-    /*
-     * Update UI immediately.
-     */
-
     this.applyFilters();
 
     this.fixCurrentPage();
 
-
-    /*
-     * Update cache immediately.
-     */
 
     this.setCachedAppointments(
       this.appointments
@@ -2334,11 +2331,6 @@ export class Appointments implements OnInit {
 
     this.deleting = true;
 
-
-    /*
-     * Backend DELETE runs in
-     * the background.
-     */
 
     this.appointmentService
       .deleteAppointment(id)
@@ -2353,12 +2345,6 @@ export class Appointments implements OnInit {
           this.deleting =
             false;
 
-
-          /*
-           * IMPORTANT:
-           *
-           * No loadAppointments() here.
-           */
 
           this.showSuccess(
             'Appointment deleted successfully.'
@@ -2376,10 +2362,6 @@ export class Appointments implements OnInit {
           );
 
 
-          /*
-           * Rollback deleted appointment.
-           */
-
           if (
             this.deletedAppointmentBackup
           ) {
@@ -2390,10 +2372,6 @@ export class Appointments implements OnInit {
             ];
           }
 
-
-          /*
-           * Update cache.
-           */
 
           this.setCachedAppointments(
             this.appointments
@@ -2442,6 +2420,27 @@ export class Appointments implements OnInit {
     this.status = 'SCHEDULED';
 
     this.editingId = null;
+
+
+    /*
+     * Reset Reactive Form.
+     */
+
+    this.appointmentForm.reset({
+
+      patientId: null,
+
+      doctorId: null,
+
+      appointmentDate: '',
+
+      appointmentTime: '',
+
+      reason: '',
+
+      status: 'SCHEDULED'
+
+    });
   }
 
 

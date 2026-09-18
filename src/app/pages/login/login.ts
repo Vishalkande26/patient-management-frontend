@@ -1,5 +1,11 @@
 import { Component, inject } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import {
+  FormControl,
+  FormGroup,
+  FormsModule,
+  ReactiveFormsModule,
+  Validators
+} from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 
 import {
@@ -11,6 +17,7 @@ import {
   selector: 'app-login',
   imports: [
     FormsModule,
+    ReactiveFormsModule,
     RouterLink
   ],
   templateUrl: './login.html',
@@ -29,6 +36,32 @@ export class Login {
   message = '';
 
   showPassword = false;
+
+
+  /*
+   * Reactive Login Form
+   *
+   * This only replaces the form handling.
+   * Authentication logic remains unchanged.
+   */
+  loginForm = new FormGroup({
+
+    email: new FormControl<string>('', {
+      nonNullable: true,
+      validators: [
+        Validators.required,
+        Validators.email
+      ]
+    }),
+
+    password: new FormControl<string>('', {
+      nonNullable: true,
+      validators: [
+        Validators.required
+      ]
+    })
+
+  });
 
 
   /*
@@ -52,13 +85,29 @@ export class Login {
    */
   login(): void {
 
-    if (!this.email || !this.password) {
+    /*
+     * Reactive Form validation
+     */
+    if (this.loginForm.invalid) {
+
+      this.loginForm.markAllAsTouched();
 
       this.message =
         'Please enter email and password';
 
       return;
     }
+
+
+    /*
+     * Get values from Reactive Form
+     */
+    const formValue = this.loginForm.getRawValue();
+
+    this.email = formValue.email;
+
+    this.password = formValue.password;
+
 
     const loginData = {
 
@@ -68,6 +117,10 @@ export class Login {
 
     };
 
+
+    /*
+     * Existing AuthService call remains unchanged
+     */
     this.authService.login(loginData).subscribe({
 
       next: (response: LoginResponse) => {
@@ -83,6 +136,10 @@ export class Login {
           'Login successful!';
 
 
+        /*
+         * Existing role-based navigation
+         * remains unchanged.
+         */
         if (response.role === 'ADMIN') {
 
           this.router.navigate(['/admin']);
@@ -105,6 +162,9 @@ export class Login {
       },
 
 
+      /*
+       * Existing error handling remains unchanged.
+       */
       error: (error: any) => {
 
         console.error(

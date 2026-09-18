@@ -5,7 +5,11 @@ import {
 } from '@angular/core';
 
 import {
-  FormsModule
+  FormsModule,
+  ReactiveFormsModule,
+  FormControl,
+  FormGroup,
+  Validators
 } from '@angular/forms';
 
 import {
@@ -31,6 +35,7 @@ import {
 
   imports: [
     FormsModule,
+    ReactiveFormsModule,
     Modal
   ],
 
@@ -50,6 +55,113 @@ export class Patients implements OnInit {
 
   private router =
     inject(Router);
+
+
+  // ============================================================
+  // FIX FOR MATH IN ANGULAR TEMPLATE
+  // ============================================================
+
+  /*
+   * Angular templates cannot directly access
+   * the global Math object unless it is exposed
+   * through the component.
+   *
+   * This keeps the existing HTML Math.min(...)
+   * functionality unchanged.
+   */
+
+  readonly Math = Math;
+
+
+  // ============================================================
+  // PATIENT REACTIVE FORM
+  // ============================================================
+
+  /*
+   * Reactive Form is used ONLY for the
+   * Add/Edit Patient modal.
+   *
+   * Search, filter and pagination controls
+   * continue using ngModel.
+   */
+
+  patientForm =
+    new FormGroup({
+
+      name: new FormControl(
+        '',
+        {
+          nonNullable: true,
+          validators: [
+            Validators.required
+          ]
+        }
+      ),
+
+      age: new FormControl(
+        0,
+        {
+          nonNullable: true,
+          validators: [
+            Validators.required,
+            Validators.min(1),
+            Validators.max(150)
+          ]
+        }
+      ),
+
+      gender: new FormControl(
+        '',
+        {
+          nonNullable: true,
+          validators: [
+            Validators.required
+          ]
+        }
+      ),
+
+      phone: new FormControl(
+        '',
+        {
+          nonNullable: true,
+          validators: [
+            Validators.required,
+            Validators.pattern(
+              /^[0-9]{10}$/
+            )
+          ]
+        }
+      ),
+
+      /*
+       * These validators keep the same
+       * validation behavior already present
+       * in your submitPatient() method.
+       *
+       * UI labels/placeholders are NOT changed.
+       */
+
+      disease: new FormControl(
+        '',
+        {
+          nonNullable: true,
+          validators: [
+            Validators.required
+          ]
+        }
+      ),
+
+      address: new FormControl(
+        '',
+        {
+          nonNullable: true,
+          validators: [
+            Validators.required
+          ]
+        }
+      )
+
+    });
 
 
   // ============================================================
@@ -207,11 +319,6 @@ export class Patients implements OnInit {
   // MESSAGE
   // ============================================================
 
-  /*
-   * Existing patients.html uses
-   * message and messageType.
-   */
-
   message = '';
 
   messageType:
@@ -297,15 +404,74 @@ export class Patients implements OnInit {
 
 
   // ============================================================
+  // RESET REACTIVE FORM
+  // ============================================================
+
+  private resetPatientForm(): void {
+
+    this.patientForm.reset({
+
+      name: '',
+
+      age: 0,
+
+      gender: '',
+
+      phone: '',
+
+      disease: '',
+
+      address: ''
+
+    });
+
+    this.patientForm.markAsPristine();
+
+    this.patientForm.markAsUntouched();
+  }
+
+
+  // ============================================================
+  // PATCH REACTIVE FORM FOR EDIT
+  // ============================================================
+
+  private patchPatientForm(
+    patient: Patient
+  ): void {
+
+    this.patientForm.patchValue({
+
+      name:
+        patient.name,
+
+      age:
+        patient.age,
+
+      gender:
+        patient.gender,
+
+      phone:
+        patient.phone,
+
+      disease:
+        patient.disease,
+
+      address:
+        patient.address
+
+    });
+
+    this.patientForm.markAsPristine();
+
+    this.patientForm.markAsUntouched();
+  }
+
+
+  // ============================================================
   // LOAD PATIENTS
   // ============================================================
 
   loadPatients(): void {
-
-    /*
-     * Only show loading when
-     * there is no current data.
-     */
 
     if (
       this.patients.length === 0
@@ -322,11 +488,6 @@ export class Patients implements OnInit {
         next: (
           data: Patient[]
         ) => {
-
-          /*
-           * Do not overwrite an
-           * optimistic CRUD operation.
-           */
 
           if (
             this.saving ||
@@ -373,11 +534,6 @@ export class Patients implements OnInit {
 
           this.loading = false;
 
-
-          /*
-           * If cached data exists,
-           * keep showing it.
-           */
 
           if (
             this.patients.length > 0
@@ -505,10 +661,6 @@ export class Patients implements OnInit {
     return this.patients.filter(
       (patient: Patient) => {
 
-        /*
-         * Hide soft-deleted patients.
-         */
-
         if (
           patient.deleted === true
         ) {
@@ -516,10 +668,6 @@ export class Patients implements OnInit {
           return false;
         }
 
-
-        /*
-         * Global search.
-         */
 
         const matchesSearch =
           !search ||
@@ -557,19 +705,11 @@ export class Patients implements OnInit {
             .includes(search);
 
 
-        /*
-         * Gender dropdown.
-         */
-
         const matchesGender =
           this.genderFilter === 'ALL' ||
           patient.gender ===
             this.genderFilter;
 
-
-        /*
-         * Column filters.
-         */
 
         const matchesId =
           !idFilter ||
@@ -859,16 +999,6 @@ export class Patients implements OnInit {
     event?: Event
   ): void {
 
-    /*
-     * Supports HTML such as:
-     *
-     * (change)="onPageSizeChange($event)"
-     *
-     * and also:
-     *
-     * (change)="onPageSizeChange()"
-     */
-
     if (event) {
 
       const target =
@@ -889,17 +1019,7 @@ export class Patients implements OnInit {
     }
 
 
-    /*
-     * Always return to the first page
-     * after changing page size.
-     */
-
     this.currentPage = 1;
-
-
-    /*
-     * Make sure the page is valid.
-     */
 
     this.fixCurrentPage();
   }
@@ -1098,20 +1218,18 @@ export class Patients implements OnInit {
 
   openAddPatientModal(): void {
 
-    /*
-     * No API call.
-     * Modal opens immediately.
-     */
-
     this.patient =
       this.createEmptyPatient();
 
-
     this.editingId = null;
-
 
     this.message = '';
 
+    /*
+     * Reset Reactive Form for ADD.
+     */
+
+    this.resetPatientForm();
 
     this.showPatientModal =
       true;
@@ -1126,11 +1244,6 @@ export class Patients implements OnInit {
     patient: Patient
   ): void {
 
-    /*
-     * No GET request.
-     * Data already exists in table.
-     */
-
     if (
       patient.id === undefined ||
       patient.isSaving
@@ -1143,12 +1256,6 @@ export class Patients implements OnInit {
     this.editingId =
       patient.id;
 
-
-    /*
-     * Copy patient so editing
-     * does not immediately modify
-     * the table.
-     */
 
     this.patient = {
 
@@ -1180,12 +1287,17 @@ export class Patients implements OnInit {
     };
 
 
-    this.message = '';
-
-
     /*
-     * Open immediately.
+     * Patch existing patient
+     * into Reactive Form.
      */
+
+    this.patchPatientForm(
+      this.patient
+    );
+
+
+    this.message = '';
 
     this.showPatientModal =
       true;
@@ -1221,6 +1333,14 @@ export class Patients implements OnInit {
 
     this.patient =
       this.createEmptyPatient();
+
+
+    /*
+     * Reset Reactive Form when
+     * modal is closed.
+     */
+
+    this.resetPatientForm();
   }
 
 
@@ -1237,7 +1357,73 @@ export class Patients implements OnInit {
 
 
     // ----------------------------------------------------------
-    // VALIDATION
+    // REACTIVE FORM VALIDATION
+    // ----------------------------------------------------------
+
+    if (
+      this.patientForm.invalid
+    ) {
+
+      this.patientForm.markAllAsTouched();
+
+      /*
+       * Keep the same validation messages
+       * already used by the original form.
+       */
+
+      const errorMessage =
+        this.getPatientFormErrorMessage();
+
+      this.showError(
+        errorMessage
+      );
+
+      return;
+    }
+
+
+    // ----------------------------------------------------------
+    // GET VALUES FROM REACTIVE FORM
+    // ----------------------------------------------------------
+
+    const formValue =
+      this.patientForm.getRawValue();
+
+
+    /*
+     * Copy Reactive Form values into
+     * the existing patient object.
+     *
+     * CRUD continues using the same
+     * patient object and methods.
+     */
+
+    this.patient = {
+
+      ...this.patient,
+
+      name:
+        formValue.name.trim(),
+
+      age:
+        Number(formValue.age),
+
+      gender:
+        formValue.gender.trim(),
+
+      phone:
+        formValue.phone.trim(),
+
+      disease:
+        formValue.disease.trim(),
+
+      address:
+        formValue.address.trim()
+    };
+
+
+    // ----------------------------------------------------------
+    // EXISTING VALIDATION
     // ----------------------------------------------------------
 
     if (
@@ -1327,9 +1513,9 @@ export class Patients implements OnInit {
     }
 
 
-    /*
-     * ADD
-     */
+    // ----------------------------------------------------------
+    // ADD
+    // ----------------------------------------------------------
 
     if (
       this.editingId === null
@@ -1341,11 +1527,105 @@ export class Patients implements OnInit {
     }
 
 
-    /*
-     * UPDATE
-     */
+    // ----------------------------------------------------------
+    // UPDATE
+    // ----------------------------------------------------------
 
     this.updatePatientOptimistically();
+  }
+
+
+  // ============================================================
+  // REACTIVE FORM ERROR MESSAGE
+  // ============================================================
+
+  private getPatientFormErrorMessage(): string {
+
+    const name =
+      this.patientForm.controls.name;
+
+    const age =
+      this.patientForm.controls.age;
+
+    const gender =
+      this.patientForm.controls.gender;
+
+    const phone =
+      this.patientForm.controls.phone;
+
+    const disease =
+      this.patientForm.controls.disease;
+
+    const address =
+      this.patientForm.controls.address;
+
+
+    if (
+      name.hasError('required')
+    ) {
+
+      return 'Patient name is required.';
+    }
+
+
+    if (
+      age.hasError('required') ||
+      age.hasError('min')
+    ) {
+
+      return 'Age must be greater than 0.';
+    }
+
+
+    if (
+      age.hasError('max')
+    ) {
+
+      return 'Age cannot be greater than 150.';
+    }
+
+
+    if (
+      gender.hasError('required')
+    ) {
+
+      return 'Gender is required.';
+    }
+
+
+    if (
+      phone.hasError('required')
+    ) {
+
+      return 'Phone number is required.';
+    }
+
+
+    if (
+      phone.hasError('pattern')
+    ) {
+
+      return 'Phone number must be exactly 10 digits.';
+    }
+
+
+    if (
+      disease.hasError('required')
+    ) {
+
+      return 'Disease is required.';
+    }
+
+
+    if (
+      address.hasError('required')
+    ) {
+
+      return 'Address is required.';
+    }
+
+
+    return 'Please enter valid patient information.';
   }
 
 
@@ -1373,11 +1653,6 @@ export class Patients implements OnInit {
 
     this.saving = true;
 
-
-    /*
-     * Temporary patient intentionally
-     * has NO fake ID.
-     */
 
     const temporaryPatient: Patient = {
 
@@ -1409,34 +1684,18 @@ export class Patients implements OnInit {
       temporaryPatient;
 
 
-    /*
-     * Update UI immediately.
-     */
-
     this.patients = [
       ...this.patients,
       temporaryPatient
     ];
 
 
-    /*
-     * Go to last page.
-     */
-
     this.currentPage =
       this.totalPages;
 
 
-    /*
-     * Close modal immediately.
-     */
-
     this.closePatientModal();
 
-
-    /*
-     * Request sent to backend.
-     */
 
     const requestPatient: Patient = {
 
@@ -1460,10 +1719,6 @@ export class Patients implements OnInit {
     };
 
 
-    /*
-     * POST runs in background.
-     */
-
     this.patientService
       .createPatient(
         requestPatient
@@ -1473,11 +1728,6 @@ export class Patients implements OnInit {
         next: (
           createdPatient: Patient
         ) => {
-
-          /*
-           * Replace temporary row
-           * with real backend row.
-           */
 
           this.patients =
             this.patients.map(
@@ -1534,10 +1784,6 @@ export class Patients implements OnInit {
           );
 
 
-          /*
-           * Remove temporary row.
-           */
-
           this.patients =
             this.patients.filter(
               (item: Patient) =>
@@ -1591,10 +1837,6 @@ export class Patients implements OnInit {
       this.editingId;
 
 
-    /*
-     * Find current patient.
-     */
-
     const existingPatient =
       this.patients.find(
         (item: Patient) =>
@@ -1611,10 +1853,6 @@ export class Patients implements OnInit {
       return;
     }
 
-
-    /*
-     * Backup old data.
-     */
 
     const oldPatient: Patient = {
 
@@ -1650,10 +1888,6 @@ export class Patients implements OnInit {
       oldPatient;
 
 
-    /*
-     * Create updated object.
-     */
-
     const updatedPatient: Patient = {
 
       id: id,
@@ -1683,10 +1917,6 @@ export class Patients implements OnInit {
     };
 
 
-    /*
-     * Update UI immediately.
-     */
-
     this.patients =
       this.patients.map(
         (item: Patient) =>
@@ -1696,19 +1926,11 @@ export class Patients implements OnInit {
       );
 
 
-    /*
-     * Close modal immediately.
-     */
-
     this.closePatientModal();
 
 
     this.saving = true;
 
-
-    /*
-     * Request sent to backend.
-     */
 
     const requestPatient: Patient = {
 
@@ -1732,10 +1954,6 @@ export class Patients implements OnInit {
     };
 
 
-    /*
-     * PUT runs in background.
-     */
-
     this.patientService
       .updatePatient(
         id,
@@ -1746,11 +1964,6 @@ export class Patients implements OnInit {
         next: (
           responsePatient: Patient
         ) => {
-
-          /*
-           * Replace optimistic row
-           * with backend response.
-           */
 
           this.patients =
             this.patients.map(
@@ -1805,10 +2018,6 @@ export class Patients implements OnInit {
             error
           );
 
-
-          /*
-           * Rollback.
-           */
 
           if (
             this.updatingPatientBackup
@@ -1867,10 +2076,6 @@ export class Patients implements OnInit {
     }
 
 
-    /*
-     * No API call.
-     */
-
     this.deletePatientId =
       patient.id;
 
@@ -1878,10 +2083,6 @@ export class Patients implements OnInit {
     this.deletePatientName =
       patient.name;
 
-
-    /*
-     * Open immediately.
-     */
 
     this.showDeleteModal =
       true;
@@ -1932,10 +2133,6 @@ export class Patients implements OnInit {
       this.deletePatientId;
 
 
-    /*
-     * Find patient.
-     */
-
     const patientToDelete =
       this.patients.find(
         (item: Patient) =>
@@ -1950,10 +2147,6 @@ export class Patients implements OnInit {
       return;
     }
 
-
-    /*
-     * Backup patient.
-     */
 
     this.deletedPatientBackup = {
 
@@ -1985,16 +2178,8 @@ export class Patients implements OnInit {
     };
 
 
-    /*
-     * Close modal immediately.
-     */
-
     this.closeDeleteModal();
 
-
-    /*
-     * Remove row immediately.
-     */
 
     this.patients =
       this.patients.filter(
@@ -2002,10 +2187,6 @@ export class Patients implements OnInit {
           item.id !== id
       );
 
-
-    /*
-     * Update cache.
-     */
 
     this.patientService
       .setCachedPatients(
@@ -2015,10 +2196,6 @@ export class Patients implements OnInit {
 
     this.fixCurrentPage();
 
-
-    /*
-     * Background delete.
-     */
 
     this.deleting = true;
 
@@ -2036,10 +2213,6 @@ export class Patients implements OnInit {
           this.deleting = false;
 
 
-          /*
-           * No loadPatients().
-           */
-
           this.showSuccess(
             'Patient deleted successfully!'
           );
@@ -2055,10 +2228,6 @@ export class Patients implements OnInit {
             error
           );
 
-
-          /*
-           * Rollback.
-           */
 
           if (
             this.deletedPatientBackup
@@ -2142,6 +2311,8 @@ export class Patients implements OnInit {
       this.createEmptyPatient();
 
     this.editingId = null;
+
+    this.resetPatientForm();
   }
 
 

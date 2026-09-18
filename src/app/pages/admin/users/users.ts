@@ -5,7 +5,11 @@ import {
 } from '@angular/core';
 
 import {
-  FormsModule
+  FormsModule,
+  ReactiveFormsModule,
+  FormControl,
+  FormGroup,
+  Validators
 } from '@angular/forms';
 
 import {
@@ -29,6 +33,7 @@ import {
 
   imports: [
     FormsModule,
+    ReactiveFormsModule,
     Modal
   ],
 
@@ -37,7 +42,6 @@ import {
   styleUrl: './users.css'
 })
 export class Users implements OnInit {
-
 
   // =====================================================
   // SERVICE
@@ -66,19 +70,18 @@ export class Users implements OnInit {
    * loading is ONLY for the initial list
    * when there is no cached data.
    */
-
   loading = false;
+
 
   /*
    * saving is used for Add / Update.
    */
-
   saving = false;
+
 
   /*
    * deleting is used for Delete.
    */
-
   deleting = false;
 
 
@@ -95,6 +98,44 @@ export class Users implements OnInit {
   password = '';
 
   role = 'PATIENT';
+
+
+  // =====================================================
+  // REACTIVE FORM
+  // =====================================================
+
+  userForm = new FormGroup({
+
+    username: new FormControl<string>('', {
+      nonNullable: true,
+      validators: [
+        Validators.required
+      ]
+    }),
+
+    email: new FormControl<string>('', {
+      nonNullable: true,
+      validators: [
+        Validators.required,
+        Validators.email
+      ]
+    }),
+
+    password: new FormControl<string>('', {
+      nonNullable: true,
+      validators: [
+        Validators.minLength(6)
+      ]
+    }),
+
+    role: new FormControl<string>('PATIENT', {
+      nonNullable: true,
+      validators: [
+        Validators.required
+      ]
+    })
+
+  });
 
 
   // =====================================================
@@ -266,7 +307,6 @@ export class Users implements OnInit {
     if (
       this.users.length === 0
     ) {
-
       this.loading = true;
     }
 
@@ -320,9 +360,7 @@ export class Users implements OnInit {
 
           this.applyFilters();
 
-
           this.loading = false;
-
 
           this.fixCurrentPage();
         },
@@ -471,21 +509,17 @@ export class Users implements OnInit {
 
           const matchesSearch =
             !search ||
-
             String(
               user.id ?? ''
             )
               .toLowerCase()
               .includes(search) ||
-
             user.username
               .toLowerCase()
               .includes(search) ||
-
             user.email
               .toLowerCase()
               .includes(search) ||
-
             user.role
               .toLowerCase()
               .includes(search);
@@ -493,14 +527,12 @@ export class Users implements OnInit {
 
           const matchesRole =
             this.roleFilter === 'ALL' ||
-
             user.role ===
             this.roleFilter;
 
 
           const matchesUsername =
             !username ||
-
             user.username
               .toLowerCase()
               .includes(username);
@@ -508,7 +540,6 @@ export class Users implements OnInit {
 
           const matchesEmail =
             !email ||
-
             user.email
               .toLowerCase()
               .includes(email);
@@ -516,7 +547,6 @@ export class Users implements OnInit {
 
           const matchesRoleColumn =
             !roleColumn ||
-
             user.role
               .toLowerCase()
               .includes(roleColumn);
@@ -663,7 +693,6 @@ export class Users implements OnInit {
         if (
           valueA < valueB
         ) {
-
           return -1 * direction;
         }
 
@@ -671,7 +700,6 @@ export class Users implements OnInit {
         if (
           valueA > valueB
         ) {
-
           return 1 * direction;
         }
 
@@ -784,7 +812,6 @@ export class Users implements OnInit {
     if (
       user.isSaving
     ) {
-
       return;
     }
 
@@ -792,7 +819,6 @@ export class Users implements OnInit {
     if (
       user.id === undefined
     ) {
-
       return;
     }
 
@@ -823,6 +849,36 @@ export class Users implements OnInit {
      */
 
     this.password = '';
+
+
+    /*
+     * Populate Reactive Form.
+     */
+
+    this.userForm.patchValue({
+
+      username:
+        user.username,
+
+      email:
+        user.email,
+
+      password:
+        '',
+
+      role:
+        user.role
+
+    });
+
+
+    /*
+     * Reset validation state.
+     */
+
+    this.userForm.markAsPristine();
+
+    this.userForm.markAsUntouched();
 
 
     /*
@@ -862,22 +918,128 @@ export class Users implements OnInit {
     if (
       this.saving
     ) {
+      return;
+    }
+
+
+    // -----------------------------------------------------
+    // REACTIVE FORM VALIDATION
+    // -----------------------------------------------------
+
+    if (
+      this.userForm.invalid
+    ) {
+
+      this.userForm.markAllAsTouched();
+
+
+      const username =
+        this.userForm.controls.username;
+
+      const email =
+        this.userForm.controls.email;
+
+      const password =
+        this.userForm.controls.password;
+
+
+      if (
+        username.hasError('required')
+      ) {
+
+        this.showToast(
+          'Username is required.',
+          'error'
+        );
+
+        return;
+      }
+
+
+      if (
+        email.hasError('required')
+      ) {
+
+        this.showToast(
+          'Email is required.',
+          'error'
+        );
+
+        return;
+      }
+
+
+      if (
+        email.hasError('email')
+      ) {
+
+        this.showToast(
+          'Please enter a valid email address.',
+          'error'
+        );
+
+        return;
+      }
+
+
+      /*
+       * Password is required only during Add.
+       */
+
+      if (
+        this.editingId === null &&
+        password.hasError('required')
+      ) {
+
+        this.showToast(
+          'Password is required.',
+          'error'
+        );
+
+        return;
+      }
+
+
+      if (
+        password.hasError('minlength')
+      ) {
+
+        this.showToast(
+          'Password must contain at least 6 characters.',
+          'error'
+        );
+
+        return;
+      }
+
 
       return;
     }
 
 
     // -----------------------------------------------------
-    // VALIDATION
+    // GET REACTIVE FORM VALUES
     // -----------------------------------------------------
 
+    const formValue =
+      this.userForm.getRawValue();
+
+
     const trimmedUsername =
-      this.username.trim();
+      formValue.username.trim();
 
 
     const trimmedEmail =
-      this.email.trim();
+      formValue.email.trim();
 
+
+    const trimmedPassword =
+      formValue.password.trim();
+
+
+    // -----------------------------------------------------
+    // KEEP EXISTING VALIDATION
+    // -----------------------------------------------------
 
     if (
       !trimmedUsername
@@ -930,7 +1092,7 @@ export class Users implements OnInit {
 
     if (
       this.editingId === null &&
-      !this.password.trim()
+      !trimmedPassword
     ) {
 
       this.showToast(
@@ -947,8 +1109,8 @@ export class Users implements OnInit {
      */
 
     if (
-      this.password.trim() &&
-      this.password.trim().length < 6
+      trimmedPassword &&
+      trimmedPassword.length < 6
     ) {
 
       this.showToast(
@@ -958,6 +1120,23 @@ export class Users implements OnInit {
 
       return;
     }
+
+
+    // -----------------------------------------------------
+    // KEEP COMPONENT VARIABLES IN SYNC
+    // -----------------------------------------------------
+
+    this.username =
+      trimmedUsername;
+
+    this.email =
+      trimmedEmail;
+
+    this.password =
+      trimmedPassword;
+
+    this.role =
+      formValue.role;
 
 
     // -----------------------------------------------------
@@ -973,7 +1152,8 @@ export class Users implements OnInit {
         trimmedEmail,
 
       role:
-        this.role
+        formValue.role
+
     };
 
 
@@ -983,11 +1163,11 @@ export class Users implements OnInit {
      */
 
     if (
-      this.password.trim()
+      trimmedPassword
     ) {
 
       request.password =
-        this.password.trim();
+        trimmedPassword;
     }
 
 
@@ -1029,7 +1209,6 @@ export class Users implements OnInit {
     if (
       this.saving
     ) {
-
       return;
     }
 
@@ -1054,6 +1233,7 @@ export class Users implements OnInit {
 
       isSaving:
         true
+
     };
 
 
@@ -1129,6 +1309,7 @@ export class Users implements OnInit {
 
                     isSaving:
                       false
+
                   };
                 }
 
@@ -1157,7 +1338,6 @@ export class Users implements OnInit {
 
 
           this.applyFilters();
-
 
           this.fixCurrentPage();
 
@@ -1211,7 +1391,6 @@ export class Users implements OnInit {
 
           this.applyFilters();
 
-
           this.fixCurrentPage();
 
 
@@ -1240,7 +1419,6 @@ export class Users implements OnInit {
     if (
       this.saving
     ) {
-
       return;
     }
 
@@ -1289,6 +1467,7 @@ export class Users implements OnInit {
 
       isSaving:
         false
+
     };
 
 
@@ -1299,7 +1478,6 @@ export class Users implements OnInit {
     const updatedUser: User = {
 
       id:
-
         existingUser.id,
 
       username:
@@ -1313,6 +1491,7 @@ export class Users implements OnInit {
 
       isSaving:
         true
+
     };
 
 
@@ -1377,6 +1556,7 @@ export class Users implements OnInit {
 
                     isSaving:
                       false
+
                   };
                 }
 
@@ -1405,7 +1585,6 @@ export class Users implements OnInit {
 
 
           this.applyFilters();
-
 
           this.fixCurrentPage();
 
@@ -1465,7 +1644,6 @@ export class Users implements OnInit {
 
           this.applyFilters();
 
-
           this.fixCurrentPage();
 
 
@@ -1498,7 +1676,6 @@ export class Users implements OnInit {
     if (
       user.isSaving
     ) {
-
       return;
     }
 
@@ -1506,7 +1683,6 @@ export class Users implements OnInit {
     if (
       user.id === undefined
     ) {
-
       return;
     }
 
@@ -1552,7 +1728,6 @@ export class Users implements OnInit {
     if (
       this.deleting
     ) {
-
       return;
     }
 
@@ -1600,6 +1775,7 @@ export class Users implements OnInit {
 
       isSaving:
         false
+
     };
 
 
@@ -1631,7 +1807,6 @@ export class Users implements OnInit {
      */
 
     this.applyFilters();
-
 
     this.fixCurrentPage();
 
@@ -1726,7 +1901,6 @@ export class Users implements OnInit {
 
           this.applyFilters();
 
-
           this.fixCurrentPage();
 
 
@@ -1758,6 +1932,32 @@ export class Users implements OnInit {
     this.role = 'PATIENT';
 
     this.editingId = null;
+
+
+    /*
+     * Reset Reactive Form.
+     */
+
+    this.userForm.reset({
+
+      username: '',
+
+      email: '',
+
+      password: '',
+
+      role: 'PATIENT'
+
+    });
+
+
+    /*
+     * Reset validation state.
+     */
+
+    this.userForm.markAsPristine();
+
+    this.userForm.markAsUntouched();
   }
 
 
@@ -1853,7 +2053,6 @@ export class Users implements OnInit {
      */
 
     this.currentPage = 1;
-
 
     this.updatePagination();
   }
@@ -1991,7 +2190,6 @@ export class Users implements OnInit {
     return Math.min(
       this.currentPage *
         this.pageSize,
-
       this.totalRecords
     );
   }
@@ -2087,7 +2285,7 @@ export class Users implements OnInit {
 
     if (
       typeof error.error ===
-      'string' &&
+        'string' &&
       error.error.trim()
     ) {
 
@@ -2104,7 +2302,7 @@ export class Users implements OnInit {
     if (
       error.error?.message &&
       typeof error.error.message ===
-      'string'
+        'string'
     ) {
 
       return error.error.message;
@@ -2120,7 +2318,7 @@ export class Users implements OnInit {
     if (
       error.error?.error &&
       typeof error.error.error ===
-      'string'
+        'string'
     ) {
 
       return error.error.error;

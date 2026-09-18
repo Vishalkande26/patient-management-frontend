@@ -8,8 +8,10 @@ import {
 } from '@angular/core';
 
 import {
-  FormsModule,
-  NgForm
+  FormControl,
+  FormGroup,
+  ReactiveFormsModule,
+  Validators
 } from '@angular/forms';
 
 import {
@@ -20,7 +22,7 @@ import {
   selector: 'app-doctor-form',
   standalone: true,
   imports: [
-    FormsModule
+    ReactiveFormsModule
   ],
   templateUrl: './doctor-form.html'
 })
@@ -47,13 +49,60 @@ export class DoctorForm implements OnChanges {
   @Output()
   cancelled = new EventEmitter<void>();
 
-  formDoctor: Doctor = {
-    name: '',
-    specialization: '',
-    phone: '',
-    email: '',
-    experience: 0
-  };
+  doctorForm = new FormGroup({
+    name: new FormControl<string>(
+      '',
+      {
+        nonNullable: true,
+        validators: [
+          Validators.required
+        ]
+      }
+    ),
+
+    specialization: new FormControl<string>(
+      '',
+      {
+        nonNullable: true,
+        validators: [
+          Validators.required
+        ]
+      }
+    ),
+
+    phone: new FormControl<string>(
+      '',
+      {
+        nonNullable: true,
+        validators: [
+          Validators.required,
+          Validators.pattern(/^[0-9]{10}$/)
+        ]
+      }
+    ),
+
+    email: new FormControl<string>(
+      '',
+      {
+        nonNullable: true,
+        validators: [
+          Validators.required,
+          Validators.email
+        ]
+      }
+    ),
+
+    experience: new FormControl<number>(
+      0,
+      {
+        nonNullable: true,
+        validators: [
+          Validators.required,
+          Validators.min(0)
+        ]
+      }
+    )
+  });
 
   ngOnChanges(
     changes: SimpleChanges
@@ -61,52 +110,61 @@ export class DoctorForm implements OnChanges {
 
     if (changes['doctor']) {
 
-      this.formDoctor = {
-        id: this.doctor.id,
-        name: this.doctor.name ?? '',
+      this.doctorForm.patchValue({
+
+        name:
+          this.doctor.name ?? '',
+
         specialization:
           this.doctor.specialization ?? '',
+
         phone:
           this.doctor.phone ?? '',
+
         email:
           this.doctor.email ?? '',
+
         experience:
           this.doctor.experience ?? 0
-      };
+
+      });
+
+      this.doctorForm.markAsPristine();
+      this.doctorForm.markAsUntouched();
 
     }
-
   }
 
-  submitForm(
-    form: NgForm
-  ): void {
+  submitForm(): void {
 
     if (this.saving) {
       return;
     }
 
-    if (!form.valid) {
+    if (this.doctorForm.invalid) {
+
+      this.doctorForm.markAllAsTouched();
+
       return;
     }
 
     const doctorData: Doctor = {
 
       name:
-        this.formDoctor.name,
+        this.doctorForm.controls.name.value.trim(),
 
       specialization:
-        this.formDoctor.specialization,
+        this.doctorForm.controls.specialization.value.trim(),
 
       phone:
-        this.formDoctor.phone,
+        this.doctorForm.controls.phone.value.trim(),
 
       email:
-        this.formDoctor.email,
+        this.doctorForm.controls.email.value.trim(),
 
       experience:
         Number(
-          this.formDoctor.experience
+          this.doctorForm.controls.experience.value
         )
 
     };
@@ -114,7 +172,6 @@ export class DoctorForm implements OnChanges {
     this.submitted.emit(
       doctorData
     );
-
   }
 
   cancel(): void {
@@ -124,7 +181,25 @@ export class DoctorForm implements OnChanges {
     }
 
     this.cancelled.emit();
+  }
 
+  isFieldInvalid(
+    fieldName:
+      | 'name'
+      | 'specialization'
+      | 'phone'
+      | 'email'
+      | 'experience'
+  ): boolean {
+
+    const control =
+      this.doctorForm.controls[fieldName];
+
+    return (
+      control.invalid &&
+      (control.touched ||
+        control.dirty)
+    );
   }
 
 }

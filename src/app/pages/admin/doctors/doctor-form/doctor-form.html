@@ -1,6 +1,6 @@
 <form
-  #doctorForm="ngForm"
-  (ngSubmit)="submitForm(doctorForm)"
+  [formGroup]="doctorForm"
+  (ngSubmit)="submitForm()"
   class="doctor-modal-form"
 >
 
@@ -37,6 +37,8 @@
 
   <div class="form-grid">
 
+    <!-- Doctor Name -->
+
     <div class="form-group">
 
       <label>
@@ -46,15 +48,27 @@
 
       <input
         type="text"
-        name="name"
-        [(ngModel)]="formDoctor.name"
+        formControlName="name"
         placeholder="Enter doctor name"
-        required
         autocomplete="off"
       />
 
+      @if (isFieldInvalid('name')) {
+
+        <small class="validation-message">
+
+          @if (doctorForm.controls.name.hasError('required')) {
+            Doctor name is required.
+          }
+
+        </small>
+
+      }
+
     </div>
 
+
+    <!-- Specialization -->
 
     <div class="form-group">
 
@@ -65,15 +79,29 @@
 
       <input
         type="text"
-        name="specialization"
-        [(ngModel)]="formDoctor.specialization"
+        formControlName="specialization"
         placeholder="e.g. Cardiologist"
-        required
         autocomplete="off"
       />
 
+      @if (isFieldInvalid('specialization')) {
+
+        <small class="validation-message">
+
+          @if (
+            doctorForm.controls.specialization.hasError('required')
+          ) {
+            Specialization is required.
+          }
+
+        </small>
+
+      }
+
     </div>
 
+
+    <!-- Phone -->
 
     <div class="form-group">
 
@@ -84,16 +112,36 @@
 
       <input
         type="tel"
-        name="phone"
-        [(ngModel)]="formDoctor.phone"
+        formControlName="phone"
         placeholder="Enter 10 digit phone number"
         maxlength="10"
-        required
         autocomplete="off"
       />
 
+      @if (isFieldInvalid('phone')) {
+
+        <small class="validation-message">
+
+          @if (doctorForm.controls.phone.hasError('required')) {
+
+            Phone number is required.
+
+          } @else if (
+            doctorForm.controls.phone.hasError('pattern')
+          ) {
+
+            Phone number must be exactly 10 digits.
+
+          }
+
+        </small>
+
+      }
+
     </div>
 
+
+    <!-- Email -->
 
     <div class="form-group">
 
@@ -104,15 +152,35 @@
 
       <input
         type="email"
-        name="email"
-        [(ngModel)]="formDoctor.email"
+        formControlName="email"
         placeholder="doctor@example.com"
-        required
         autocomplete="off"
       />
 
+      @if (isFieldInvalid('email')) {
+
+        <small class="validation-message">
+
+          @if (doctorForm.controls.email.hasError('required')) {
+
+            Email is required.
+
+          } @else if (
+            doctorForm.controls.email.hasError('email')
+          ) {
+
+            Please enter a valid email address.
+
+          }
+
+        </small>
+
+      }
+
     </div>
 
+
+    <!-- Experience -->
 
     <div class="form-group full-width">
 
@@ -125,11 +193,9 @@
 
         <input
           type="number"
-          name="experience"
-          [(ngModel)]="formDoctor.experience"
+          formControlName="experience"
           min="0"
           placeholder="Enter experience"
-          required
         />
 
         <span>
@@ -137,6 +203,28 @@
         </span>
 
       </div>
+
+      @if (isFieldInvalid('experience')) {
+
+        <small class="validation-message">
+
+          @if (
+            doctorForm.controls.experience.hasError('required')
+          ) {
+
+            Experience is required.
+
+          } @else if (
+            doctorForm.controls.experience.hasError('min')
+          ) {
+
+            Experience cannot be negative.
+
+          }
+
+        </small>
+
+      }
 
     </div>
 
@@ -160,7 +248,7 @@
       class="modal-submit-button"
       [disabled]="
         saving ||
-        !doctorForm.form.valid
+        doctorForm.invalid
       "
     >
 

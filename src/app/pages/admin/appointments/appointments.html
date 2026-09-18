@@ -1023,8 +1023,13 @@
     (closed)="closeAppointmentModal()">
 
 
+    <!-- ===================================================
+         REACTIVE FORM
+         =================================================== -->
+
     <form
       class="appointment-modal-form"
+      [formGroup]="appointmentForm"
       (ngSubmit)="saveAppointment()">
 
 
@@ -1072,8 +1077,7 @@
           </label>
 
           <select
-            [(ngModel)]="patientId"
-            name="patientId"
+            formControlName="patientId"
             required>
 
             <option [ngValue]="null">
@@ -1115,8 +1119,7 @@
           </label>
 
           <select
-            [(ngModel)]="doctorId"
-            name="doctorId"
+            formControlName="doctorId"
             required>
 
             <option [ngValue]="null">
@@ -1160,8 +1163,7 @@
 
           <input
             type="date"
-            [(ngModel)]="appointmentDate"
-            name="appointmentDate"
+            formControlName="appointmentDate"
             required>
 
         </div>
@@ -1178,8 +1180,7 @@
 
           <input
             type="time"
-            [(ngModel)]="appointmentTime"
-            name="appointmentTime"
+            formControlName="appointmentTime"
             required>
 
         </div>
@@ -1195,8 +1196,7 @@
           </label>
 
           <select
-            [(ngModel)]="status"
-            name="status"
+            formControlName="status"
             required>
 
             @for (
@@ -1225,8 +1225,7 @@
           </label>
 
           <textarea
-            [(ngModel)]="reason"
-            name="reason"
+            formControlName="reason"
             rows="4"
             placeholder="Enter appointment reason"
             required></textarea>
@@ -1268,7 +1267,7 @@
         <button
           type="submit"
           class="modal-submit-button"
-          [disabled]="saving">
+          [disabled]="saving || appointmentForm.invalid">
 
           @if (saving) {
 

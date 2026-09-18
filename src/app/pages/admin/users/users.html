@@ -697,8 +697,13 @@
     (closed)="closeUserModal()">
 
 
+    <!-- =====================================================
+         REACTIVE FORM
+         ===================================================== -->
+
     <form
       class="user-modal-form"
+      [formGroup]="userForm"
       (ngSubmit)="saveUser()">
 
 
@@ -750,8 +755,7 @@
 
           <input
             type="text"
-            [(ngModel)]="username"
-            name="username"
+            formControlName="username"
             placeholder="Enter username"
             autocomplete="off"
             required>
@@ -775,8 +779,7 @@
 
           <input
             type="email"
-            [(ngModel)]="email"
-            name="email"
+            formControlName="email"
             placeholder="Enter email address"
             autocomplete="off"
             required>
@@ -810,8 +813,7 @@
 
           <input
             type="password"
-            [(ngModel)]="password"
-            name="password"
+            formControlName="password"
             [placeholder]="editingId === null
               ? 'Enter password'
               : 'Enter new password'"
@@ -835,8 +837,7 @@
           </label>
 
           <select
-            [(ngModel)]="role"
-            name="role">
+            formControlName="role">
 
             @for (
               item of roles;

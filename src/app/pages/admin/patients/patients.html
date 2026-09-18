@@ -845,8 +845,12 @@
     (closed)="closePatientModal()"
   >
 
+    <!-- =====================================================
+         REACTIVE FORM
+         ===================================================== -->
+
     <form
-      #patientForm="ngForm"
+      [formGroup]="patientForm"
       (ngSubmit)="submitPatient()"
       class="patient-modal-form"
     >
@@ -897,10 +901,8 @@
 
           <input
             type="text"
-            name="name"
-            [(ngModel)]="patient.name"
+            formControlName="name"
             placeholder="Enter patient name"
-            required
             autocomplete="off"
           />
 
@@ -918,12 +920,10 @@
 
           <input
             type="number"
-            name="age"
-            [(ngModel)]="patient.age"
+            formControlName="age"
             min="1"
             max="150"
             placeholder="Enter age"
-            required
           />
 
         </div>
@@ -939,9 +939,7 @@
           </label>
 
           <select
-            name="gender"
-            [(ngModel)]="patient.gender"
-            required
+            formControlName="gender"
           >
 
             <option value="">
@@ -976,11 +974,9 @@
 
           <input
             type="tel"
-            name="phone"
-            [(ngModel)]="patient.phone"
+            formControlName="phone"
             placeholder="Enter 10 digit phone number"
             maxlength="10"
-            required
             autocomplete="off"
           />
 
@@ -997,8 +993,7 @@
 
           <input
             type="text"
-            name="disease"
-            [(ngModel)]="patient.disease"
+            formControlName="disease"
             placeholder="e.g. Fever"
             autocomplete="off"
           />
@@ -1016,8 +1011,7 @@
 
           <input
             type="text"
-            name="address"
-            [(ngModel)]="patient.address"
+            formControlName="address"
             placeholder="Enter patient address"
             autocomplete="off"
           />
@@ -1044,7 +1038,7 @@
         <button
           type="submit"
           class="modal-submit-button"
-          [disabled]="saving || !patientForm.form.valid"
+          [disabled]="saving || patientForm.invalid"
         >
 
           @if (saving) {
