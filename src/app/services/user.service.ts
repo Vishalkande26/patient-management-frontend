@@ -10,6 +10,8 @@ import {
 
 import { Observable } from 'rxjs';
 
+import { environment } from '../../environments/environment';
+
 
 export interface User {
 
@@ -74,7 +76,7 @@ export class UserService {
   // =====================================================
 
   private apiUrl =
-    'http://localhost:8080/api/users';
+    `${environment.apiUrl}/api/users`;
 
 
   // =====================================================

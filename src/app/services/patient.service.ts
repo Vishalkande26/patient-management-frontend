@@ -7,6 +7,8 @@ import {
 
 import { Observable } from 'rxjs';
 
+import { environment } from '../../environments/environment';
+
 
 export interface Patient {
 
@@ -39,7 +41,7 @@ export class PatientService {
 
 
   private apiUrl =
-    'http://localhost:8080/api/patients';
+    `${environment.apiUrl}/api/patients`;
 
 
   private cacheKey =

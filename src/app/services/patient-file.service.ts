@@ -1,19 +1,32 @@
 import { Injectable, inject } from '@angular/core';
+
 import {
   HttpClient,
   HttpResponse
 } from '@angular/common/http';
+
 import { Observable } from 'rxjs';
 
+import { environment } from '../../environments/environment';
+
+
 export interface PatientFile {
+
   id: number;
+
   patientId: number;
+
   originalFileName: string;
+
   contentType: string;
+
   fileSize: number;
+
   uploadedAt: string;
+
   updatedAt: string;
 }
+
 
 @Injectable({
   providedIn: 'root'
@@ -22,8 +35,9 @@ export class PatientFileService {
 
   private http = inject(HttpClient);
 
+
   private readonly apiUrl =
-    'http://localhost:8080/api/files';
+    `${environment.apiUrl}/api/files`;
 
 
   // ==========================================
@@ -115,4 +129,5 @@ export class PatientFileService {
       `${this.apiUrl}/${id}`
     );
   }
+
 }

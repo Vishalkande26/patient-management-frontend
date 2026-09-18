@@ -2,6 +2,9 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 
+import { environment } from '../../environments/environment';
+
+
 export interface AppointmentRequest {
 
   patientId: number;
@@ -55,7 +58,7 @@ export class AppointmentService {
 
 
   private readonly apiUrl =
-    'http://localhost:8080/api/appointments';
+    `${environment.apiUrl}/api/appointments`;
 
 
   private recentlyCreatedAppointment: Appointment | null = null;

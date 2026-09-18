@@ -11,6 +11,8 @@ import {
   Observable
 } from 'rxjs';
 
+import { environment } from '../../environments/environment';
+
 
 export interface RegisterRequest {
 
@@ -55,7 +57,7 @@ export class AuthService {
 
 
   private readonly apiUrl =
-    'http://localhost:8080/api/auth';
+    `${environment.apiUrl}/api/auth`;
 
 
   // ==========================================

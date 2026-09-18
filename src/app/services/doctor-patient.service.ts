@@ -2,33 +2,56 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
+import { environment } from '../../environments/environment';
+
+
 export interface Patient {
+
   id: number;
+
   name: string;
+
   age: number;
+
   gender: string;
+
   phone: string;
+
   disease: string;
+
   address: string;
 }
 
+
 export interface Doctor {
+
   id: number;
+
   name: string;
+
   specialization: string;
+
   phone: string;
+
   email: string;
+
   experience: number;
 }
+
 
 @Injectable({
   providedIn: 'root'
 })
 export class DoctorPatientService {
 
-  private apiUrl = 'http://localhost:8080/api/doctor-patient';
+  private apiUrl =
+    `${environment.apiUrl}/api/doctor-patient`;
 
-  constructor(private http: HttpClient) {}
+
+  constructor(
+    private http: HttpClient
+  ) {}
+
 
   // ==========================================
   // ASSIGN DOCTOR TO PATIENT
@@ -93,4 +116,5 @@ export class DoctorPatientService {
       `${this.apiUrl}/patients/${patientId}/doctors`
     );
   }
+
 }
