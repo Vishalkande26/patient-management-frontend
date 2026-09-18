@@ -1,5 +1,5 @@
 import { Component, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 
@@ -17,7 +17,8 @@ import {
 
   imports: [
     CommonModule,
-    FormsModule
+    FormsModule,
+    DatePipe
   ],
 
   templateUrl: './appointments.html',

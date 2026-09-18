@@ -5,6 +5,10 @@ import {
 } from '@angular/core';
 
 import {
+  DatePipe
+} from '@angular/common';
+
+import {
   FormsModule,
   ReactiveFormsModule,
   FormControl,
@@ -105,7 +109,8 @@ interface AppointmentRequest {
   imports: [
     FormsModule,
     ReactiveFormsModule,
-    Modal
+    Modal,
+    DatePipe
   ],
 
   templateUrl: './appointments.html',
@@ -1372,32 +1377,13 @@ export class Appointments implements OnInit {
 
   openAddAppointmentModal(): void {
 
-    /*
-     * Reset the Reactive Form.
-     */
-
     this.clearForm();
 
     this.editingId = null;
 
-
-    /*
-     * IMPORTANT:
-     *
-     * Reload patients and doctors when
-     * Add Appointment is clicked.
-     *
-     * This does NOT change CRUD functionality.
-     */
-
     this.loadPatients();
 
     this.loadDoctors();
-
-
-    /*
-     * Open modal immediately.
-     */
 
     this.showAppointmentModal = true;
   }
@@ -1458,10 +1444,6 @@ export class Appointments implements OnInit {
       'SCHEDULED';
 
 
-    /*
-     * Patch Reactive Form.
-     */
-
     this.appointmentForm.patchValue({
 
       patientId:
@@ -1517,10 +1499,6 @@ export class Appointments implements OnInit {
       return;
     }
 
-
-    /* -----------------------------------------------------
-       REACTIVE FORM VALIDATION
-       ----------------------------------------------------- */
 
     if (
       this.appointmentForm.invalid
@@ -1611,10 +1589,6 @@ export class Appointments implements OnInit {
     }
 
 
-    /* -----------------------------------------------------
-       READ REACTIVE FORM VALUES
-       ----------------------------------------------------- */
-
     const formValue =
       this.appointmentForm.getRawValue();
 
@@ -1637,10 +1611,6 @@ export class Appointments implements OnInit {
     this.status =
       formValue.status;
 
-
-    /* -----------------------------------------------------
-       EXISTING VALIDATION
-       ----------------------------------------------------- */
 
     if (
       this.patientId === null ||
@@ -1716,10 +1686,6 @@ export class Appointments implements OnInit {
     }
 
 
-    /* -----------------------------------------------------
-       REQUEST
-       ----------------------------------------------------- */
-
     const request:
       AppointmentRequest = {
 
@@ -1755,10 +1721,6 @@ export class Appointments implements OnInit {
     );
 
 
-    /* -----------------------------------------------------
-       CREATE
-       ----------------------------------------------------- */
-
     if (
       this.editingId === null
     ) {
@@ -1770,10 +1732,6 @@ export class Appointments implements OnInit {
       return;
     }
 
-
-    /* -----------------------------------------------------
-       UPDATE
-       ----------------------------------------------------- */
 
     this.updateAppointmentOptimistically(
       this.editingId,
@@ -2421,10 +2379,6 @@ export class Appointments implements OnInit {
 
     this.editingId = null;
 
-
-    /*
-     * Reset Reactive Form.
-     */
 
     this.appointmentForm.reset({
 

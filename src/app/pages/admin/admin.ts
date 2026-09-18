@@ -1,3 +1,4 @@
+
 import { Component, inject } from '@angular/core';
 
 import {
@@ -11,7 +12,6 @@ import { ButtonModule } from 'primeng/button';
 
 import { AuthService } from '../../services/auth.service';
 
-
 @Component({
   selector: 'app-admin',
 
@@ -19,14 +19,12 @@ import { AuthService } from '../../services/auth.service';
     RouterLink,
     RouterLinkActive,
     RouterOutlet,
-
-    // PrimeNG
     ButtonModule
   ],
 
   templateUrl: './admin.html',
 
-  styleUrl: './admin.css'
+  styleUrl: './admin.scss'
 })
 export class Admin {
 
@@ -34,21 +32,11 @@ export class Admin {
 
   private authService = inject(AuthService);
 
-
-  // ==========================================
-  // USERNAME
-  // ==========================================
-
   get username(): string {
 
     return this.authService.getUsername() ?? 'Admin';
 
   }
-
-
-  // ==========================================
-  // CHECK ADMIN DASHBOARD
-  // ==========================================
 
   get isDashboard(): boolean {
 
@@ -59,15 +47,9 @@ export class Admin {
 
   }
 
-
-  // ==========================================
-  // PAGE TITLE
-  // ==========================================
-
   get pageTitle(): string {
 
     const url = this.router.url;
-
 
     if (url.includes('/doctors')) {
 
@@ -75,13 +57,11 @@ export class Admin {
 
     }
 
-
     if (url.includes('/patients')) {
 
       return 'Manage Patients';
 
     }
-
 
     if (url.includes('/users')) {
 
@@ -89,22 +69,15 @@ export class Admin {
 
     }
 
-
     if (url.includes('/appointments')) {
 
       return 'Manage Appointments';
 
     }
 
-
     return 'Admin Dashboard';
 
   }
-
-
-  // ==========================================
-  // ADMIN DASHBOARD
-  // ==========================================
 
   goToDashboard(): void {
 
@@ -114,11 +87,6 @@ export class Admin {
 
   }
 
-
-  // ==========================================
-  // PATIENT MANAGEMENT
-  // ==========================================
-
   goToPatients(): void {
 
     this.router.navigate([
@@ -126,11 +94,6 @@ export class Admin {
     ]);
 
   }
-
-
-  // ==========================================
-  // DOCTOR MANAGEMENT
-  // ==========================================
 
   goToDoctors(): void {
 
@@ -140,11 +103,6 @@ export class Admin {
 
   }
 
-
-  // ==========================================
-  // USER MANAGEMENT
-  // ==========================================
-
   goToUsers(): void {
 
     this.router.navigate([
@@ -153,11 +111,6 @@ export class Admin {
 
   }
 
-
-  // ==========================================
-  // APPOINTMENT MANAGEMENT
-  // ==========================================
-
   goToAppointments(): void {
 
     this.router.navigate([
@@ -165,11 +118,6 @@ export class Admin {
     ]);
 
   }
-
-
-  // ==========================================
-  // LOGOUT
-  // ==========================================
 
   logout(): void {
 
@@ -182,3 +130,4 @@ export class Admin {
   }
 
 }
+

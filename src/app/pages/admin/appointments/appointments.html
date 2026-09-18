@@ -801,7 +801,7 @@
                 <td>
 
                   <span class="date-text">
-                    {{ appointment.appointmentDate }}
+                    {{ appointment.appointmentDate | date:'dd MMM yyyy' }}
                   </span>
 
                 </td>
@@ -1351,7 +1351,7 @@
             </span>
 
             <strong>
-              {{ selectedAppointment.appointmentDate }}
+              {{ selectedAppointment.appointmentDate | date:'dd MMM yyyy' }}
             </strong>
 
           </div>
